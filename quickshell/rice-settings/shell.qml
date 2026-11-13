@@ -937,6 +937,7 @@ FloatingWindow {
             PageSlot { nav: win; idx: 10; cur: win.page; page: Component { NotificationsPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 11; cur: win.page; page: Component { IdlePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 12; cur: win.page; page: Component { DesktopPage { anchors.fill: parent; ctl: win } } }
+            PageSlot { nav: win; idx: 13; cur: win.page; page: Component { HotCornersPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 14; cur: win.page; page: Component { InterfacePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 15; cur: win.page; page: Component { ServicesPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 16; cur: win.page; page: Component { GamingPage { anchors.fill: parent; ctl: win } } }

@@ -146,7 +146,7 @@ put() {
   if [ -e "$dst" ] || [ -L "$dst" ]; then
     rel="${dst#"$HOME"/}"
     mkdir -p "$BK/$(dirname "$rel")"
-    cp -aL "$dst" "$BK/$rel" 2>/dev/null || true
+    cp -aL "$dst" "$BK/$rel" 2>/dev/null || warn "could not back up ~/$rel (it is replaced anyway)"
     [ -L "$dst" ] && rm -f "$dst"
   fi
   mkdir -p "$(dirname "$dst")"
@@ -182,7 +182,7 @@ copy_tree() { # copy_tree SRC_DIR DST_DIR
     if user_edited "$f" "$d"; then rm -f "$d.rice-new"; keep_edit "$f" "$d"; continue; fi
     rel2="${d#"$HOME"/}"
     mkdir -p "$BK/$(dirname "$rel2")"
-    cp -aL "$d" "$BK/$rel2" 2>/dev/null || true
+    cp -aL "$d" "$BK/$rel2" 2>/dev/null || warn "could not back up ~/$rel2 (it is replaced anyway)"
     [ -L "$d" ] && rm -f "$d"
     staged+=("$d")
   done
@@ -195,7 +195,7 @@ copy_tree() { # copy_tree SRC_DIR DST_DIR
       if cmp -s "$d.rice-new" "$d"; then rm -f "$d.rice-new"; rec_sum "$d"
       elif user_edited "$src/shell.qml" "$d"; then rm -f "$d.rice-new"; keep_edit "$src/shell.qml" "$d"
       else
-        rel2="${d#"$HOME"/}"; mkdir -p "$BK/$(dirname "$rel2")"; cp -aL "$d" "$BK/$rel2" 2>/dev/null || true
+        rel2="${d#"$HOME"/}"; mkdir -p "$BK/$(dirname "$rel2")"; cp -aL "$d" "$BK/$rel2" 2>/dev/null || warn "could not back up ~/$rel2 (it is replaced anyway)"
         [ -L "$d" ] && rm -f "$d"
         mv -f "$d.rice-new" "$d"; rec_sum "$d"
       fi

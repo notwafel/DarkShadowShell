@@ -69,7 +69,7 @@ ShellRoot {
     }
     property int secureTick: 0
     function submit() {
-        if (phase === "checking" || phase === "done" || pass === "") return
+        if (phase === "checking" || phase === "done" || pass === "" || waitT.running) return
         pending = pass
         phase = "checking"; msg = ""
         if (pam.active && pam.responseRequired) { pam.respond(pending); pending = ""; return }
@@ -82,6 +82,9 @@ ShellRoot {
     }
     function fail(text) {
         tries++
+        // 1, 2, 4 ... 30 s between tries: a keyboard cannot guess passwords quickly through PAM
+        wait = Math.min(30, Math.pow(2, Math.min(tries - 1, 5)))
+        waitT.restart()
         phase = "wrong"
         msg = text
         pass = ""; pending = ""
@@ -103,7 +106,10 @@ ShellRoot {
             lockShell.fail(lockShell.msg !== "" ? lockShell.msg : (result === PamResult.MaxTries ? Tr.t("Too many tries, wait a moment") : Tr.t("That is not the password")))
         }
     }
-    Timer { id: wrongT; interval: 2600; onTriggered: if (lockShell.phase === "wrong") { lockShell.phase = "idle"; lockShell.msg = "" } }
+    property int wait: 0                     // seconds left before the next try
+    Timer { id: waitT; interval: 1000; repeat: true
+            onTriggered: { lockShell.wait--; if (lockShell.wait <= 0) stop() } }
+    Timer { id: wrongT; interval: 2600; onTriggered: if (lockShell.phase === "wrong") { lockShell.phase = "idle"; lockShell.msg = lockShell.wait > 0 ? Tr.t("Wait") + " " + lockShell.wait + " s" : "" } }
 
     // ---------- locking and unlocking ----------
     property real out: 0                     // 0 shown .. 1 gone (the way out after the right password)

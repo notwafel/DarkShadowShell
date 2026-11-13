@@ -1023,8 +1023,8 @@ if [ "$MODE" = update ]; then
         [ "$target" = "${GUARD_CHECKED:-}" ] || update_guard "$prev" "$target" || exit 1
         stamp="$(date +%Y%m%d-%H%M%S)"
         gq branch "rice-before-update-$stamp" HEAD || true
-        gq stash push -u -m "rice: your changes before the update of $stamp" || true
-        if gq reset --hard "$up"; then
+        # only reset when the stash really kept the changes (a failed stash + reset --hard would lose them)
+        if gq stash push -u -m "rice: your changes before the update of $stamp" && gq reset --hard "$up"; then
           ok "Took the newest version (your old state: branch rice-before-update-$stamp, and git stash list)"
           exec "$ROOT/install.sh" --update --pulled "$@"
         fi
@@ -1033,7 +1033,7 @@ if [ "$MODE" = update ]; then
         fail "Could not get the newest version from GitHub (offline?). Nothing was changed."
         exit 1
       fi
-      warn "Could not get the newest version from GitHub (offline?). Continuing with the files you have."
+      warn "Could not get the newest version from GitHub (offline, or your changes could not be set aside). Continuing with the files you have."
     fi
   fi
 fi

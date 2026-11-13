@@ -110,6 +110,8 @@ PY
 # since then is kept as it is on an update: the new version lands next to it as FILE.rice-update and the summary
 # lists it. Before there was a list, the version the repo had before this update (git) tells if it was changed.
 SUMS="$HOME/.config/rice/installed.sums"
+# one line per file: appending on every update made this grow without end (and every check below slower)
+[ -f "$SUMS" ] && awk 'NF == 2 { s[$2] = $1 } END { for (k in s) print s[k] "  " k }' "$SUMS" >"$SUMS.tmp" && mv "$SUMS.tmp" "$SUMS"
 KEPTF="$HOME/.cache/rice/kept-edits"
 PREV_REV=""
 sum_of() { sha256sum 2>/dev/null | cut -c1-64; }

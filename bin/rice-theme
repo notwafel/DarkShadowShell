@@ -369,12 +369,14 @@ def discord(on, p):
 
 # ---------------- the theme ----------------
 def set_prefs(kv):
+    os.makedirs(DIR, exist_ok=True)
+    lk = open(APPPREFS + ".lock", "w")      # the same lock Settings uses (Prefs.qml): one read-write at a time
+    fcntl.flock(lk, fcntl.LOCK_EX)
     try:
         d = json.load(open(APPPREFS))
     except Exception:
         d = {}
     d.update(kv)
-    os.makedirs(DIR, exist_ok=True)
     tmp = APPPREFS + ".tmp"
     json.dump(d, open(tmp, "w"))
     os.replace(tmp, APPPREFS)

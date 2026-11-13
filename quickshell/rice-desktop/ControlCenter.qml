@@ -373,7 +373,9 @@ PanelWindow {
                     width: parent.width; height: 176; radius: 28; color: cc.card
                     visible: mp.has
                     opacity: cc.stg(5); transform: Translate { y: (1 - cc.stg(5)) * 22 }
-                    Player { id: mp; running: cc.open && cc.tab === "control" }
+                    // the one Player ticks while this card is out
+                    Instantiator { model: cc.open && cc.tab === "control" ? 1 : 0
+                                   delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
                     Item {
                         id: art
                         x: 12; anchors.verticalCenter: parent.verticalCenter

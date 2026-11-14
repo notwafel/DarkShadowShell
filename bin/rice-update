@@ -179,8 +179,9 @@ def latest(offline=False):
     latest.ahead, latest.sha, latest.log = 0, "", ""
     if r and os.path.isdir(r + "/.git") and shutil.which("git"):
         try:
-            if not offline and origin_ok(r):
+            if not offline:
                 fix_remote(r)
+            if not offline and origin_ok(r):
                 f = git(r, "fetch", "--quiet")
                 if f.returncode != 0:
                     err = (f.stderr.strip().splitlines() or ["git fetch failed"])[-1]

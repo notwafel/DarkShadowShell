@@ -441,7 +441,10 @@ def run(args):
                 pass
             sys.exit(1)
     os.chdir(r)
-    code = subprocess.call(["./install.sh", "--update"] + args)
+    env = dict(os.environ)
+    for k in ("RICE_GUI", "NO_COLOR", "GIT_TERMINAL_PROMPT", "GCM_INTERACTIVE"):
+        env.pop(k, None)   # a terminal the Update Center opened must ask, not act like the background update
+    code = subprocess.call(["./install.sh", "--update"] + args, env=env)
     print()
     try:
         input("Press Enter to close")

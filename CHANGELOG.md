@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.56: Update Center: no more endless terminals
+- Fix: an update that changes the installer, started from Settings > Update Center, said "update failed" and opened terminals again and again, each ending in "Press Enter to close". The terminal it opens got the Update Center's "no terminal here" setting, so it opened another one instead of asking. Now that terminal asks "Apply this update? [y/N]" (and for sudo) as it should, and at most one opens per minute
+- Thanks to the user who found the cause
+
 ## V4.55: the bar on every screen, and ZIP copies that can update
 - New: Settings > System > Monitors > **Bar on every screen** (`rice-screens bar-all on`). The same bar on all your screens, with its island, clock, workspaces and tray. The menus it opens and commands from scripts (SUPER + ALT + D, the calendar) still open on the main screen. The desktop widgets stay on one screen (Desktop widgets: Put the widgets here)
 - Fix: "it does not update any more, and it went back to V3.60". The newest Release on GitHub was still V3.60, and its ZIP has no git history, so `rice-update` had nothing to pull and installed that old copy again. `rice-update` now sees a ZIP copy, clones the project with git in its place (the old folder is kept, renamed) and updates. Settings > Update Center opens a terminal for it, and the installer says so too. Each new version is now also published as the Latest release on GitHub

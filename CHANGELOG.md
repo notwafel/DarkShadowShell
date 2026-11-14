@@ -1,5 +1,11 @@
 # Changelog
 
+## V4.54: the Material 3 lock screen works again, and its Settings page shows it
+- Fix: since V4.51 the shell's lock screen did not start and hyprlock (the old one) showed instead. The desktop's music player became a shared singleton, and the lock screen copied it and could not create it. The lock screen has its own player now (`LockPlayer.qml`), and an old copy is removed when you lock
+- Settings > Desktop > Idle & Lockscreen: the small picture at the top is the real layout now (Cards: the month, the time, the music and the bar; Classic: one column), in your clock font, 12/24 h and theme. The old hyprlock picture and the DarkShadow/hyprlock switch are gone (hyprlock only steps in if the lock screen ever fails)
+- Only the options the chosen style uses are shown. Cards: clock font, 24-hour clock, power buttons, background, music. Classic adds layout, clock style, accent clock, date, greeting, picture, password field and the small lines
+- Clock fonts: one you pick that is not installed yet downloads and shows up in Settings within seconds, no restart needed. New Test (30 s) button: a real lock that opens itself after 30 seconds
+
 ## V4.53: the lock screen is back
 - V4.52 removed the shell's own Material 3 lock screen by mistake. It is back exactly as it was (SUPER + L, power menu, Settings > Desktop > Idle & Lockscreen). Only the hot corners stay removed
 

@@ -92,6 +92,8 @@ def load():
                 c[k] = int(clamp(float(v), *INTS[k]))
             except Exception:
                 c[k] = d
+    # V4.54: the shell's lock screen is the only one you pick; hyprlock only steps in when it fails
+    c["engine"] = "shell"
     return c
 
 
@@ -403,11 +405,16 @@ ACTIVE = HOME + "/.cache/rice/lock-active"
 SHOT = HOME + "/.cache/rice/lock-shot.png"
 FALLBACK = HOME + "/.cache/rice/lock-fallback"
 # the parts it shares with the desktop shell (copied from rice-desktop when they are newer)
-SHARED = ["Look", "Fonts", "DashFont", "MIcon", "T", "Blob", "ShapeImage", "WavyLine", "WavyArc", "Player",
+SHARED = ["Look", "Fonts", "DashFont", "MIcon", "T", "Blob", "ShapeImage", "WavyLine", "WavyArc",
           "RoundImage", "NPal", "Trigger", "Shadow", "Tr"]
 
 
 def sync_shared():
+    # V4.51 made the desktop's Player a singleton; an old copy of it here would stop the lock screen from loading
+    try:
+        os.remove(LOCKQS + "/Player.qml")
+    except OSError:
+        pass
     for n in SHARED:
         src, dst = QS + "/rice-desktop/%s.qml" % n, LOCKQS + "/%s.qml" % n
         try:

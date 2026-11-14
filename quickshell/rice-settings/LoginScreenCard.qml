@@ -2,7 +2,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 
-// Settings > Desktop > Idle & Login screen: the login screen (SDDM). The shell's own theme, in your wallpaper and
+// Settings > Desktop > Idle & Lockscreen: the login screen (SDDM). The shell's own theme, in your wallpaper and
 // colors (rice-sddm). Putting it in asks for your password once; after that it follows the wallpaper by itself.
 Column {
     id: card

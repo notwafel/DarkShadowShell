@@ -131,6 +131,8 @@ def checks():
     add("ptrace", "Programs spying on programs", pt not in (None, "0"), "Restricted" if pt not in (None, "0") else "Any of your programs can read another one's memory (see Experimental below)")
     enc = "crypt" in run(["lsblk", "-no", "TYPE"])
     add("disk", "Disk encryption", enc, "Your disk is encrypted" if enc else "Anyone who holds this computer can read your files (matters most for laptops)")
+    idle = any(run(["pgrep", "-x", n]).strip() for n in ("hypridle", "swayidle"))
+    add("lock", "Lock when you are away", idle, "The screen locks when you are idle" if idle else "Nothing locks the screen when you leave (Settings > Desktop > Idle & Lockscreen)")
     try:
         need = not os.path.isdir("/usr/lib/modules/" + os.uname().release) and not os.path.isdir("/lib/modules/" + os.uname().release) and os.path.isdir("/usr/lib/modules")
     except Exception:

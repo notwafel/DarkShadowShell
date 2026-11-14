@@ -19,16 +19,17 @@ Item {
         "Press SUPER + U anywhere to open these settings.",
         "SUPER + W opens the wallpaper menu. The Auto theme follows your new wallpaper.",
         "Drag the desktop widgets anywhere, their position is saved.",
-        "Pick a scheme in Theme to recolor the bar, borders and notifications.",
+        "Pick a scheme in Theme to recolor the bar, borders, notifications and lock screen.",
         "Try the Islands or Pills style in DarkShadow bar for a floating look.",
-        "Idle & Login screen decides when the screen turns off and when the computer sleeps.",
-        "Click your picture in the sidebar to change it. It is also shown on the login screen.",
+        "Idle & Lockscreen decides when the screen locks and when the computer sleeps.",
+        "Click your picture in the sidebar to change it. It is also shown on the lock screen.",
         "Gaming mode turns off animations, blur and gaps. Click it again to bring them back.",
         "Notifications has nine popup styles. Try Island or Accent bar.",
         "Theme has 21 color schemes, from pure Mono to Ocean and Rose.",
         "The launcher can open as a full-width bar, or Split with your wallpaper on the left.",
+        "Lock screen clocks come in Big, Stacked and Minimal. Preview them in Idle & Lockscreen.",
         "Run rice-notify test in a terminal to see a sample notification.",
-        "Everything here is also a command: rice-bar, rice-rofi, rice-idle, rice-notify."
+        "Everything here is also a command: rice-bar, rice-rofi, rice-lock, rice-notify."
     ]
     function greeting() {
         const h = now.getHours()

@@ -12,7 +12,7 @@ Scope {
     property bool dnd: false
     readonly property var list: srvLoader.item ? srvLoader.item.trackedNotifications.values : []
     readonly property int count: list.length
-    // (the lock screen that showed how many wait was removed in V4.52)
+    // the lock screen shows how many wait (rice-lock notif-count)
     onCountChanged: Quickshell.execDetached(["bash", "-c", "mkdir -p \"$HOME/.cache/rice\"; echo " + count + " > \"$HOME/.cache/rice/notif-count\""])
     property var pops: []              // notifications on screen right now
     property var leaving: []           // pop-ups that are on their way out

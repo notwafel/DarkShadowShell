@@ -41,7 +41,7 @@ Item {
             ["Super + D", "Launcher: find and open apps", "launcher"], ["Alt + Space", "Launcher", "launcher2"],
             ["Super + E", "Files"], ["Super + U", "Settings (this window)", "settings"], ["Super + W", "Wallpapers", "wallpaper"],
             ["Super + A", "Quick switches: Wi-Fi, Bluetooth, Do not disturb ...", "quick"], ["Super + N", "Control center and notifications", "cc"],
-            ["Super + G", "Game bar", "gamebar"], ["Super + Alt + D", "Dashboard", "dashboard"],
+            ["Super + G", "Game bar", "gamebar"], ["Super + Alt + D", "Dashboard", "dashboard"], ["Super + L", "Lock the screen", "lock"],
             ["Super + V", "Clipboard: everything you copied", "clipboard"] ] },
         { name: "Windows", sym: "select_window", keys: [
             ["Super + Q", "Close the window", "close"], ["Super + Shift + V", "Float / tile the window", "float"],
@@ -71,7 +71,7 @@ Item {
             ["Super + R", "Launcher: find and open apps", "launcher"], ["Alt + Space", "Launcher", "launcher2"],
             ["Super + E", "Files"], ["Super + U", "Settings (this window)", "settings"], ["Super + W", "Wallpapers", "wallpaper"],
             ["Super + A", "Quick switches: Wi-Fi, Bluetooth, Do not disturb ...", "quick"], ["Super + N", "Control center and notifications", "cc"],
-            ["Super + G", "Game bar", "gamebar"], ["Super + Alt + D", "Dashboard", "dashboard"],
+            ["Super + G", "Game bar", "gamebar"], ["Super + Alt + D", "Dashboard", "dashboard"], ["Super + L", "Lock the screen", "lock"],
             ["Super + V", "Clipboard: everything you copied", "clipboard"] ] },
         { name: "Windows", sym: "select_window", keys: [
             ["Super + Q", "Close the window", "close"], ["Super + Shift + V", "Float / tile the window", "float"],

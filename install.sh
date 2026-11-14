@@ -638,7 +638,7 @@ copy_lua() { local f; for f in "$ROOT"/lua/*.lua; do [ -f "$f" ] && put "$f" "$H
 
 # ------------------------------------------------------------------ your saved settings
 # settings/ holds what you chose in Settings on the computer that ran ./sync.sh: the Waybar look
-# (ui.json), dashboard, widgets, notifications, rofi, fonts, cursor, effects.
+# (ui.json), dashboard, widgets, notifications, lock screen, rofi, fonts, cursor, effects.
 # A file is put in place when you do not have it yet, or when you did not change it since the
 # installer put it there last time. Files you changed on this computer are kept, unless you said
 # "use the saved settings" (then yours are backed up first, like every other file).
@@ -685,7 +685,7 @@ PY
 }
 step_settings() {
   local sf; sf="$(mktemp)"
-  task "Your saved settings: bar, widgets..." apply_settings "$sf"
+  task "Your saved settings: bar, widgets, lock screen..." apply_settings "$sf"
   local n_set n_kept
   n_set="$(grep -c '^set ' "$sf" 2>/dev/null || true)"; n_kept="$(grep -c '^kept ' "$sf" 2>/dev/null || true)"
   [ "${n_set:-0}" -gt 0 ] && note "$n_set settings files updated"
@@ -860,11 +860,10 @@ prune_backups() {
   done <<<"$old"
   return 0
 }
-# V4.52 removed the hot corner panel and the shell's lock screen (and the hyprlock one): take their files out
+# V4.52 removed the hot corner panel: take its files out
 remove_old_parts() {
   [ "$DRY_RUN" = 1 ] && return 0
-  rm -rf "$HOME/.config/quickshell/rice-lockscreen" "$HOME/.config/hypr/rice-hotcorner.lua"
-  rm -f "$BIN/rice-lock" "$HOME/.config/quickshell/rice-desktop/HotCorner.qml" "$HOME/.config/quickshell/rice-desktop/HotCornerPanel.qml" \
+  rm -f "$HOME/.config/hypr/rice-hotcorner.lua" "$HOME/.config/quickshell/rice-desktop/HotCorner.qml" "$HOME/.config/quickshell/rice-desktop/HotCornerPanel.qml" \
     "$HOME/.config/quickshell/rice-settings/HotCornersPage.qml" "$HOME/.config/quickshell/rice-settings/HotCornerPanel.qml"
   return 0
 }
@@ -874,7 +873,7 @@ refresh_look() {
   [ -x "$BIN/desktop-set" ] && t "$BIN/desktop-set" state
   [ -x "$BIN/rice-cc" ] && t "$BIN/rice-cc" migrate
   t "$BIN/rice-notify" apply
-  command -v hypridle >/dev/null 2>&1 && t "$BIN/rice-idle" apply
+  command -v hyprlock >/dev/null 2>&1 && t "$BIN/rice-lock" apply
   t "$BIN/rice-rofi" apply
   [ -x "$BIN/rice-bar" ] && t bash -c "\"$BIN/rice-bar\" migrate && \"$BIN/rice-bar\" start"
   t "$BIN/rice-hotcorner" apply     # takes the old hot corner blur rule out of your Hyprland config
@@ -901,13 +900,13 @@ step_finish() {
   [ "${WANT[4]:-0}" = 1 ] && have_settings && step_settings
   if [ "$MODE" = update ]; then
     # an update re-applies your settings quietly: one line instead of ten
-    task "Refreshing your settings (bar, dock, blur, notifications)" refresh_look
+    task "Refreshing your settings (bar, dock, blur, notifications, lock screen)" refresh_look
   else
     [ -f "$HOME/.config/waybar/config.jsonc" ] && task "Waybar: ${DISTRO_NAME} logo" t "$BIN/waybar-set" distro-icon on
     [ -x "$BIN/desktop-set" ] && task "Desktop widgets settings" t "$BIN/desktop-set" state
     [ -x "$BIN/rice-cc" ] && task "Notifications shown by the shell (Google-style pop-ups and control center)" t "$BIN/rice-cc" migrate
     task "Notifications style and blur" t "$BIN/rice-notify" apply
-    command -v hypridle >/dev/null 2>&1 && task "Idle timers (screen off, sleep)" t "$BIN/rice-idle" apply
+    command -v hyprlock >/dev/null 2>&1 && task "Lock screen and idle timers" t "$BIN/rice-lock" apply
     task "Launcher and bar blur" t "$BIN/rice-rofi" apply
     [ -x "$BIN/rice-bar" ] && task "DarkShadow bar (Waybar stays off)" t bash -c "\"$BIN/rice-bar\" migrate && \"$BIN/rice-bar\" start"
     task "Remove the old hot corner rule" t "$BIN/rice-hotcorner" apply
@@ -941,7 +940,7 @@ step_finish() {
       task "Login screen (SDDM): your wallpaper and colors" t "$BIN/rice-sddm" sync
     elif [ "$MODE" != update ] && [ "$ASSUME_YES" != 1 ] && command -v sddm >/dev/null 2>&1 && [ ! -e /etc/NIXOS ] \
          && confirm "Use the shell's login screen for SDDM? (it asks for your password)"; then
-      "$BIN/rice-sddm" install || warn "The login screen was not put in (Settings > Desktop > Idle & Login screen can do it later)"
+      "$BIN/rice-sddm" install || warn "The login screen was not put in (Settings > Desktop > Idle & Lockscreen can do it later)"
     fi
   fi
   # Settings > Security > Shell files: the files are watched from here on (after every install and update)
@@ -1097,7 +1096,7 @@ if [ "$MENU_CHOICE" = 2 ]; then
     "Fonts|Inter, Rubik, Nerd Font icons and clock fonts|1" \
     "Config files|Hyprland, bar, notifications, launcher|1" \
     "Apps and scripts|Settings app, widgets, dock|1" \
-    "Your settings|bar, widgets (settings/)|1"
+    "Your settings|bar, widgets, lock screen (settings/)|1"
   WANT=("${MENU_SEL[@]}")
 fi
 
@@ -1108,8 +1107,8 @@ info "Window manager: $(wm_name)"
 [ "${WANT[1]}" = 1 ] && info "Install fonts"
 [ "${WANT[2]}" = 1 ] && info "Copy config files into ~/.config"
 [ "${WANT[3]}" = 1 ] && info "Install the Settings app, widgets and helper scripts"
-[ "${WANT[4]:-0}" = 1 ] && have_settings && info "Use your saved settings (bar, widgets...)"
-info "Finish setup (theme, notifications)"
+[ "${WANT[4]:-0}" = 1 ] && have_settings && info "Use your saved settings (bar, widgets, lock screen...)"
+info "Finish setup (theme, lock screen, notifications)"
 note "Files that get replaced are saved in ${BK/#$HOME/~}"
 confirm "Start?" || { warn "Cancelled."; exit 0; }
 fi
@@ -1122,7 +1121,7 @@ if [ "${WANT[2]}" = 1 ]; then n=$((n + 1)); step "$n" "Config files" "Your old f
 if [ "${WANT[3]}" = 1 ]; then n=$((n + 1)); step "$n" "Apps and scripts" "Settings app, desktop widgets and the commands behind them"; step_apps
   [ "${WANT[2]}" = 1 ] || task "Hyprland add-ons (keybinds)" copy_lua
 fi
-n=$((n + 1)); if [ "$MODE" = update ]; then step "$n" "Finishing" "Refreshing and cleaning up"; else step "$n" "Finishing" "Theme and notifications"; fi; step_finish
+n=$((n + 1)); if [ "$MODE" = update ]; then step "$n" "Finishing" "Refreshing and cleaning up"; else step "$n" "Finishing" "Theme, lock screen and notifications"; fi; step_finish
 
 # ------------------------------------------------------------------ summary
 miss="$(missing_cmds)"

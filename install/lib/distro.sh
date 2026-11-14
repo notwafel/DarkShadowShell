@@ -25,7 +25,7 @@ FEDORA_ATOMIC=0
 if [ "$FAMILY" = fedora ] && [ -e "${OSTREE_BOOTED:-/run/ostree-booted}" ]; then FEDORA_ATOMIC=1; fi
 
 # Arch packages, grouped so the installer can explain what it is doing.
-PKG_DESKTOP=(hyprland hypridle xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent qt5-wayland qt6-wayland)
+PKG_DESKTOP=(hyprland hyprlock hypridle xdg-desktop-portal-hyprland xdg-desktop-portal-gtk hyprpolkitagent qt5-wayland qt6-wayland)
 PKG_SHELL=(quickshell qt6-multimedia waybar swaync awww cava kitty fish fastfetch nautilus matugen)
 PKG_TOOLS=(wf-recorder grim slurp wl-clipboard cliphist wtype libnotify xdg-user-dirs jq curl python playerctl brightnessctl pamixer
            imagemagick ffmpeg mpvpaper zenity networkmanager bluez bluez-utils pipewire pipewire-pulse pipewire-audio wireplumber
@@ -41,11 +41,11 @@ ARCH_PKGS=("${PKG_DESKTOP[@]}" "${PKG_SHELL[@]}" "${PKG_TOOLS[@]}" "${PKG_FONTS[
 AUR_NEEDED=(quickshell awww matugen niri xwayland-satellite mpvpaper)
 
 # programs the desktop needs at runtime (shown at the end if something is missing)
-NEED_CMDS=(Hyprland hypridle waybar qs swaync-client awww matugen cava jq python3 grim slurp wl-copy wf-recorder notify-send)
+NEED_CMDS=(Hyprland hyprlock hypridle waybar qs swaync-client awww matugen cava jq python3 grim slurp wl-copy wf-recorder notify-send)
 
 # niri: the scrollable-tiling window manager. The shell runs on it as on Hyprland (install.sh asks which one:
 # Hyprland, niri or both). xwayland-satellite runs X11 apps there; the GNOME portal gives screen sharing.
-# hypridle and hyprpolkitagent stay: the idle timers and password prompts use them on niri too.
+# hyprlock, hypridle and hyprpolkitagent stay: the lock screen, the idle timers and password prompts use them on niri too.
 # gammastep is the night light there (hyprsunset needs Hyprland).
 PKG_NIRI=(niri xwayland-satellite xdg-desktop-portal-gnome gammastep)
 FPKG_NIRI=(niri xwayland-satellite xdg-desktop-portal-gnome gammastep)
@@ -59,7 +59,7 @@ FEDORA_NIRI_COPR=yalter/niri
 # Quickshell: errornointernet/quickshell is the COPR the Quickshell docs point to (nett00n/hyprland has it too).
 # matugen is in Fedora 44 and newer; on older ones the installer downloads it from its GitHub releases.
 FEDORA_COPRS=(nett00n/hyprland errornointernet/quickshell scottames/awww)
-FPKG_DESKTOP=(hyprland hypridle hyprsunset hyprpolkitagent xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
+FPKG_DESKTOP=(hyprland hyprlock hypridle hyprsunset hyprpolkitagent xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
               qt5-qtwayland qt6-qtwayland)
 FPKG_SHELL=(quickshell qt6-qtmultimedia waybar SwayNotificationCenter awww cava kitty fish fastfetch nautilus matugen)
 FPKG_TOOLS=(wf-recorder grim slurp wl-clipboard cliphist wtype libnotify xdg-user-dirs jq curl python3 playerctl brightnessctl pamixer

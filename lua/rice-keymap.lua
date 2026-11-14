@@ -22,6 +22,7 @@ RK.actions = {
     cc        = { "SUPER + N",         exec(BIN .. "rice-cc") },
     gamebar   = { "SUPER + G",         exec(BIN .. "rice-gamebar") },
     dashboard = { "SUPER + ALT + D",   exec(BIN .. "rice-dashboard open") },
+    lock      = { "SUPER + L",         exec(BIN .. "rice-lock now") },
     close     = { "SUPER + Q",         function() return hl.dsp.window.close() end },
     float     = { "SUPER + SHIFT + V", function() return hl.dsp.window.float({ action = "toggle" }) end },
     clipboard = { "SUPER + V",         exec(BIN .. "rice-clip toggle") },

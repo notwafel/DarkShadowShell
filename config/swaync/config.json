@@ -63,6 +63,10 @@
           "command": "$HOME/.local/bin/rice-sys poweroff"
         },
         {
+          "label": "󰌾",
+          "command": "hyprlock"
+        },
+        {
           "label": "󰍃",
           "command": "@HOME@/.local/bin/logout"
         },

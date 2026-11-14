@@ -153,7 +153,6 @@ Singleton {
             "Theme": "Motyw",
             "Cursors": "Kursory",
             "Notifications": "Powiadomienia",
-            "Idle & Login screen": "Bezczynność i ekran logowania",
             "Idle & Lockscreen": "Bezczynność i blokada",
             "Widgets": "Widżety",
             "Hot corners": "Aktywne rogi",

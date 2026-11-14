@@ -48,5 +48,6 @@ local function soft(t, path, depth)
 end
 pcall(soft, hl.dsp, "hl.dsp", 0)
 
--- if a lock screen of yours stops while the screen is locked, another one may take the lock over
+-- the lock screen: if it ever stops while the screen is locked, another one (hyprlock) may take the lock over
+-- instead of leaving a red "locked" screen (rice-lock does that by itself)
 hl.config({ misc = { allow_session_lock_restore = true } })

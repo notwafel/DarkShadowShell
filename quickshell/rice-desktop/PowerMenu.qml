@@ -4,7 +4,7 @@ import Quickshell.Wayland
 import QtQuick
 
 // The power menu: click the power icon on the bar and it drops down under it.
-// Sleep, Log out, Restart, Shut down. The last three need a second click, so nothing happens by accident.
+// Lock, Sleep, Log out, Restart, Shut down. The last three need a second click, so nothing happens by accident.
 PanelWindow {
     screen: Mon.screen
     id: pw
@@ -33,7 +33,8 @@ PanelWindow {
     property int hover: -1
 
     readonly property var items: [
-        { key: "suspend", label: Tr.t("Sleep"), icon: "bedtime", glyph: 0xF0904, cmd: "\"$HOME/.local/bin/rice-sys\" suspend", ask: false },
+        { key: "lock", label: Tr.t("Lock"), icon: "lock", glyph: 0xF033E, cmd: "\"$HOME/.local/bin/rice-power\" lock", ask: false },
+        { key: "suspend", label: Tr.t("Sleep"), icon: "bedtime", glyph: 0xF0904, cmd: "\"$HOME/.local/bin/rice-power\" lock; sleep 0.6; \"$HOME/.local/bin/rice-sys\" suspend", ask: false },
         { key: "logout", label: Tr.t("Log out"), icon: "logout", glyph: 0xF0343, cmd: "\"$HOME/.local/bin/logout\"", ask: true },
         { key: "reboot", label: Tr.t("Restart"), icon: "restart_alt", glyph: 0xF0709, cmd: "\"$HOME/.local/bin/rice-sys\" reboot", ask: true },
         { key: "poweroff", label: Tr.t("Shut down"), icon: "power_settings_new", glyph: 0xF0425, cmd: "\"$HOME/.local/bin/rice-sys\" poweroff", ask: true }

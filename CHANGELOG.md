@@ -1,5 +1,15 @@
 # Changelog
 
+## V4.51: 23 small fixes from a full read of the inherited code
+Thanks to notwafel again (pull request #16).
+- The hot corner panel finally opens, and the Settings pages for Hot corners and Security are linked again
+- Lock screen: waits and retries if the lock is not ready, with a timeout, instead of hanging; `rice-lock` no longer blocks on a second press
+- Stats and Player are now single shared services: widgets use one reader each, and Stats only runs while something on screen shows it
+- Config files are written atomically with locks (`hypr-set`, `rice-theme`, prefs), so two writers cannot corrupt them
+- Polling removed from the wallpaper and hot corners (file watching instead); sounds read through a FileView; `rice-clip` makes each thumbnail once per open
+- pid checks compare the command line before killing; `rice-cursor` refuses archive links pointing outside; `secure.sh` guards its own install and library path
+- Install: `install.sh` stashes/resets cleanly on update, checksums with spaces in paths work, the install guide uses the right name
+
 ## V4.50: 75 Hz (and every other refresh rate) now sticks on niri
 - Issue #17 (thanks JapanisuGoburin): niri wants the refresh rate exactly as `niri msg outputs` shows it, down to the third decimal (74.973), and drops a mode that does not match. Settings rounded it to 74.97, so the screen stayed at 60 Hz or went back to it. The rate is now kept exact everywhere (the buttons still say 75 Hz), and a mode saved before this is matched to the nearest real one when niri's config is written
 - A screen that your own `user.kdl` sets up (`output "HDMI-A-1" { ... }`) is left alone by Settings, so the two blocks no longer fight over it

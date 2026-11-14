@@ -447,8 +447,18 @@ def wall_path():
 def lock_now(preview=False, test=False):
     c = load()
     qs = qs_bin()
-    if not preview and (running("hyprlock") or our_lock_running()):
-        return
+    if not preview:
+        # two locks at the same moment (hypridle's timeout and SUPER + L) both passed the check and both started a
+        # lock screen. The first keeps this lock for as long as it locks (hyprlock() waits until you unlock), and a
+        # second one does not wait for it: waiting would lock the screen again right after you unlocked it
+        os.makedirs(HOME + "/.cache/rice", exist_ok=True)
+        lk = open(HOME + "/.cache/rice/lock.lock", "w")
+        try:
+            fcntl.flock(lk, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            return
+        if running("hyprlock") or our_lock_running():
+            return
     if c["engine"] == "hyprlock" or not qs or not os.path.exists(LOCKQS + "/shell.qml"):
         if not preview:
             hyprlock()

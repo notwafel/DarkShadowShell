@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.55: the bar on every screen, and ZIP copies that can update
+- New: Settings > System > Monitors > **Bar on every screen** (`rice-screens bar-all on`). The same bar on all your screens, with its island, clock, workspaces and tray. The menus it opens and commands from scripts (SUPER + ALT + D, the calendar) still open on the main screen. The desktop widgets stay on one screen (Desktop widgets: Put the widgets here)
+- Fix: "it does not update any more, and it went back to V3.60". The newest Release on GitHub was still V3.60, and its ZIP has no git history, so `rice-update` had nothing to pull and installed that old copy again. `rice-update` now sees a ZIP copy, clones the project with git in its place (the old folder is kept, renamed) and updates. Settings > Update Center opens a terminal for it, and the installer says so too. Each new version is now also published as the Latest release on GitHub
+
 ## V4.54: the Material 3 lock screen works again, and its Settings page shows it
 - Fix: since V4.51 the shell's lock screen did not start and hyprlock (the old one) showed instead. The desktop's music player became a shared singleton, and the lock screen copied it and could not create it. The lock screen has its own player now (`LockPlayer.qml`), and an old copy is removed when you lock
 - Settings > Desktop > Idle & Lockscreen: the small picture at the top is the real layout now (Cards: the month, the time, the music and the bar; Classic: one column), in your clock font, 12/24 h and theme. The old hyprlock picture and the DarkShadow/hyprlock switch are gone (hyprlock only steps in if the lock screen ever fails)

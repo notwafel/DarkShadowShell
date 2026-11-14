@@ -103,7 +103,7 @@ Item {
     }
     // rice-dashboard open / island: the info card (the dashboard is the island now)
     Trigger {
-        path: Quickshell.env("HOME") + "/.cache/rice/island-open"
+        path: isl.bar && isl.bar.extra ? "" : Quickshell.env("HOME") + "/.cache/rice/island-open"
         every: 1500
         onFired: function(line) {
             const p = String(line).trim().split(/\s+/)

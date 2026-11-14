@@ -16,8 +16,12 @@ import QtQuick
 // style is dynamic now. Auto-hide: it slides away and a thin strip at the edge brings it back.
 // What sits where comes from ~/.config/rice/bar.json (layout: left, center, right).
 PanelWindow {
-    screen: Mon.screen
     id: bar
+    // the main bar lives on the main screen; Bar on every screen (Mon.everywhere) makes a copy for each other screen.
+    // A copy shows the same, but commands from scripts (open the island, the calendar ...) go to the main bar only
+    property var scr: null
+    readonly property bool extra: scr !== null
+    screen: scr ? scr : Mon.screen
 
     // ---------- settings (~/.config/rice/bar.json) ----------
     property var bc: ({})
@@ -702,7 +706,7 @@ PanelWindow {
     readonly property var st: Stats.st
     StatsHold { on: (bar.on || bar.ghostOnly) && (bar.hasMod("sysmon") || (barPop.open && barPop.kind === "system")) }
     // a side bar (VBar.qml) opens these cards too: "KIND" in ~/.cache/rice/barpop-open
-    Trigger { name: "barpop-open"; onFired: function(o) { const p = o.trim().split(" "); barPop.toggle(p[1] || "calendar", p[2] !== undefined ? parseFloat(p[2]) : 200) } }
+    Trigger { name: bar.extra ? "" : "barpop-open"; onFired: function(o) { const p = o.trim().split(" "); barPop.toggle(p[1] || "calendar", p[2] !== undefined ? parseFloat(p[2]) : 200) } }
     function popAt(it, k) { const p = it.mapToItem(body, it.width / 2, 0); barPop.fromW = it.width + 16; barPop.toggle(k, p.x) }
 
     Component { id: mWeather

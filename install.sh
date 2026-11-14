@@ -1046,6 +1046,9 @@ if [ "$MODE" = update ]; then
       fi
       warn "Could not get the newest version from GitHub (offline, or your changes could not be set aside). Continuing with the files you have."
     fi
+  else
+    # a ZIP from a GitHub release: no .git, so nothing to pull; it reinstalled the same old version again and again
+    warn "This folder is not a git copy (a ZIP download?), so it cannot get new versions. Run  rice-update  in a terminal: it turns it into one."
   fi
 fi
 

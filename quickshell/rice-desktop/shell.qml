@@ -579,6 +579,11 @@ ShellRoot {
     Bar { id: mainBar; nf: notifs }
     // the bar on the left or right edge (Settings > DarkShadow bar > Position)
     VBar { }
+    // Settings > System > Monitors > Bar on every screen: the same bar on the other screens too
+    Variants {
+        model: Mon.everywhere ? Mon.others : []
+        Bar { required property var modelData; scr: modelData; nf: notifs }
+    }
     // a click on the desktop closes the bar's open card or tray menu (it lies under the windows, over the wallpaper)
     PanelWindow {
         screen: Mon.screen

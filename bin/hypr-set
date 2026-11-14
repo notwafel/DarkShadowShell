@@ -150,7 +150,9 @@ def rgba(h):
 
 
 def mon_rate(x):
-    return ("%.2f" % float(x)).rstrip("0").rstrip(".")
+    # niri wants the refresh rate exactly as `niri msg outputs` shows it, down to the third decimal (74.973, not
+    # 74.97: a mode that does not match is dropped and the screen stays at 60 Hz). Hyprland takes two.
+    return (("%.3f" if NIRI else "%.2f") % float(x)).rstrip("0").rstrip(".")
 
 
 # Motion styles (Settings > Motion). calm = the curves of hyprland.lua; the spring ones use Hyprland's spring curves.

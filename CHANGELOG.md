@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.50: 75 Hz (and every other refresh rate) now sticks on niri
+- Issue #17 (thanks JapanisuGoburin): niri wants the refresh rate exactly as `niri msg outputs` shows it, down to the third decimal (74.973), and drops a mode that does not match. Settings rounded it to 74.97, so the screen stayed at 60 Hz or went back to it. The rate is now kept exact everywhere (the buttons still say 75 Hz), and a mode saved before this is matched to the nearest real one when niri's config is written
+- A screen that your own `user.kdl` sets up (`output "HDMI-A-1" { ... }`) is left alone by Settings, so the two blocks no longer fight over it
+
 ## V4.49: CI green again
 - The ShellCheck step of CI failed on two notes in the new `install/lib/secure.sh` (V4.48). Both are intended code, now marked as such. Nothing changes for you
 

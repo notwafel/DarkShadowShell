@@ -232,14 +232,43 @@ def check(offline=False):
 
 
 def terminal_update():
+    """ONE terminal with rice-update in it (at most one a minute), without the background update's settings: an old
+    installer (before V4.56) that saw RICE_GUI in its terminal opened another terminal instead of asking, endlessly"""
+    mark = CACHE + "/update-terminal"
+    try:
+        if time.time() - os.path.getmtime(mark) < 60:
+            return
+    except OSError:
+        pass
+    os.makedirs(CACHE, exist_ok=True)
+    open(mark, "w").write(str(int(time.time())))
+    env = dict(os.environ)
+    for k in ("RICE_GUI", "NO_COLOR", "GIT_TERMINAL_PROMPT", "GCM_INTERACTIVE"):
+        env.pop(k, None)
     t = os.environ.get("TERMINAL") or "kitty"
     if not shutil.which(t):
         t = next((x for x in ("kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal") if shutil.which(x)), t)
     cmd = [t, "-e", HOME + "/.local/bin/rice-update"]
     if os.access(HOME + "/.local/bin/rice-term", os.X_OK):        # your terminal (Settings > Look & Feel)
         cmd = [HOME + "/.local/bin/rice-term", "-e", HOME + "/.local/bin/rice-update"]
-    subprocess.Popen(cmd, start_new_session=True,
+    subprocess.Popen(cmd, start_new_session=True, env=env,
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def installer_changes(r):
+    """does the newest version change the installer (install.sh, install/lib)? Then the update must be asked about in a
+    terminal. Checked here, before the installer runs: an installer from before V4.56 got this wrong from Settings and
+    opened terminals without end"""
+    q = dict(cwd=r, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+             env=dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never"))
+    try:
+        if subprocess.call(["git", "-c", "credential.helper=", "fetch", "--quiet", "origin"], timeout=60, **q) != 0:
+            return False
+        up = subprocess.run(["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], cwd=r,
+                            capture_output=True, text=True).stdout.strip() or "origin/main"
+        return subprocess.call(["git", "diff", "--quiet", "HEAD", up, "--", "install.sh", "install/lib"], timeout=30, **q) == 1
+    except Exception:
+        return False
 
 
 def open_center():
@@ -307,6 +336,12 @@ def gui(args):
         os._exit(0)
     log = open(LIVE_LOG, "w", buffering=1)
     t0 = int(time.time())
+    if installer_changes(r):
+        log.write("    \u2139 This update changes the installer, so it is asked about in a terminal: one opened now.\n"
+                  "      Answer y there (it may ask for your password). Nothing was changed yet.\n")
+        put_live(state="failed", code=1, started=t0, ended=int(time.time()), pid=0, was=installed())
+        terminal_update()
+        os._exit(0)
     put_live(state="running", code=-1, started=t0, ended=0, pid=os.getpid(), was=installed())
     env = dict(os.environ, RICE_GUI="1", NO_COLOR="1", GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never")
     env.pop("SUDO_ASKPASS", None)

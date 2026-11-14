@@ -83,21 +83,12 @@ update_guard() {
   fi
   warn "This update changes install.sh, the script that runs with your files and may ask for sudo:"
   git -C "$ROOT" diff --stat "$old" "$new" -- install.sh 2>/dev/null | sed 's/^/      /'
-  # a terminal is a terminal, also when it was opened by the Update Center (it once passed RICE_GUI on, so the new
-  # terminal thought it had none and opened another one, again and again)
-  if [ ! -t 0 ]; then
-    # from Settings > Update Center: ONE terminal opens with rice-update, which shows this and asks (nothing moves here)
-    local mark="$HOME/.cache/rice/update-terminal" now
-    now="$(date +%s)"
+  if [ ! -t 0 ] || [ -n "${RICE_GUI:-}" ]; then
+    # from Settings > Update Center: a terminal opens with rice-update, which shows this and asks (nothing moves here)
     if [ -n "${RICE_GUI:-}" ] && [ -n "${WAYLAND_DISPLAY:-}" ] && [ -x "$HOME/.local/bin/rice-term" ]; then
-      if [ "$((now - $(cat "$mark" 2>/dev/null || echo 0)))" -gt 60 ]; then
-        mkdir -p "$HOME/.cache/rice" && echo "$now" >"$mark"
-        # a clean environment: without RICE_GUI and the no-prompt settings of the background update
-        # shellcheck disable=SC2016  # the single quotes are meant: the terminal's own shell expands $HOME
-        setsid -f env -u RICE_GUI -u NO_COLOR -u GIT_TERMINAL_PROMPT -u GCM_INTERACTIVE \
-          "$HOME/.local/bin/rice-term" -e bash -c '"$HOME/.local/bin/rice-update"' >/dev/null 2>&1
-      fi
-      fail "This update changes the installer: a terminal opened to show what changes and ask you (answer y there). Nothing was changed yet."
+      # shellcheck disable=SC2016  # the single quotes are meant: the terminal's own shell expands $HOME
+      setsid -f "$HOME/.local/bin/rice-term" -e bash -c '"$HOME/.local/bin/rice-update"; echo; read -n1 -rsp "Press a key to close"' >/dev/null 2>&1
+      fail "This update changes the installer: a terminal opened to show what changes and ask you. Nothing was changed yet."
     else
       fail "Not starting it on its own. Run  rice-update  in a terminal to see what changed and apply it."
     fi

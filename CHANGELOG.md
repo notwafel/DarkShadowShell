@@ -1,5 +1,9 @@
 # Changelog
 
+## V4.57: no terminal storm when updating from an older version
+- Fix: updating to V4.56 from Settings > Update Center opened terminal after terminal until the computer froze. The installer from before V4.56 runs during that update, and it still had the bug V4.56 fixed; V4.56 itself changed the installer, which set it off. V4.57 leaves the installer files as they were in V4.55, so updating from V4.55 runs on its own again
+- The Update Center checks first whether an update changes the installer. If it does, it opens one terminal (at most one a minute, without the background settings) where you answer y, and never starts the old installer for it
+
 ## V4.56: Update Center: no more endless terminals
 - Fix: an update that changes the installer, started from Settings > Update Center, said "update failed" and opened terminals again and again, each ending in "Press Enter to close". The terminal it opens got the Update Center's "no terminal here" setting, so it opened another one instead of asking. Now that terminal asks "Apply this update? [y/N]" (and for sudo) as it should, and at most one opens per minute
 - Thanks to the user who found the cause

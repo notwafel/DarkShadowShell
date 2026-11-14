@@ -1016,7 +1016,10 @@ if [ "$MODE" = update ]; then
     elif GIT_TERMINAL_PROMPT=0 GCM_INTERACTIVE=never git -c credential.helper= -C "$ROOT" pull --ff-only >>"$LOG" 2>&1; then
       new="$(git -C "$ROOT" rev-parse --short HEAD)"
       if [ "$old" != "$new" ]; then
-        # new files from GitHub, maybe a new installer too (asked about before the pull): start the new one
+        # new files from GitHub, maybe a new installer too. update_precheck asked already; when its fetch failed it
+        # could not, so ask here, before the pulled installer runs with your files
+        t="$(git -C "$ROOT" rev-parse HEAD)"
+        [ "$t" = "${GUARD_CHECKED:-}" ] || update_guard "${RICE_PREV_REV:-}" "$t" </dev/null || exit 1
         exec "$ROOT/install.sh" --update --pulled "$@"
       fi
     else

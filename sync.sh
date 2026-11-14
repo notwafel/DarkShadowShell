@@ -6,7 +6,7 @@ set -Euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 TOOLS=(rice-effects rice-run rice-busy hypr-set waybar-set waybar-preset waybar-reload waybar-autohide font-set desktop-set rice-settings rice-settings-size
-       rice-colors rice-welcome rice-wallpaper rice-rofi rice-notify rice-lock rice-fonts rice-hotcorner
+       rice-colors rice-welcome rice-wallpaper rice-rofi rice-notify rice-idle rice-fonts rice-hotcorner
        rice-desktop rice-stats rice-sysline rice-nowplaying rice-weather rice-cava rice-media rice-cursor rice-update rice-ws-watch rice-calendar rice-sound rice-sfx rice-services rice-battery rice-todo rice-dashboard border-sync logout)
 CONFIG_DIRS=(hypr waybar waybar-presets swaync rofi matugen kitty fish fastfetch)    # folders from ~/.config to publish
 SKIP_QS=(cache thumbs)                                  # quickshell folders that are not apps
@@ -15,7 +15,7 @@ EXCLUDE=(ui.json 'config.jsonc.save*' '*.bak*' '*.save*' '.first-backup' '*.qslo
          'rice-gaming.lua' 'rice-lock.conf' 'hyprland.lua.save' 'fish_variables' 'fish_history' 'darkshadows.fish'
          'rice-flat.conf')
 # your choices in Settings: they go to settings/ and ./install.sh puts them on your other computers
-SETTINGS_RICE=(dashboard.json desktop.json hotcorner.json notify.json lock.json rofi.json fonts.json cursor.json
+SETTINGS_RICE=(dashboard.json desktop.json hotcorner.json notify.json idle.json rofi.json fonts.json cursor.json
                effects.json color-mode border-custom)
 
 tmpl() { # tmpl SRC DST: follow symlinks, replace your home folder with @HOME@
@@ -58,7 +58,7 @@ for d in "${CONFIG_DIRS[@]}"; do
   echo "config/$d: $c files"
 done
 
-# your Settings choices (Waybar look, dashboard, widgets, hot corner, notifications, lock screen, rofi,
+# your Settings choices (Waybar look, dashboard, widgets, notifications, rofi,
 # fonts, cursor, blur & gaming mode). Gaming mode on/off itself is not saved (it is per computer).
 rm -rf "${HERE:?}/settings"
 mkdir -p "$HERE/settings/rice" "$HERE/settings/waybar"

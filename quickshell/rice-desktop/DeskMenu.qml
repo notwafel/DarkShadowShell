@@ -5,7 +5,7 @@ import QtQuick
 
 // The desktop menu: right-click the desktop (where no window is). It opens where you clicked:
 //   your wallpapers in a row on top (click one; the last tile opens all of them), a few quick switches
-//   (next wallpaper, night light, Do Not Disturb, gaming mode, lock), then the places you change most
+//   (next wallpaper, night light, Do Not Disturb, gaming mode), then the places you change most
 //   (Themes, Wallpaper & colors, the bar, the dock, widgets, monitors) and Settings.
 // rice-deskmenu (the "deskmenu-open" file) opens it in the middle of the screen, e.g. from a key.
 Scope {
@@ -328,9 +328,9 @@ Scope {
                 Grid {
                     id: tiles
                     width: parent.width
-                    columns: 5
+                    columns: 4
                     spacing: 6
-                    readonly property real tw: (width - 4 * spacing) / 5
+                    readonly property real tw: (width - 3 * spacing) / 4
                     Tile { width: tiles.tw; icon: "shuffle"; glyph: ""; label: Tr.t("Next")
                         opacity: dm.stg(2); transform: Translate { y: (1 - dm.stg(2)) * 22 }
                         onClicked: Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-walls\" next"]) }
@@ -343,9 +343,6 @@ Scope {
                     Tile { width: tiles.tw; icon: "sports_esports"; glyph: ""; label: Tr.t("Gaming"); on: dm.st.gaming
                         opacity: dm.stg(3.2); transform: Translate { y: (1 - dm.stg(3.2)) * 22 }
                         onClicked: { dm.flip("gaming"); Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-effects\" gaming toggle"]); again.restart() } }
-                    Tile { width: tiles.tw; icon: "lock"; glyph: ""; label: Tr.t("Lock")
-                        opacity: dm.stg(3.6); transform: Translate { y: (1 - dm.stg(3.6)) * 22 }
-                        onClicked: dm.run("\"$HOME/.local/bin/rice-services\" session lock") }
                 }
                 // the real state a moment after a switch (it changes the look of the whole shell first)
                 Timer { id: again; interval: 1500; onTriggered: stateP.running = true }

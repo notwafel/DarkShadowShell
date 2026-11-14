@@ -370,9 +370,9 @@ FloatingWindow {
         { name: "Color theme", icon: "\udb80\udfd8" },
         { name: "Cursors", icon: "\uf245" },
         { name: "Notifications", icon: "\uf0f3" },
-        { name: "Idle & Lockscreen", icon: "\uf023" },
+        { name: "Idle & Login screen", icon: "\uf023" },
         { name: "Widgets", icon: "\uf26c" },
-        { name: "Hot corners", icon: "\udb82\ude0b" },
+        { name: "(removed)", icon: "" },   // index 13 stays so the page numbers after it do not move
         { name: "Dock", icon: "\uf2d0" },
         { name: "Services", icon: "" },
         { name: "Gaming hub", icon: "\uf11b" },
@@ -406,7 +406,7 @@ FloatingWindow {
         { group: "wall", name: "Wallpaper", icon: "\uf03e", sym: "wallpaper", pages: [18], caption: I18n.t("Wallpaper and the colors it gives") },
         { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [34, 8, 21, 19, 24, 22, 9, 14], caption: I18n.t("Themes, colors, fonts, shapes, components, cursors and the dock") },
         { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: I18n.t("How windows and Settings move") },
-        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: niri ? [29, 12, 25, 36, 4, 11] : [29, 33, 12, 25, 36, 4, 11], caption: I18n.t("Look & feel, widgets, windows, window rules, %1 and the lock screen", wmLabel) },
+        { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: niri ? [29, 12, 25, 36, 4, 11] : [29, 33, 12, 25, 36, 4, 11], caption: I18n.t("Look & feel, widgets, windows, window rules, %1 and sleep timers", wmLabel) },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 3, 6, 7], caption: I18n.t("The bar, the dynamic island and the launcher") },
         { group: "snd", name: "Sound & language", icon: "\uf028", sym: "graphic_eq", pages: [1, 10, 26], caption: I18n.t("Sounds, notifications, language and region") },
         { group: "sys", name: "System", icon: "\uf013", sym: "settings", pages: [30, 31, 28, 5, 23, 15], caption: I18n.t("Keybinds, languages, monitors, recording, keyboard and services") },
@@ -937,7 +937,6 @@ FloatingWindow {
             PageSlot { nav: win; idx: 10; cur: win.page; page: Component { NotificationsPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 11; cur: win.page; page: Component { IdlePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 12; cur: win.page; page: Component { DesktopPage { anchors.fill: parent; ctl: win } } }
-            PageSlot { nav: win; idx: 13; cur: win.page; page: Component { HotCornersPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 14; cur: win.page; page: Component { InterfacePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 15; cur: win.page; page: Component { ServicesPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 16; cur: win.page; page: Component { GamingPage { anchors.fill: parent; ctl: win } } }

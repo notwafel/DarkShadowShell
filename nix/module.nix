@@ -59,7 +59,7 @@ in
       programs.hyprland.enable = lib.mkDefault true;
 
       environment.systemPackages = wallpaperDaemon ++ have [
-        "waybar" "swaynotificationcenter" "hyprlock" "hypridle" "hyprsunset" "hyprpolkitagent"
+        "waybar" "swaynotificationcenter" "hypridle" "hyprsunset" "hyprpolkitagent"
         "quickshell" "matugen" "imagemagick" "kitty" "fish" "fastfetch"
         "cava" "curl" "jq" "python3" "playerctl" "brightnessctl" "pamixer" "zenity"
         "wf-recorder" "grim" "slurp" "wl-clipboard" "libnotify" "xdg-user-dirs"
@@ -84,8 +84,6 @@ in
 
       xdg.portal.enable = lib.mkDefault true;
 
-      # the lock screen (the shell's own and hyprlock) checks your password with this PAM service
-      security.pam.services.hyprlock = { };
     }
 
     # Infinite Desktop reads the mouse and the keyboard (SUPER + ALT + mouse): your user in the input group

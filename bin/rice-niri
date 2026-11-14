@@ -222,7 +222,6 @@ def default_binds(f, term, files):
         ("Mod+D", 'hotkey-overlay-title="Launcher"', run(b + "rice-launch")),
         ("Alt+Space", 'hotkey-overlay-title=null', run(b + "rice-launch")),
         ("Mod+U", 'hotkey-overlay-title="Settings"', run(b + "rice-settings")),
-        ("Mod+L", 'hotkey-overlay-title="Lock the screen"', run(b + "rice-lock", "now")),
         ("Mod+W", 'hotkey-overlay-title="Wallpapers"', run(b + "rice-dashboard", "wallpaper")),
         ("Mod+N", 'hotkey-overlay-title="Control center"', run(b + "rice-cc")),
         ("Mod+A", 'hotkey-overlay-title="Quick switches"', run(b + "rice-dashboard", "open", "control")),

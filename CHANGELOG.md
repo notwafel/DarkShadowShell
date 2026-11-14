@@ -1,5 +1,11 @@
 # Changelog
 
+## V4.52: hot corners and the lock screens are gone
+- The hot corner panel is removed (panel, Settings page, blur rule). `rice-hotcorner` stays as the tool behind Print, SUPER + SHIFT + R and the recording buttons, and an update takes the old hot corner rule out of your Hyprland config
+- The shell's own lock screen and the hyprlock one are removed, together with SUPER + L, the Lock entries in the power menu, desktop menu and notification center, and the `rice-lock` tool. hyprlock is no longer installed by the installer
+- Idle timers (screen off, sleep) stay: Settings > Desktop > Idle & Login screen, `rice-idle`. Your old screen-off and sleep minutes are taken over
+- If you want a lock screen, install any locker (swaylock, hyprlock) and bind it yourself
+
 ## V4.51: 23 small fixes from a full read of the inherited code
 Thanks to notwafel again (pull request #16).
 - The hot corner panel finally opens, and the Settings pages for Hot corners and Security are linked again

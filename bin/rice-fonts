@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Installs the fonts DarkShadow's Shell uses (Google Sans Flex and Google Sans Code, Inter, Rubik, Material Symbols
-# Rounded and the six lock screen clock fonts) for the current user.
+# Rounded and the six clock fonts) for the current user.
 # Works on any distro (NixOS too): files go to ~/.local/share/fonts, no root needed.
 #   rice-fonts           install what is missing
 #   rice-fonts status    show what is installed
@@ -19,7 +19,7 @@ has() {
   grep -qiE "(^|,)$1( |,|$)" <<<"$fams"
 }
 
-# lock screen clock fonts (Settings > Idle & Lockscreen > Clock font), all SIL Open Font License
+# clock fonts (Settings > Desktop > Clock font), all SIL Open Font License
 GF="https://raw.githubusercontent.com/google/fonts/main/ofl"
 CLOCK_FONTS=(
   "Bebas Neue|$GF/bebasneue/BebasNeue-Regular.ttf|BebasNeue.ttf"
@@ -150,10 +150,10 @@ for e in "${CLOCK_FONTS[@]}"; do
     echo "$fam: already installed"
   elif curl -fsSL -o "$tmp/clock.ttf" "$url" && [ "$(head -c 4 "$tmp/clock.ttf" | od -An -tx1 | tr -d ' ')" = "00010000" ]; then
     mv "$tmp/clock.ttf" "$dir/$file"
-    echo "$fam: installed (lock screen clock)"
+    echo "$fam: installed (clock)"
     changed=1
   else
-    echo "$fam: could not download (the lock screen clock uses your Numbers font instead)"
+    echo "$fam: could not download (the clock uses your Numbers font instead)"
   fi
 done
 

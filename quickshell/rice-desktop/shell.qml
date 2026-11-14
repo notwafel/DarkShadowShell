@@ -601,8 +601,6 @@ ShellRoot {
     LazyPanel { name: "cc-open"; ControlCenter { nf: notifs } }
 
     Dock { dc: root.cfg.dock ? root.cfg.dock : ({}) }
-    // the corner panel (Settings > Hot corners): rice-hotcorner writes ~/.cache/rice/hotcorner-open
-    HotCorner { }
 
 
 }

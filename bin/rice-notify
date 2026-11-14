@@ -292,8 +292,7 @@ def deck_widgets(c, light):
     quick.append(tog(chr(0xF0176), "awake"))
     if len(quick) < 5:
         quick.append(tog(chr(0xF036C), "mic"))
-    session = [{"label": chr(0xF033E), "command": SVC + " session lock"},
-               {"label": chr(0xF04B2), "command": SVC + " session suspend"},
+    session = [{"label": chr(0xF04B2), "command": SVC + " session suspend"},
                {"label": chr(0xF0343), "command": SVC + " session logout"},
                {"label": chr(0xF0709), "command": SVC + " session reboot"},
                {"label": chr(0xF0425), "command": SVC + " session poweroff"}]

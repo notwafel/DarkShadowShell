@@ -42,21 +42,17 @@ rice-notify test             # send a test notification
 rice-notify restore          # give back your original swaync files
 ```
 
-## Idle & Lockscreen (hypridle + hyprlock)
+## Idle (hypridle)
 ```bash
-rice-lock set lock_after 5          # minutes, 0 = never
-rice-lock set suspend_after 30
-rice-lock set clock big|stacked|minimal
-rice-lock set background screenshot|wallpaper|color
-rice-lock restore                   # give back your original hyprlock.conf and hypridle.conf
+rice-idle set screen_off_after 10   # minutes, 0 = never
+rice-idle set suspend_after 30
+rice-idle restore                   # give back your original hypridle.conf
 ```
+The shell has no lock screen of its own (removed in V4.52). Use any locker you like and bind it yourself.
 
-## Hot corner
+## Screenshots and recording
 ```bash
-rice-hotcorner set corner bottom-right|bottom-left|top-right|top-left
-rice-hotcorner list sections awake,record,shot,toggles,media
-rice-hotcorner list toggles wifi,bluetooth,dnd,gaming,mic,settings,wallpaper,lock
-rice-hotcorner open          # open the panel now (bind it to a key if you like)
 rice-hotcorner shot region   # screenshot of a region
+rice-hotcorner shot full
 rice-hotcorner record full   # start recording (run "record stop" to stop)
 ```

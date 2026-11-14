@@ -16,8 +16,7 @@
     "wireplumber",
     "clock",
     "group/apps",
-    "custom/notification",
-    "custom/lock"
+    "custom/notification"
   ],
   "hyprland/workspaces": {
     "format": "{id}",
@@ -103,12 +102,6 @@
     "on-click-right": "swaync-client -d -sw",
     "escape": true,
     "exec-if": "which swaync-client"
-  },
-  "custom/lock": {
-    "format": "",
-    "on-click": "hyprlock",
-    "tooltip": true,
-    "tooltip-format": "Lock Screen"
   },
   "network": {
     "format-wifi": "󰖩",

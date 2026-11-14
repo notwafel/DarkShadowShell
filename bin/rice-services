@@ -234,14 +234,7 @@ def session(what):
     if not shell_notify():
         run(["swaync-client", "-cp", "-sw"])     # close the notification center first
     if what == "lock":
-        rp = os.path.expanduser("~/.local/bin/rice-power")
-        if os.path.exists(rp):
-            bg([rp, "lock"])
-        elif shutil.which("hyprlock"):
-            if out(["pidof", "hyprlock"]) == "":
-                bg(["hyprlock"])
-        else:
-            run(["loginctl", "lock-session"])
+        run(["loginctl", "lock-session"])
     elif what == "suspend":
         run([HOME + "/.local/bin/rice-sys", "suspend"], 10)
     elif what == "logout":

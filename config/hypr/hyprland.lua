@@ -476,7 +476,6 @@ hl.layer_rule({
 require("hyprland-gui")
 require("rice-settings")
 require("rice-dock")
-require("rice-hotcorner")
 require("rice-notify")
 require("rice-rofi")
 require("rice-desktop")

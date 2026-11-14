@@ -68,7 +68,7 @@ def reapply():
 
 
 def refresh():
-    for tool in ("rice-notify", "rice-lock"):
+    for tool in ("rice-notify",):
         p = HOME + "/.local/bin/" + tool
         if os.access(p, os.X_OK):
             subprocess.run([p, "apply"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

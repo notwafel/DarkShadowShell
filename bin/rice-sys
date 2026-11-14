@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # rice-sys: power and session commands that work with and without systemd (Void Linux: runit + elogind).
 #
-#   rice-sys suspend | reboot | poweroff | lock     the power buttons of the shell, the lock screen and hypridle
+#   rice-sys suspend | reboot | poweroff | lock     the power buttons of the shell and hypridle
 #   rice-sys session                                 at login without systemd: PipeWire, a password prompt agent
 #   rice-sys inhibit CMD...                          run CMD while sleep and idle are blocked (Keep Awake)
 #   rice-sys init                                    prints systemd, runit, openrc or other

@@ -373,9 +373,12 @@ def cmd_restore(name):
     except Exception:
         sys.exit("not in quarantine")
     src = os.path.join(QDIR, m["name"])
-    os.chmod(src, 0o600)
     os.makedirs(os.path.dirname(m["from"]), exist_ok=True)
     shutil.move(src, m["from"])
+    try:
+        os.chmod(m["from"], int(m.get("mode") or 0o600))   # the mode it had before it went to quarantine
+    except OSError:
+        pass
     os.remove(meta)
 
 

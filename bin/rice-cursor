@@ -71,7 +71,8 @@ def load():
 
 def save(c):
     os.makedirs(os.path.dirname(CFG), exist_ok=True)
-    json.dump(c, open(CFG, "w"))
+    json.dump(c, open(CFG + ".tmp", "w"))
+    os.replace(CFG + ".tmp", CFG)
 
 
 def manifest(d):
@@ -509,7 +510,8 @@ def get_pack(pid):
             names.append(name)
         db = packs_db()
         db[pid] = names
-        json.dump(db, open(PACKS_DB, "w"))
+        json.dump(db, open(PACKS_DB + ".tmp", "w"))
+        os.replace(PACKS_DB + ".tmp", PACKS_DB)
         return names
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

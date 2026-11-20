@@ -3,3 +3,8 @@
 a2e3b50e49ed6439999ba3c252ed04fabd98ee4e9d12e5e5dff2e66370569751  matugen-4.2.0-x86_64.tar.gz
 a68cae60c4dc706350e194ebc91c5fe48bc7bc9d59e119555834a2a7ee5078ef  Bibata-Modern-Ice.tar.xz
 7d3495864e5bbef02f5e77de760b2905903b63c71495a78ef6306d19a3b556d8  Bibata-Modern-Classic.tar.xz
+# Cursor packs (bin/rice-cursor get PACK): the version is in the URL, bump both together
+a4d976491bdb1b1311b2de88327cad3f1c66c2d9da896e0c56362a660c802585  catppuccin-mocha-dark-cursors.zip
+971e113a49de65529b3b706ce8529c1c80f22b2828b9c2f4732b3363fb69fcbb  catppuccin-mocha-mauve-cursors.zip
+46d4cfc30a38c19cada3339027b5a78f7b0bf74f3220eba7001c4fdd9d5a6e56  phinger-cursors-variants.tar.bz2
+d0e5dcf52297a936ae04bddb7f2fe1f7d644674627d7b67ac87f734282c661f9  rose-pine-hyprcursor-4b02963d0baf0bee18725cf7c5762b3b3c1392f1.zip

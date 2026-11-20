@@ -125,7 +125,9 @@ assert m.expected_sha("Bibata-Modern-Ice.tar.xz")
 assert m.expected_sha("nothing-here.bin") == ""
 assert m.expected_sha("broken.bin") == ""
 assert m.get_bibata("Bibata-Modern-Amber") is False
+for p in m.PACKS:                       # a cursor pack is only kept when its hash is pinned, and never from "latest"
+    assert m.expected_sha(p["file"]), p["id"] + " has no SHA-256 in install/checksums.txt"
+    assert "latest" not in p["url"], p["id"] + " downloads the latest release"
 PY
-
 bash -n "$root/install.sh" && ok "install.sh parses" || bad "install.sh syntax"
 echo "# $n checks passed"

@@ -1,0 +1,109 @@
+/* DarkShadow: the shapes of the shell (colors come from color.ini; darkshadow.css has them as vars) */
+:root {
+  --ds-r-s: 10px;
+  --ds-r-m: 16px;
+  --ds-r-l: 24px;
+  --ds-ease: cubic-bezier(0, 0.55, 0.45, 1);
+}
+
+/* Buttons, track rows, menu items ease in on hover like the shell does */
+button,
+.main-trackList-trackListRow,
+.main-contextMenu-menuItemButton {
+  transition: color 200ms var(--ds-ease), background-color 200ms var(--ds-ease) !important;
+}
+
+/* Round the small square buttons (play, shuffle, like) */
+button[class*="encore-small"] {
+  border-radius: 100% !important;
+}
+
+/* The main play button and the progress bar take the accent */
+.encore-bright-accent-set,
+.encore-inverted-light-set,
+.x-progressBar-fillColor {
+  background-color: var(--spice-button-active) !important;
+}
+
+/* Floating card for menus, tooltips and the right sidebar */
+.main-contextMenu-menu,
+.encore-tooltip,
+.main-rightSidebar-container {
+  border-radius: var(--ds-r-m) !important;
+}
+
+.main-contextMenu-menuItemButton {
+  border-radius: var(--ds-r-s) !important;
+}
+
+/* Search bar and its dropdown: a little pill */
+.main-topBar-searchBar {
+  border-radius: 1000px !important;
+  background-color: var(--spice-main-elevated) !important;
+}
+
+.main-topBar-searchBar input {
+  border-radius: 1000px !important;
+}
+
+/* The home header is just a wall of text; the shell has its own greeting */
+.main-home-homeHeader {
+  display: none !important;
+}
+
+/* Filter chips and cards on the home page */
+.main-home-filterChipsContainer {
+  background: linear-gradient(to bottom, var(--spice-main-elevated), var(--spice-main)) !important;
+}
+
+.main-card-card,
+.main-heroCard-card {
+  border-radius: var(--ds-r-m) !important;
+}
+
+/* Playlist and album covers */
+.main-entityHeader-imageContainer,
+.main-entityHeader-image,
+.main-coverSlotExpanded-container,
+.cover-art,
+.cover-art-image {
+  border-radius: var(--ds-r-m) !important;
+}
+
+.main-entityHeader-image {
+  box-shadow: 0 8px 28px rgba(var(--spice-rgb-shadow), 0.55) !important;
+}
+
+/* No gradients behind playlist and album headers */
+.main-entityHeader-backgroundColor,
+.main-actionBarBackground-background,
+.playlist-playlist-actionBarBackground-background {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+/* The sticky bar at the top of a playlist fades into the content */
+.main-topBar-background {
+  background: linear-gradient(to bottom, var(--spice-main-elevated), var(--spice-main)) !important;
+}
+
+.main-topBar-overlay {
+  background: linear-gradient(to bottom, transparent, var(--spice-main-elevated)) !important;
+}
+
+/* Scrollbars: a thin line instead of the fat system one */
+.os-theme-spotify.os-host-transition > .os-scrollbar-vertical > .os-scrollbar-track {
+  width: 4px;
+}
+
+.os-theme-spotify.os-host-transition > .os-scrollbar-vertical > .os-scrollbar-track > .os-scrollbar-handle,
+.os-scrollbar-handle {
+  width: 4px;
+  border-radius: 8px;
+  background-color: var(--spice-button-disabled) !important;
+}
+
+/* Now playing bar: rounded top like the bar of the shell */
+.main-nowPlayingBar-container {
+  border-radius: var(--ds-r-m) var(--ds-r-m) 0 0 !important;
+}

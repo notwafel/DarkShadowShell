@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# DarkShadow colors and shapes for the official Spotify client (Spicetify).
+#
+#   rice-spicetify theme       write the theme into ~/.config/spicetify (once; spicetify-cli needed)
+#   rice-spicetify colors      the colors again from ~/.config/rice/palette.json (matugen calls it)
+#   rice-spicetify apply       the theme into the client again (after a Spotify update changed the files)
+#   rice-spicetify state       JSON: is spicetify here, is Spotify themed, which palette colors
+#
+# The theme is in this folder (Themes/darkshadow). color.ini is written every time; user.css is the shapes.
+# Colors only need color.ini: Spicetify reads it without `apply`.
+set -Euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CFG="${XDG_CONFIG_HOME:-$HOME/.config}/spicetify"
+TH="$CFG/Themes/darkshadow"
+# the shapes next to the colors, once the installer has put this into ~/.local/bin
+SRC="$TH"
+[ -f "$HERE/../config/spicetify/Themes/darkshadow/user.css" ] && SRC="$HERE/../config/spicetify/Themes/darkshadow"
+PAL="$HOME/.config/rice/palette.json"
+NAME=darkshadow
+
+# palette key -> [section] key in color.ini. Same meanings as Caelestia's (and every Spicetify theme's).
+KEYS="text=on_surface subtext=on_surface_variant main=surface_container main-elevated=surface_high
+highlight-elevated=surface_highest highlight=primary sidebar=surface player=surface_high card=surface_high
+selected-row=on_surface button=primary button-active=primary button-disabled=outline_variant
+tab-active=surface_container notification=outline notification-error=error shadow=surface_low"
+
+pal() { # pal KEY: #rrggbb from matugen's palette, else from kitty's theme, else the DarkShadow default
+  python3 - "$PAL" "$1" <<'PY'
+import json, os, re, sys
+pal, key = sys.argv[1], sys.argv[2]
+fall = {"surface": "#1c1b1f", "surface_low": "#141315", "surface_container": "#211f24",
+        "surface_high": "#312f35", "surface_highest": "#3a373f", "on_surface": "#e6e1e9",
+        "on_surface_variant": "#c7c3cf", "outline": "#918f99", "outline_variant": "#4a4652",
+        "primary": "#6ea8fe", "error": "#f2b8b5"}
+try:
+    p = json.load(open(pal))
+except Exception:
+    p = {}
+try:
+    for line in open(os.path.expanduser("~/.config/kitty/current-theme.conf")):
+        m = re.match(r"^\s*(\w+)\s+(#[0-9a-fA-F]{6})", line)
+        if m:
+            p.setdefault(m.group(1), m.group(2))
+except Exception:
+    pass
+v = p.get(key, fall.get(key, "#888888"))
+print(v[1:].lower() if re.fullmatch(r"#[0-9a-fA-F]{6}", v or "") else "888888")
+PY
+}
+
+write_ini() {
+  local pair k key out
+  out="[$NAME]"
+  for pair in $KEYS; do
+    k="${pair%%=*}"; key="${pair#*=}"
+    out="$out
+$(printf '%-19s' "$k")= $(pal "$key")"
+  done
+  mkdir -p "$TH"
+  printf '%s\n' "$out" >"$TH/color.ini.new"
+  mv -f "$TH/color.ini.new" "$TH/color.ini"
+}
+
+theme() {
+  write_ini
+  [ "$SRC" = "$TH" ] || cp -f "$SRC/user.css" "$TH/user.css"
+}
+
+has_spicetify() { command -v spicetify >/dev/null 2>&1; }
+
+apply() {
+  local s="${SPICE:-spicetify}"
+  "$s" config current_theme "$NAME" >/dev/null && "$s" config color_scheme "$NAME" >/dev/null \
+    && "$s" config inject_css 1 >/dev/null && "$s" config replace_colors 1 >/dev/null \
+    && "$s" config overwrite_assets 1 >/dev/null && "$s" apply >/dev/null
+}
+
+case "${1:-}" in
+  theme)
+    if ! has_spicetify; then
+      echo "rice-spicetify: spicetify is not in PATH (Arch: yay -S spicetify-cli; else: spicetify's install)" >&2
+      echo "the theme is in $TH: set it with 'spicetify config current_theme $NAME color_scheme $NAME' + 'spicetify apply'" >&2
+      exit 1
+    fi
+    theme && apply ;;
+  colors) theme ;;
+  apply)  has_spicetify || { echo "rice-spicetify: spicetify is not in PATH" >&2; exit 1; }; apply ;;
+  state)
+    themed=0
+    grep -qs "^current_theme *= *$NAME\$" "$CFG/config-xpui.ini" && themed=1
+    sp=0; has_spicetify && sp=1
+    printf '{"spicetify": %s, "themed": %s, "config": "%s", "palette": "%s"}\n' \
+      "$sp" "$themed" "${CFG#"$HOME"/}" "${PAL#"$HOME"/}" ;;
+  *)
+    sed -n '2,10p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

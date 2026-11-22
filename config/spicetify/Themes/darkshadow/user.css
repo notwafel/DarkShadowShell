@@ -1,4 +1,4 @@
-/* DarkShadow: the shapes of the shell (colors come from color.ini; darkshadow.css has them as vars) */
+/* DarkShadow: the shapes of the shell. Colors come from color.ini, not from here */
 :root {
   --ds-r-s: 10px;
   --ds-r-m: 16px;

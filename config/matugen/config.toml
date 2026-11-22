@@ -31,8 +31,8 @@ output_path = '~/.config/hypr/border-colors.txt'
 post_hook = '$HOME/.local/bin/border-sync'
 
 
-# the palette for your apps (rice-theme: VSCodium / VS Code, Discord clients)
+# the palette for your apps (rice-theme: VSCodium / VS Code, Discord clients; Spotify, through Spicetify)
 [templates.palette]
 input_path = '~/.config/matugen/templates/palette.json'
 output_path = '~/.config/rice/palette.json'
-post_hook = 'setsid -f $HOME/.local/bin/rice-theme sync >/dev/null 2>&1; setsid -f $HOME/.local/bin/rice-look files-theme >/dev/null 2>&1; [ -w /usr/share/sddm/themes/darkshadow-shell/user ] && setsid -f $HOME/.local/bin/rice-sddm sync >/dev/null 2>&1; true'
+post_hook = 'setsid -f $HOME/.local/bin/rice-theme sync >/dev/null 2>&1; setsid -f $HOME/.local/bin/rice-spicetify colors >/dev/null 2>&1; setsid -f $HOME/.local/bin/rice-look files-theme >/dev/null 2>&1; [ -w /usr/share/sddm/themes/darkshadow-shell/user ] && setsid -f $HOME/.local/bin/rice-sddm sync >/dev/null 2>&1; true'

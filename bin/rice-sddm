@@ -15,7 +15,7 @@
 # change the wallpaper and colors there without a password; SDDM only reads it.
 set -u
 NAME=darkshadow-shell
-THEME="/usr/share/sddm/themes/$NAME"
+THEME="${RICE_SDDM_THEME:-/usr/share/sddm/themes/$NAME}"   # RICE_SDDM_THEME: the tests' copy
 CONFD=/etc/sddm.conf.d
 CONF="$CONFD/99-darkshadow-shell.conf"
 OLDCONF="$CONFD/10-darkshadow-shell.conf"   # where V4.37 put it
@@ -67,9 +67,13 @@ state() {
   cur="$(theme_now)"; [ "$cur" = "$NAME" ] && in_use=true
   [ -w "$U" ] && w=true
   # the update brought a newer theme than the one in /usr/share (putting it in again needs the password)
-  local r out=false; r="$(repo)"
+  local r out=false f; r="$(repo)"
   if [ "$inst" = true ] && [ -n "$r" ] && [ "$U" != "$NIXU" ]; then
-    for f in "$r/sddm/$NAME"/*.qml; do cmp -s "$f" "$THEME/${f##*/}" || out=true; done
+    # every file root-install puts in, not only the .qml ones: a new clock in theme.conf is a new theme too
+    for f in "$r/sddm/$NAME"/*.qml "$r/sddm/$NAME"/*.desktop "$r/sddm/$NAME"/theme.conf "$r/sddm/$NAME"/*.png; do
+      [ -f "$f" ] || continue
+      cmp -s "$f" "$THEME/${f##*/}" || out=true
+    done
   fi
   printf '{"sddm": %s, "installed": %s, "outdated": '"$out"', "in_use": %s, "theme": "%s", "dm": "%s", "writable": %s, "nixos": %s, "repo": %s, "pkg": "%s"}\n' \
     "$(have_sddm && echo true || echo false)" "$inst" "$in_use" "$cur" "$(dm_now)" "$w" \

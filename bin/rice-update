@@ -7,6 +7,10 @@
   rice-update watch [on|off|state]  background: checks after login and once a day, shows a notification; off: no checks
                             (how often: every_minutes in ~/.config/rice/update.json, 60 - 10080)
   rice-update notify        show the "Update is Available!" notification now (to try it)
+  rice-update update        the one update both Settings > Update Center and the About tab run: the shell, and the
+                            system's packages (Arch, Fedora, Gentoo, Flatpak, Snap ...) in a terminal when any
+                            wait (the password belongs there). AUR is not updated here: install.sh upgrades only
+                            what the shell needs
   rice-update gui           update in the background for Settings > Update Center (no terminal): the steps go to
                             ~/.cache/rice/update-live.log, the state to ~/.cache/rice/update-live.json
   rice-update whatsnew [VERSION]   JSON: what is new in this version (or VERSION), from the CHANGELOG
@@ -385,6 +389,31 @@ def gui(args):
     os._exit(0)
 
 
+def packages_pending():
+    """updates waiting in the system's packages, Flatpak or Snap: those need the password, so they run in a terminal.
+    AUR is shown in Settings but never updated here (only the packages the shell itself needs, and install.sh does
+    that). The check may take minutes (emerge, dnf): the timeout covers the slowest one."""
+    b = HOME + "/.local/bin/rice-care"
+    if not os.access(b, os.X_OK):
+        return 0
+    try:
+        r = subprocess.run([b, "updates"], capture_output=True, text=True, timeout=600)
+        d = json.loads((r.stdout.strip().splitlines() or ["{}"])[-1])
+        if isinstance(d.get("updateable"), int):
+            return d["updateable"]
+        return sum(int(m.get("count") or 0) for m in d.get("managers") or [] if not m.get("manual"))
+    except Exception:
+        return 0
+
+
+def update_all(args):
+    """one action for both places that show updates: a terminal when packages wait, else the quiet GUI update"""
+    if packages_pending() > 0:
+        terminal_update()
+        return 0
+    return gui(args)
+
+
 def body(st):
     v = st["latest"]
     head = "<b>Update V%s</b>" % v
@@ -608,6 +637,8 @@ def main(a):
         notify_bg(st)
     elif cmd == "gui":
         sys.exit(gui(a[2:]))
+    elif cmd == "update":
+        sys.exit(update_all(a[2:]))
     elif cmd == "center":
         open_center()
     elif cmd in ("", "run"):

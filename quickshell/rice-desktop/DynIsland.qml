@@ -175,7 +175,32 @@ Item {
         stdout: StdioCollector { onStreamFinished: if (text.trim() !== "") isl.osName = text.trim() }
     }
     property var up: ({ installed: "", latest: "", update: false, news: [], checked: 0 })
+    property var pk: ({})            // rice-care updates: the same package state Update Center shows
     property bool checking: false
+    readonly property int pkgTotal: (isl.pk && isl.pk.updateable) || 0
+    // "Arch packages 12 · Flatpak apps 3 · AUR (paru) 5 (shown only)": one line, the same answer as Update Center
+    // a manager that is only shown (AUR, NixOS, rpm-ostree) with nothing to count keeps its own note
+    function pkgLine() {
+        const ms = (isl.pk && isl.pk.managers) || []
+        const parts = []
+        for (let i = 0; i < ms.length; i++) {
+            const m = ms[i]
+            if (m.count > 0)
+                parts.push(Tr.t(m.name) + " " + m.count + (m.manual ? " (" + Tr.t("shown only") + ")" : ""))
+            else if (m.manual && m.note) parts.push(Tr.t(m.note))
+        }
+        return parts.join("  ·  ")
+    }
+    Process {
+        id: pkProc
+        command: ["true"]
+        stdout: StdioCollector { onStreamFinished: { try { isl.pk = JSON.parse(text) } catch (e) { isl.pk = {} } } }
+    }
+    function loadPackages() {
+        if (pkProc.running) return
+        pkProc.command = ["bash", "-c", "\"$HOME/.local/bin/rice-care\" updates 2>/dev/null"]
+        pkProc.running = true
+    }
     Process {
         id: upCache
         command: ["bash", "-c", "cat \"$HOME/.cache/rice/update.json\" 2>/dev/null"]
@@ -188,7 +213,7 @@ Item {
     }
     function checkUpdates() { if (!upProc.running) { checking = true; upProc.running = true } }
     readonly property bool aboutOpen: big && cardMode === "info" && infoTab === "about"
-    onAboutOpenChanged: if (aboutOpen) { upCache.running = true; if (Date.now() / 1000 - (up.checked || 0) > 1800) checkUpdates() }
+    onAboutOpenChanged: if (aboutOpen) { upCache.running = true; loadPackages(); if (Date.now() / 1000 - (up.checked || 0) > 1800) checkUpdates() }
     function ago(t) {
         if (!t) return "never"
         const m = Math.floor((Date.now() / 1000 - t) / 60)
@@ -703,28 +728,31 @@ Item {
                 // updates
                 Rectangle {
                     x: 24; y: 124; width: parent.width - 48; height: 104; radius: Look.sq ? 0 : (24)
-                    color: isl.up.update ? (fInfo.pp ? fInfo.pp.container : "#333") : (fInfo.pp ? fInfo.pp.card : "#222")
+                    color: isl.up.update || isl.pkgTotal > 0 ? (fInfo.pp ? fInfo.pp.container : "#333") : (fInfo.pp ? fInfo.pp.card : "#222")
                     Behavior on color { ColorAnimation { duration: 260 } }
                     Item { id: upIc; x: 18; anchors.verticalCenter: parent.verticalCenter; width: 48; height: 48
-                        Blob { id: upBlob; anchors.fill: parent; kind: isl.up.update ? Look.shape : "circle"; color: fInfo.pp ? (isl.up.update ? fInfo.pp.primary : fInfo.pp.cardHi) : "#444"
+                        Blob { id: upBlob; anchors.fill: parent; kind: isl.up.update || isl.pkgTotal > 0 ? Look.shape : "circle"; color: fInfo.pp ? (isl.up.update || isl.pkgTotal > 0 ? fInfo.pp.primary : fInfo.pp.cardHi) : "#444"
                             RotationAnimator on rotation { from: 0; to: 360; duration: 2400; loops: Animation.Infinite; running: isl.checking && ab.visible
                                 onRunningChanged: if (running) upBlobSettle.stop(); else Qt.callLater(upBlobSettle.go) }
                             NumberAnimation { id: upBlobSettle; target: upBlob; property: "rotation"; to: 360; duration: 600; easing.type: Easing.OutCubic
                                 function go() { const r = ((upBlob.rotation % 360) + 360) % 360; upBlob.rotation = r; from = r; restart() }
                                 onFinished: upBlob.rotation = 0 } }
                         MIcon { anchors.centerIn: parent; size: 22; filled: true; glyph: ""
-                            name: isl.checking ? "sync" : (isl.up.update ? "system_update_alt" : "check_circle")
-                            color: fInfo.pp ? (isl.up.update ? fInfo.pp.inkPrimary : fInfo.pp.fg) : "white" } }
+                            name: isl.checking ? "sync" : (isl.up.update || isl.pkgTotal > 0 ? "system_update_alt" : "check_circle")
+                            color: fInfo.pp ? (isl.up.update || isl.pkgTotal > 0 ? fInfo.pp.inkPrimary : fInfo.pp.fg) : "white" } }
                     Column {
                         anchors.left: upIc.right; anchors.leftMargin: 14; anchors.right: upBtn.left; anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter; spacing: 2
                         Text { width: parent.width; elide: Text.ElideRight
-                            text: isl.checking && !isl.up.installed ? Tr.t("Looking for updates") : (isl.up.update ? Tr.t("Update V") + isl.up.latest + Tr.t(" is ready") : Tr.t("You are up to date"))
-                            color: isl.up.update ? (fInfo.pp ? fInfo.pp.inkContainer : "white") : (fInfo.pp ? fInfo.pp.fg : "white")
+                            text: isl.checking && !isl.up.installed ? Tr.t("Looking for updates") : (isl.up.update ? Tr.t("Update V") + isl.up.latest + Tr.t(" is ready") : (isl.pkgTotal > 0 ? Tr.t("Updates are ready") : Tr.t("You are up to date")))
+                            color: isl.up.update || isl.pkgTotal > 0 ? (fInfo.pp ? fInfo.pp.inkContainer : "white") : (fInfo.pp ? fInfo.pp.fg : "white")
                             font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
                         Text { width: parent.width; elide: Text.ElideRight; maximumLineCount: 2; wrapMode: Text.WordWrap
                             text: isl.up.update && isl.up.news && isl.up.news.length > 0 ? isl.up.news[0] : (isl.checking ? Tr.t("Asking GitHub ...") : Tr.t("Checked ") + isl.ago(isl.up.checked))
                             color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12 }
+                        Text { visible: isl.pkgTotal > 0 || isl.pkgLine() !== ""; width: parent.width; elide: Text.ElideRight
+                            text: isl.pkgLine()
+                            color: fInfo.pp ? fInfo.pp.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11 }
                         // a wave while it looks
                         WavyLine { visible: isl.checking; width: parent.width; height: 14; value: 1; handle: false; moving: true; thick: 3
                             color: fInfo.pp ? fInfo.pp.primary : "white"; track: "transparent" }
@@ -734,13 +762,14 @@ Item {
                         anchors.right: parent.right; anchors.rightMargin: 16; anchors.verticalCenter: parent.verticalCenter
                         width: ubt.implicitWidth + 36; height: 42; radius: Look.sq ? 0 : (ubm.pressed ? 14 : 21)
                         Behavior on radius { NumberAnimation { duration: 200 } }
-                        color: isl.up.update ? (fInfo.pp ? fInfo.pp.primary : "white") : (fInfo.pp ? fInfo.pp.cardHi : "#444")
-                        Text { id: ubt; anchors.centerIn: parent; text: isl.up.update ? Tr.t("Update now") : Tr.t("Check")
-                            color: isl.up.update ? (fInfo.pp ? fInfo.pp.inkPrimary : "black") : (fInfo.pp ? fInfo.pp.fg : "white")
+                        color: isl.up.update || isl.pkgTotal > 0 ? (fInfo.pp ? fInfo.pp.primary : "white") : (fInfo.pp ? fInfo.pp.cardHi : "#444")
+                        Text { id: ubt; anchors.centerIn: parent; text: isl.up.update || isl.pkgTotal > 0 ? Tr.t("Update now") : Tr.t("Check")
+                            color: isl.up.update || isl.pkgTotal > 0 ? (fInfo.pp ? fInfo.pp.inkPrimary : "black") : (fInfo.pp ? fInfo.pp.fg : "white")
                             font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.DemiBold }
                         MouseArea { id: ubm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                if (isl.up.update) { isl.infoOpen = false; Quickshell.execDetached([Quickshell.env("HOME") + "/.local/bin/rice-update", "center"]) }
+                                if (isl.up.update || isl.pkgTotal > 0) { isl.infoOpen = false
+                                    Quickshell.execDetached([Quickshell.env("HOME") + "/.local/bin/rice-update", "update"]) }
                                 else isl.checkUpdates()
                             } }
                     }

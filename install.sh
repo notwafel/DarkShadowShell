@@ -497,6 +497,17 @@ SESSION
   return 0
 }
 
+# the app stores next to the system's packages: Flatpak and Snap are updated nowhere else
+update_app_stores() {
+  [ "$DRY_RUN" = 1 ] && { info "would update Flatpak and Snap apps"; return 0; }
+  if command -v flatpak >/dev/null 2>&1; then
+    live "Flatpak apps" flatpak update -y || warn "Flatpak apps were not updated"
+  fi
+  if command -v snap >/dev/null 2>&1; then
+    live "Snap apps" sudo snap refresh || warn "Snap apps were not updated"
+  fi
+}
+
 step_packages() {
   case "$FAMILY" in
     arch)
@@ -511,6 +522,12 @@ step_packages() {
         warn "pacman's lock file is left behind from an update that was stopped: sudo rm /var/lib/pacman/db.lck"
       fi
       artix_repos
+      # the mirrorlist first: reflector, the 20 freshest HTTPS mirrors in countries without a name for tampered
+      # ones, sorted by speed. Without reflector (or offline) the list you have stays
+      if [ "$DRY_RUN" != 1 ] && [ -x "$ROOT/bin/rice-mirrors" ]; then
+        T=180 task "Mirrors: the fastest nearby ones (reflector)" t "$ROOT/bin/rice-mirrors" \
+          || note "reflector did not make a list: your current mirrors are kept"
+      fi
       if [ "${NO_UPGRADE:-0}" = 1 ]; then
         note "Skipping the system update (--no-upgrade): if a package then fails to download, run: sudo pacman -Syu"
       else
@@ -1113,6 +1130,14 @@ step_finish() {
   fi
   # the login screen (SDDM): it follows your wallpaper; a fresh install asks whether to use it
   if [ -x "$BIN/rice-sddm" ] && [ "$DRY_RUN" != 1 ]; then
+    local sddm_st=""
+    sddm_st="$("$BIN/rice-sddm" state 2>/dev/null || true)"
+    # the theme lives in /usr/share and only its wallpaper followed your wallpaper so far: an update brought new
+    # theme files too, and they are put in (it asks for your password; when that is cancelled the old one stays)
+    if [ "$MODE" = update ] && [[ "$sddm_st" == *'"outdated": true'* ]]; then
+      T=300 task "Login screen (SDDM): the new theme" t "$BIN/rice-sddm" install \
+        || warn "The login screen keeps its old look (Settings > Desktop > Idle & Lockscreen > Login screen > Update it)"
+    fi
     if [ -w /usr/share/sddm/themes/darkshadow-shell/user ]; then
       task "Login screen (SDDM): your wallpaper and colors" t "$BIN/rice-sddm" sync
     elif [ "$MODE" != update ] && [ "$ASSUME_YES" != 1 ] && command -v sddm >/dev/null 2>&1 && [ ! -e /etc/NIXOS ] \
@@ -1312,7 +1337,8 @@ fi
 
 STEP_TOTAL=$(( WANT[0] + WANT[1] + WANT[2] + WANT[3] + 1 ))
 n=0
-if [ "${WANT[0]}" = 1 ]; then n=$((n + 1)); step "$n" "Packages" "Everything the desktop needs, from your package manager"; step_packages; fi
+if [ "${WANT[0]}" = 1 ]; then n=$((n + 1)); step "$n" "Packages" "Everything the desktop needs, from your package manager"; step_packages
+  [ "$MODE" = update ] && update_app_stores; fi
 if [ "${WANT[1]}" = 1 ]; then n=$((n + 1)); step "$n" "Fonts" "So text and icons look right"; step_fonts || warn "fonts skipped (run rice-fonts later)"; fi
 if [ "${WANT[2]}" = 1 ]; then n=$((n + 1)); step "$n" "Config files" "Your old files are backed up first"; step_configs; fi
 if [ "${WANT[3]}" = 1 ]; then n=$((n + 1)); step "$n" "Apps and scripts" "Settings app, desktop widgets and the commands behind them"; step_apps

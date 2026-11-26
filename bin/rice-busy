@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """rice-busy: prints 1 while the screen has tiled windows on it, 0 when the desktop is empty.
-Floating windows (Settings, pop-ups, a floating-only layout) do not count: the widgets stay.
+Floating windows (Settings, pop-ups, a floating-only layout) do not count: the widgets stay, and neither does
+a window that is not on that screen (Infinite Desktop's canvas can hold one far away).
 
   rice-busy [MONITOR]     MONITOR: name like DP-1 (default: the focused one)
 
@@ -42,6 +43,25 @@ def hypr(what):
         return None
 
 
+def mon_rect(m):
+    """the monitor's place on the layout, in the same units as a window's at/size (logical, scale taken out)"""
+    sc = float(m.get("scale") or 1) or 1
+    w, h = float(m.get("width") or 0) / sc, float(m.get("height") or 0) / sc
+    if int(m.get("transform") or 0) % 2:     # turned by 90°: the sides swap
+        w, h = h, w
+    return float(m.get("x") or 0), float(m.get("y") or 0), w, h
+
+
+def on_screen(c, r):
+    """a window counts only when it is on that screen: on the Infinite Desktop's canvas it can sit far away"""
+    try:
+        x, y = (float(v) for v in (c.get("at") or (0, 0))[:2])
+        w, h = (float(v) for v in (c.get("size") or (0, 0))[:2])
+    except (TypeError, ValueError):
+        return True
+    return x < r[0] + r[2] and x + w > r[0] and y < r[1] + r[3] and y + h > r[1]
+
+
 def busy(mon_name):
     mons = hypr("monitors")
     clients = hypr("clients")
@@ -57,11 +77,15 @@ def busy(mon_name):
     sp = mon.get("specialWorkspace", {}) or {}
     if sp.get("id"):
         ids.add(sp.get("id"))
-    # only tiled (or fullscreen) windows hide the widgets; floating ones leave them alone
+    rect = mon_rect(mon)
+    # only tiled (or fullscreen) windows hide the widgets; floating ones leave them alone, and so does one that
+    # is not on the screen at all (Infinite Desktop can put a window anywhere on its canvas)
     for c in clients:
         if (c.get("workspace", {}) or {}).get("id") not in ids:
             continue
         if not c.get("mapped", True) or c.get("hidden", False):
+            continue
+        if not on_screen(c, rect):
             continue
         if c.get("floating", False) and not c.get("fullscreen", 0):
             continue

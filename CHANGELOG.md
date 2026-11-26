@@ -1,12 +1,33 @@
 # Changelog
 
-## V6.82: one Update Center, and packages from every supported distro
+## V6.83: one Update Center, and packages from every supported distro
 - **Settings > Update Center and the dashboard's About tab do the same thing** (they did not): both show the shell, the system's packages, Flatpak and Snap, and the AUR ones, and both press the same button. One call decides: the shell updates in the background when nothing else waits, or everything runs in a terminal when packages do (they need your password)
 - **AUR packages are only shown.** An update no longer runs `paru -Syu`/`yay -Syu` (one broken build could take the rest with it); the packages the shell itself needs are the only ones `install.sh` upgrades, and it says so
 - **Every supported distro has its packages in the Update Center**: Arch (and CachyOS, Endeavour, Garuda, Artix), Fedora (`dnf`), Gentoo (`emerge`, after `emaint sync -a`), Void (`xbps`), openSUSE (`zypper`) and Debian/Ubuntu (`apt`), next to Flatpak and Snap. NixOS and the atomic Fedoras are shown with their own command (`nixos-rebuild`, `rpm-ostree`) and never run from here
 - **reflector picks the mirrors before every pacman update**: the 20 freshest HTTPS mirrors in Poland, Germany, Czechia and the other countries without a name for tampered mirrors, sorted by speed. reflector is installed first when it is missing, and a failed run leaves the mirrorlist you have. On Artix only Arch's list (`mirrorlist-arch`) is replaced, so the Artix repositories keep their mirrors
 - **Snap is checked and updated too**, next to Flatpak and the system's packages; Care keeps the cleaning and the backup, updates live in one place
 - The package check waits long enough for the slow ones (`dnf` cold metadata, `emerge --pretend`), so an update that has packages no longer starts in the background
+
+## V6.82: Frame fixed for real
+- **Frame**: the bar sat a whole bar higher than the edge, with the wallpaper under it. Quickshell sets a window back to "keep clear of the others" whenever its reserved room is set, so the bar's "ignore the others" did not hold and it moved above the room the frame keeps for it. The bar now asks for that directly (`exclusiveZone: -1`), so it lies on the edge, corner to corner, and the frame joins it
+
+## V6.81: Frame corners, the island's workspaces and the stop button
+- **Frame**: the bar reaches both corners again. The frame's side strips kept their room first, so the bar was a few pixels short at each end and the wallpaper showed in the bottom (or top) corners; the frame now keeps the bar's room for it
+- **The island shows the workspaces like the bar**: when you switch, the island (the Dynamic clock) draws the workspaces in your style with your Animation, Pac-Man too. It showed only dots or numbers for the newer styles, and moved its own way. Bar and island share one drawing now (`WsStrip.qml`)
+- **The stop button of a recording works again** (in the island). Since V6.56 the recording state is shared by every bar and is read-only there, so the button failed before it could stop anything
+
+## V6.80: The bar styles fixed, Pac-Man runs, and your reports
+- **Frame works**: the frame round the screen lay over the bar, so the bar was an empty dark strip you could still click. The frame now leaves the bar alone (at the top or the bottom), and sits under it whatever starts first
+- **The workspaces move on every style**: on Lines, Squares, Rings, Bubbles, Numbers and Letters one marker slides from the workspace you leave to the one you open, its front edge first, so it stretches on the way and settles. **Animation** (Bouncy, Smooth, Snappy) now changes how it moves; before, these styles only changed color
+- **Pac-Man runs**: he chomps all the way to the workspace you open (the further, the longer), eats the dots he runs over, turns round to run back, and his mouth settles half open. He is drawn on the graphics card now (the old drawing often did not repaint, so he did not move at all)
+- **Settings**: the old row of bar style buttons on DarkShadow bar is gone (Bar styles has them, with pictures); **Workspaces** and **Seconds** moved to Bar styles > Content; the workspace pictures there move like the bar
+- **Monitors keep what you set**: a change is saved at once, so Hyprland reading its config again (a new wallpaper, a theme, another setting) no longer puts the old mode back a few seconds later. "Keep these screen settings?" is a card at the bottom with a countdown ring, wherever you scrolled; Go back or the countdown undoes it, and if Settings is closed before you answer it is undone by itself after 20 seconds
+- **The volume keys no longer lag**: every press made a notification with its animation (the shell shows the volume itself), and an install added the keys to `hyprland.lua` a second time, so each press ran two volume programs. Held keys do not pile up any more
+- **Live wallpapers are not a player**: mpvpaper runs without mpv's scripts, so the wallpaper does not show in the bar, the island, the lock screen or the media widgets (a running one restarts once)
+- **The installer backs up every file it changes**: also the ones it changes in place (GTK settings, btop, the lines it adds to `hyprland.lua`, its fixes), not only the ones it replaces. At the end it says where the backup is, or that nothing of yours was changed
+- **The gesture shape in Settings > Motion** stays under your pointer: the page no longer scrolls away while you drag it, it stays inside its box and it leans smoothly
+- The shipped Hyprland settings file no longer carries one monitor's mode
+- With the audits of **V6.56** and **V6.57** (#38, #42 by notwafel): Infinite Desktop without the `input` group, and the installer, update and script fixes below
 
 ## V6.70: Gentoo
 - **DarkShadow's Shell installs on Gentoo** (and Gentoo-based distros: Calculate, Redcore, Funtoo). `./install.sh` works as on Arch and Fedora; the Gentoo part is its own file, `install/gentoo.sh`, which also runs alone (`bash install/gentoo.sh`, `--pretend` shows what it would emerge)

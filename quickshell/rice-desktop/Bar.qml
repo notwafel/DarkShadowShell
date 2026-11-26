@@ -191,9 +191,12 @@ PanelWindow {
     implicitHeight: barH + gap * 2 + 460      // room for the island's cards (the bar lets the pointer through there)
     // V6.80: with the frame the bar takes the whole edge, ignoring the room the frame keeps at the sides (its
     // strips were placed first, so the bar was 8 px short at both ends and the wallpaper showed in its corners);
-    // the frame keeps the bar's room for it instead (ScreenFrame.qml)
+    // the frame keeps the bar's room for it instead (ScreenFrame.qml).
+    // V6.82: that is exclusiveZone -1 itself. Quickshell turns the mode back to Normal whenever exclusiveZone is
+    // set, so "Ignore" with a zone of 0 became "Normal, 0": the bar then kept clear of the frame's strip for it and
+    // sat a whole bar higher, with the wallpaper under it
     exclusionMode: hideOn || !on || framed ? ExclusionMode.Ignore : ExclusionMode.Normal
-    exclusiveZone: hideOn || !on || framed ? 0 : barH + gap * 2
+    exclusiveZone: framed && !hideOn && on ? -1 : (hideOn || !on ? 0 : barH + gap * 2)
     // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
     mask: Region { item: !bar.on ? hitNone : (bar.shownBar ? hitBar : hitStrip); Region { item: hitRec } Region { item: hitIsl } Region { item: hitMenu } Region { item: hitPop } }
     Item { id: hitMenu; x: bar.gap + trayMenu.x; y: body.y + trayMenu.y; width: trayMenu.visible ? trayMenu.width : 0; height: trayMenu.height }

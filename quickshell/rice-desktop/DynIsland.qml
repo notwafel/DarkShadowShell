@@ -186,7 +186,7 @@ Item {
         for (let i = 0; i < ms.length; i++) {
             const m = ms[i]
             if (m.count > 0)
-                parts.push(Tr.t(m.name) + " " + m.count + (m.manual ? " (" + Tr.t("shown only") + ")" : ""))
+                parts.push(Tr.t(m.name) + " " + m.count + (m.manual ? " (" + Tr.t("not updated here") + ")" : ""))
             else if (m.manual && m.note) parts.push(Tr.t(m.note))
         }
         return parts.join("  ·  ")

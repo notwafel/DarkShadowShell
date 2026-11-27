@@ -255,7 +255,7 @@ Item {
                             required property var modelData
                             height: 24; width: pc.implicitWidth + 16; radius: M3.sq ? 0 : 12; color: M3.alpha(M3.primary, 0.14)
                             T { id: pc; anchors.centerIn: parent; font.pixelSize: 11; color: M3.inkPrimaryC
-                                text: I18n.t(modelData.name) + "  " + modelData.count + (modelData.manual ? "  ·  " + I18n.t("shown only") : "") }
+                                text: I18n.t(modelData.name) + "  " + modelData.count + (modelData.manual ? "  ·  " + I18n.t("not updated here") : "") }
                         }
                     }
                 }

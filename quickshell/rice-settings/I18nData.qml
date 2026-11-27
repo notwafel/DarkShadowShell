@@ -646,7 +646,7 @@ Singleton {
             "The shell, its apps and the system's packages update together, on your distro too": "Shell, jego aplikacje i pakiety systemu aktualizują się razem, także na twojej dystrybucji",
             "Update everything": "Aktualizuj wszystko",
             "%1 system updates wait: they finish in a terminal (your password there)": "%1 aktualizacji systemu czeka: kończą się w terminalu (tam hasło)",
-            "shown only": "tylko pokazane",
+            "not updated here": "nie aktualizowane tutaj",
             "Updates are ready": "Aktualizacje gotowe",
             "Updating the mirrors (reflector)...": "Wybieranie serwerów lustrzanych (reflector)...",
             "Home": "Start",

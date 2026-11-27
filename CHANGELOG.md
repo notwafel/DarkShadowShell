@@ -1,5 +1,8 @@
 # Changelog
 
+## V6.92: the bar does not jump when a card opens
+- **The bar keeps one window size, the screen's, from the first frame.** Since V6.85 the window grew to the whole screen while a card was open so a click outside could close it. That resized the layer surface under the bar, and the bar's parts are placed from its height: with the bar at the bottom, the whole bar (left, middle and right) moved for a frame before the card's own animation — the odd jump. The mask still keeps the pointer off everything but the bar and the open card, so a click outside still closes it
+
 ## V6.91: Update does not sit forever on a terminal that closed
 - **A terminal that went away no longer counts as a running update.** The background update leaves `terminal` in its live state, with no process behind it; after a terminal was closed, crashed or killed, every later Update in Settings returned "already updating" at once — the card stayed on "Updating..." and no terminal opened. The state now counts only while that terminal's process is alive (a terminal that hands its window to another process counts while its marker is fresh)
 - **Package updates open a terminal again after one was closed**, instead of taking the 60-second marker for "a terminal opened a moment ago" and doing nothing

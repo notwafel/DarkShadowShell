@@ -601,5 +601,25 @@ for _ in $(seq 50); do [ -f "$as/home/good" ] && break; sleep 0.02; done
 [ ! -e "$as/home/hidden" ] && [ ! -e "$as/home/elsewhere" ] && [ ! -e "$as/home/off" ] \
   && ok "rice-autostart leaves out hidden, off and other desktops' apps" || bad "rice-autostart started a skipped app"
 
+# ---- rice-taskview: a tray app's 1x1 helper window is not one of the windows in the Task view
+python3 - "$root/bin/rice-taskview" <<'PYT' && ok "the Task view leaves out a tiny hidden window" || bad "the Task view still shows a tiny window"
+import importlib.machinery, importlib.util, json, sys
+ldr = importlib.machinery.SourceFileLoader("rtv", sys.argv[1])
+spec = importlib.util.spec_from_loader("rtv", ldr); m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+mons = [{"id": 0, "focused": True, "width": 1920, "height": 1080, "scale": 1, "x": 0, "y": 0,
+         "activeWorkspace": {"id": 1}}]
+clients = [
+    {"address": "0x1", "workspace": {"id": 1}, "mapped": True, "hidden": False, "at": [100, 100], "size": [800, 600],
+     "class": "kitty", "title": "shell", "monitor": 0},
+    {"address": "0x2", "workspace": {"id": 1}, "mapped": True, "hidden": False, "at": [0, 0], "size": [1, 1],
+     "class": "mullvad-vpn", "title": "", "monitor": 0}]
+def fake(cmd, timeout=4):
+    return json.dumps(mons if cmd[-1] == "monitors" else clients)
+m.run = fake
+d = m.data_hypr()
+assert [w["cls"] for w in d["wins"]] == ["kitty"], d["wins"]
+PYT
+
 bash -n "$root/install.sh" && ok "install.sh parses" || bad "install.sh syntax"
 echo "# $n checks passed"

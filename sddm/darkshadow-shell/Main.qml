@@ -1,8 +1,8 @@
 import QtQuick 2.15
 
 // DarkShadow's Shell: the login screen (SDDM). Material 3, in the colors of your wallpaper.
-// Resting: your wallpaper and a big clock. Press a key or click: it wakes, the wallpaper blurs and the
-// login card comes up. rice-sddm sync puts your wallpaper, its colors and the shell's font in user/.
+// Resting: your wallpaper and a big clock. Press a key or click: it wakes and the login comes up over the
+// wallpaper. rice-sddm sync puts your wallpaper, its colors and the shell's font in user/.
 // Works on SDDM with Qt 6 and with Qt 5 (only QtQuick, no effects modules).
 Rectangle {
     id: root
@@ -301,8 +301,9 @@ Rectangle {
                anchors.verticalCenter: parent.verticalCenter }
     }
 
-    // ---------------- the card ----------------
-    // a frosted glass card, like the shell's desktop widgets: translucent, a thin light edge, a soft shine on top
+    // ---------------- the login ----------------
+    // V6.95: no card behind it: the avatar, the name and the password sit on the wallpaper under the veil, and only
+    // the password field has a surface of its own
     Rectangle {
         id: card
         width: 424 * root.s

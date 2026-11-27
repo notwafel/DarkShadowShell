@@ -264,7 +264,8 @@ def terminal_update():
     mark = CACHE + "/update-terminal"
     try:
         if time.time() - os.path.getmtime(mark) < 60:
-            return False
+            # a terminal for this same update opened a moment ago: that one is this update, not a failure
+            return True
     except OSError:
         pass
     os.makedirs(CACHE, exist_ok=True)

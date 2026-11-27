@@ -1,5 +1,9 @@
 # Changelog
 
+## V6.91: Update does not sit forever on a terminal that closed
+- **A terminal that went away no longer counts as a running update.** The background update leaves `terminal` in its live state, with no process behind it; after a terminal was closed, crashed or killed, every later Update in Settings returned "already updating" at once — the card stayed on "Updating..." and no terminal opened. The state now counts only while that terminal's process is alive (a terminal that hands its window to another process counts while its marker is fresh)
+- **Package updates open a terminal again after one was closed**, instead of taking the 60-second marker for "a terminal opened a moment ago" and doing nothing
+
 ## V6.90: the login screen gets in on the update that finds it missing
 - **An update installs the login screen when SDDM is the display manager but the theme never got in.** The update only ever refreshed a theme that was already in `/usr/share`; a session where an earlier update could not ask for the password kept SDDM's own look for good. Now the missing theme counts as something to put in
 - **The password window is given a moment to appear.** After the shell starts its polkit agent, `pkexec` was asked at once and could find no agent yet; it now waits up to 3 seconds before falling back to a terminal

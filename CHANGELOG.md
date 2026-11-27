@@ -1,5 +1,9 @@
 # Changelog
 
+## V7.06: the island card draws in with the drop, in the island's own colors
+- **The menu is drawn together with the animation, not already there.** The card and its content fade in over the first half of the 500 ms drop, so the menu is revealed as the card falls; before, the card was at full opacity after ~80 ms and only the last frames were seen, which read as a card that was already there
+- **The drop and the neck use the island's own color and opacity.** The neck fades with the card, so the shape that peels off is the same glass as the pill, not a separate solid blob
+
 ## V7.05: the island's drop takes 500 ms, not 280
 - **The drop is no longer a blink.** 280 ms made the 20 px fall and the neck read as a single flash; the card now hangs attached for the first ~100 ms, the neck stretches, and it lands over 500 ms in all. The light sweep is 500 ms too
 

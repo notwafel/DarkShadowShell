@@ -573,7 +573,7 @@ Item {
         width: Math.max(1, card.width)
         height: Math.max(0, card.gapA)
         visible: isl.big && card.opacity > 0.05 && neck.tw > 1 && height > 0.5
-        opacity: Math.min(1, neck.tw / 30)
+        opacity: Math.min(1, neck.tw / 30) * card.opacity
         readonly property real tw: Math.max(0, Math.min(card.width * 0.45, isl.width * 0.8) * (1 - card.tc))
         readonly property real cx: Math.max(40, Math.min(width - 40, isl.width / 2 - card.x))
         onTwChanged: requestPaint()
@@ -629,7 +629,9 @@ Item {
         radius: Look.sq ? 0 : (Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc)))
         color: isl.fill
         visible: opacity > 0.01
-        opacity: t < 0.02 ? 0 : Math.min(1, t * 6)
+        // V7.06: the card draws in with the drop instead of a blink at the start; it reaches full opacity around the
+        // half of the motion, so the menu is revealed while the drop falls (not already there before it lands)
+        opacity: tc < 0.02 ? 0 : Math.min(1, tc * 1.9)
         clip: true
         HoverHandler { id: hovC }
         // the glass edge and one sweep of light: a plain dark rectangle reads as a panel, not as glass
@@ -1076,13 +1078,16 @@ Item {
         readonly property bool act: inCard ? (isl.big && isl.cardMode === name) : isl.faceNow === name
         x: Math.round((parent.width - width) / 2)
         y: isl.down ? 0 : Math.round(parent.height - height)
-        // it comes in once the shape has (nearly) grown to it, so it is never seen cut
-        opacity: act && parent.width >= width * 0.82 && parent.height >= height * 0.82 ? 1 : 0
+        // it comes in once the shape has (nearly) grown to it, so it is never seen cut. V7.06: in the card it draws
+        // in with the drop (the menu is revealed as the card falls, not already there before it lands)
+        opacity: inCard ? (act ? Math.max(0, Math.min(1, (card.tc - 0.12) / 0.5)) : 0)
+            : (act && parent.width >= width * 0.82 && parent.height >= height * 0.82 ? 1 : 0)
         scale: act ? 1 : 0.94
         visible: opacity > 0.01
         enabled: act
-        // the old face leaves first, then the new one comes in (they never show on top of each other)
-        Behavior on opacity { SequentialAnimation {
+        // the old face leaves first, then the new one comes in (they never show on top of each other); the card's
+        // face follows the drop instead, so no extra animation on the same property
+        Behavior on opacity { enabled: !inCard; SequentialAnimation {
             PauseAnimation { duration: fc.act ? 20 : 0 }
             NumberAnimation { target: fc; property: "opacity"; duration: fc.act ? 170 : 60; easing.type: Easing.Linear } } }
         Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } }

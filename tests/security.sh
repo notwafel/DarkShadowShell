@@ -378,6 +378,7 @@ p.terminate(); p.wait()
 assert m.terminal_active() is False, "a closed terminal still blocked"
 assert not os.path.exists(pidf), "the pid of a closed terminal was kept"
 # a terminal that hands its window to another process (gnome-terminal): the fresh marker counts
+live("terminal")
 open(mark, "w").write("1")
 assert m.terminal_active() is True, "a terminal that hands off its window was not seen"
 old = time.time() - 1000
@@ -419,6 +420,24 @@ upd = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)", "ri
 live("running", upd.pid)
 assert m.terminal_update() is True, "a running update opened a second terminal"
 upd.terminate(); upd.wait()
+other.terminate(); other.wait()
+PYC
+
+# ---- rice-update live: a killed update or a reboot leaves no process, and no "running" that disables the buttons
+mkdir -p "$tmp/upd4/home"
+HOME="$tmp/upd4/home" python3 - "$root/bin/rice-update" <<'PYC' && ok "a killed update no longer leaves Update now disabled" \
+  || bad "a stale running state still disables Update now"
+import importlib.machinery, importlib.util, json, os, subprocess, sys, time
+loader = importlib.machinery.SourceFileLoader("ru4", sys.argv[1])
+spec = importlib.util.spec_from_loader("ru4", loader)
+m = importlib.util.module_from_spec(spec)
+loader.exec_module(m)
+os.makedirs(m.CACHE, exist_ok=True)
+other = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+m.put_live(state="running", code=-1, started=int(time.time()), ended=0, pid=other.pid, was="")
+st = m.live()
+assert st.get("state") == "failed", st
+assert json.load(open(m.LIVE)).get("state") == "failed", "the healed state was not written"
 other.terminate(); other.wait()
 PYC
 

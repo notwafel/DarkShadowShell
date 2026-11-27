@@ -1,5 +1,9 @@
 # Changelog
 
+## V6.98: a dead update no longer leaves the update screen stuck on "running"
+- **When the update process is gone, its state is cleared.** A killed update or a reboot left `update-live.json` on "running" with no process behind it: the Update Center button ignored every click and Settings opened on the update page with a spinner that never ended. Any read of the state (the Update Center, the badge) now checks the recorded pid and turns a dead "running" or "terminal" into "failed", so the buttons work again
+- No process to find in `ps` is the clue: only the state file was left
+
 ## V6.97: Update now works again after an update in a terminal
 - **The terminal that ran the update waits at "Press Enter to close" after it finishes.** It is still a live process, so its pid counted as "an update is running": Update now opened nothing, and the same block stopped Settings > Update Center. The updater now believes a pid only if its command line is the updater, and a finished update (its live state says done) never counts, even with the window still open
 - **A finished update no longer leaves a false "updating in a terminal".** The new terminal marks the state before the window opens, so the next click does not overwrite the "running" the terminal reports, and a terminal that could not be opened says it failed instead

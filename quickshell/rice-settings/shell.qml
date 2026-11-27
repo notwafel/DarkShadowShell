@@ -251,7 +251,7 @@ FloatingWindow {
     // rice-settings PAGE: open on that page (the Settings card of the dashboard uses it)
     Process {
         command: ["bash", "-c", "f=\"$HOME/.cache/rice/settings-page\"; if [ -f \"$f\" ]; then cat \"$f\"; rm -f \"$f\"; " +
-                  "elif grep -q '\"state\": \"running\"' \"$HOME/.cache/rice/update-live.json\" 2>/dev/null; then echo 35; fi"]
+                  "elif \"$HOME/.local/bin/rice-update\" live 2>/dev/null | grep -q '\"state\": \"running\"'; then echo 35; fi"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {

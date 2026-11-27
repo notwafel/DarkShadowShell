@@ -1,5 +1,10 @@
 # Changelog
 
+## V6.87: the updater stops calling its own hand-off a failure
+- **A second click no longer breaks the update.** While the terminal that the Update Center opened was still waiting for your `y`, another click reported "no terminal could be opened" and the page turned it into a 1-second failure ("The update did not finish"). That guard is the same update: the page now keeps saying it continues in the terminal
+- **"Another update is already running" says where it is.** The lock is real (one installer at a time), and the process holding it is usually the terminal that Settings opened, waiting for your answer: finish it there or close that terminal, then run again
+- **The AUR note no longer starts with "Shown only:"** and is translated: "not updated here, unless the shell needs the package"
+
 ## V6.86: the island opens small, the login screen asks, and updates finish where they start
 - **The island opens without the block.** The card's size overshot its own size by a lot and then shrank back, which read as one big block puffing up and collapsing. The overshoot is now a small spring (0.12, was 0.9): it grows into the card, the gap to the pill opens at the end and the content rises, with nothing to shrink back. The preview in Settings > Island uses the same spring
 - **The right-hand corner menus move like the island too.** Wi-Fi, Bluetooth, volume and power still eased on their own old curve with a 26 px slide. They now share the island's motion: 620 ms with a small overshoot on the way in, 280 ms out (340 in Light mode), a 0.94 scale that settles, and the 8 px gap to the bar opening only at the end so the card peels off instead of jumping away

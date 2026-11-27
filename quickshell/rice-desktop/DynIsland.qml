@@ -30,6 +30,8 @@ Item {
     function on(k) { return dynamic && cfg[k] !== false }
 
     Instantiator { model: isl.visible && isl.big ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
+    // the words in the player: Lyrics looks them up only while they are on screen
+    LyricsUser { active: isl.big && isl.cardMode === "media" && isl.mediaLyr }
     readonly property var source: Pipewire.defaultAudioSource
     PwObjectTracker { objects: [isl.source] }
     readonly property bool micMuted: source && source.audio ? source.audio.muted : false
@@ -43,6 +45,8 @@ Item {
     property var note: null                    // the notification it shows
     property bool infoOpen: false
     property string infoTab: "today"           // today | system
+    property bool mediaLyr: false              // the player shows the words of the song instead
+    onBigChanged: if (!big) mediaLyr = false
     readonly property string mode: flash !== "" ? flash : (bar && bar.recOn ? "rec" : "idle")
     readonly property string cardWant: note ? "notif"
         : (infoOpen ? "info" : ((pinned || hoverOpen) && Player.has && !ghost ? "media" : ""))
@@ -878,46 +882,120 @@ Item {
         // ---------- the player ----------
         Face {
             name: "media"; inCard: true; width: 470; height: 184
-            ShapeImage {
-                x: 16; y: 16; width: 78; height: 78
-                kind: Look.shape; source: Player.art
-                empty: isl.pal ? isl.pal.container : "#333"; fallbackColor: isl.pal ? isl.pal.inkContainer : "#ccc"
-            }
-            Column {
-                x: 110; y: 18; width: parent.width - 110 - 70; spacing: 3
-                Text { text: (Player.p && Player.p.identity ? Player.p.identity : Tr.t("Music")).toUpperCase(); color: isl.pal ? isl.pal.primary : "#aaa"
-                    font.family: Fonts.main; font.pixelSize: 10; font.weight: Font.Bold; font.letterSpacing: 1.2 }
-                Text { width: parent.width; elide: Text.ElideRight; text: Player.title; color: isl.pal ? isl.pal.fg : "white"
-                    font.family: Fonts.main; font.pixelSize: 17; font.weight: Font.DemiBold }
-                Text { width: parent.width; elide: Text.ElideRight; text: Player.artist; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 13 }
-            }
-            // a wave that moves while it plays
-            Eq { x: parent.width - 58; y: 22; h: 22; bars: 5; go: isl.big && Player.playing && isl.cardMode === "media" }
-            Text { x: 16; y: 110; width: 38; text: Player.clock(Player.pos); color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 11 }
-            WavyLine {
-                x: 56; y: 105; width: parent.width - 112; height: 22
-                value: Player.frac; moving: Player.playing; seekable: true
-                color: isl.pal ? isl.pal.primary : "white"; track: isl.pal ? isl.pal.track : "#444"
-                onMoved: function(v) { Player.seekTo(v) }
-            }
-            Text { x: parent.width - 52; y: 110; width: 38; horizontalAlignment: Text.AlignRight
-                text: Player.length > 0 ? "-" + Player.clock(Player.length - Player.pos) : ""; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 11 }
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter; y: 134
-                spacing: 22
-                Btn { icon: "skip_previous"; onHit: Player.prev() }
-                // play / pause: your shape while it plays, a circle while it waits; pressing squeezes it
-                Item {
-                    width: 40; height: 40; anchors.verticalCenter: parent.verticalCenter
-                    Blob { anchors.fill: parent; kind: Player.playing ? Look.shape : "circle"; color: isl.pal ? isl.pal.primary : "white"
-                        scale: pm.pressed ? 0.86 : (pm.containsMouse ? 1.06 : 1)
-                        Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
-                        SlowSpin { turn: 360; period: 12000; running: Player.playing && isl.big && isl.cardMode === "media" && !Look.lite } }
-                    MIcon { anchors.centerIn: parent; size: 20; filled: true; name: Player.playing ? "pause" : "play_arrow"; glyph: ""
-                        color: isl.pal ? isl.pal.inkPrimary : "black" }
-                    MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Player.toggle() }
+            // the player; the words take its place
+            Item {
+                id: mediaBody
+                anchors.fill: parent
+                visible: !isl.mediaLyr
+                ShapeImage {
+                    x: 16; y: 16; width: 78; height: 78
+                    kind: Look.shape; source: Player.art
+                    empty: isl.pal ? isl.pal.container : "#333"; fallbackColor: isl.pal ? isl.pal.inkContainer : "#ccc"
                 }
-                Btn { icon: "skip_next"; onHit: Player.next() }
+                Column {
+                    x: 110; y: 18; width: parent.width - 110 - 130; spacing: 3
+                    Text { text: (Player.p && Player.p.identity ? Player.p.identity : Tr.t("Music")).toUpperCase(); color: isl.pal ? isl.pal.primary : "#aaa"
+                        font.family: Fonts.main; font.pixelSize: 10; font.weight: Font.Bold; font.letterSpacing: 1.2 }
+                    Text { width: parent.width; elide: Text.ElideRight; text: Player.title; color: isl.pal ? isl.pal.fg : "white"
+                        font.family: Fonts.main; font.pixelSize: 17; font.weight: Font.DemiBold }
+                    Text { width: parent.width; elide: Text.ElideRight; text: Player.artist; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 13 }
+                }
+                // a wave that moves while it plays
+                Eq { x: parent.width - 58; y: 62; h: 22; bars: 5; go: isl.big && Player.playing && isl.cardMode === "media" && !isl.mediaLyr }
+                Text { x: 16; y: 110; width: 38; text: Player.clock(Player.pos); color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 11 }
+                WavyLine {
+                    x: 56; y: 105; width: parent.width - 112; height: 22
+                    value: Player.frac; moving: Player.playing; seekable: true
+                    color: isl.pal ? isl.pal.primary : "white"; track: isl.pal ? isl.pal.track : "#444"
+                    onMoved: function(v) { Player.seekTo(v) }
+                }
+                Text { x: parent.width - 52; y: 110; width: 38; horizontalAlignment: Text.AlignRight
+                    text: Player.length > 0 ? "-" + Player.clock(Player.length - Player.pos) : ""; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 11 }
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter; y: 134
+                    spacing: 22
+                    Btn { icon: "skip_previous"; onHit: Player.prev() }
+                    // play / pause: your shape while it plays, a circle while it waits; pressing squeezes it
+                    Item {
+                        width: 40; height: 40; anchors.verticalCenter: parent.verticalCenter
+                        Blob { anchors.fill: parent; kind: Player.playing ? Look.shape : "circle"; color: isl.pal ? isl.pal.primary : "white"
+                            scale: pm.pressed ? 0.86 : (pm.containsMouse ? 1.06 : 1)
+                            Behavior on scale { NumberAnimation { duration: 220; easing.type: Easing.OutBack } }
+                            SlowSpin { turn: 360; period: 12000; running: Player.playing && isl.big && isl.cardMode === "media" && !Look.lite } }
+                        MIcon { anchors.centerIn: parent; size: 20; filled: true; name: Player.playing ? "pause" : "play_arrow"; glyph: ""
+                            color: isl.pal ? isl.pal.inkPrimary : "black" }
+                        MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: Player.toggle() }
+                    }
+                    Btn { icon: "skip_next"; onHit: Player.next() }
+                }
+            }
+            // the words of the song, in place of the player
+            Item {
+                id: mediaWords
+                anchors.fill: parent
+                visible: isl.mediaLyr
+                Column {
+                    x: 22; y: 14; width: parent.width - 44; spacing: 2
+                    Text { width: parent.width; elide: Text.ElideRight; text: Player.title; color: isl.pal ? isl.pal.fg : "white"
+                        font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
+                    Text { width: parent.width; elide: Text.ElideRight; text: Player.artist; color: isl.pal ? isl.pal.dim : "#aaa"
+                        font.family: Fonts.main; font.pixelSize: 11 }
+                }
+                Item {
+                    x: 22; y: 44; width: parent.width - 44; height: 88
+                    LyricLine {
+                        anchors.fill: parent; anchors.leftMargin: 4; anchors.rightMargin: 4
+                        visible: Player.has && Lyrics.lines.length > 0
+                        size: 21; minSize: 13; maxRows: 2
+                        sung: isl.pal ? isl.pal.primary : "white"
+                        dim: isl.pal ? Qt.rgba(isl.pal.fg.r, isl.pal.fg.g, isl.pal.fg.b, 0.34) : Qt.rgba(1, 1, 1, 0.34)
+                        live: isl.big && isl.cardMode === "media" && isl.mediaLyr && !Look.lite
+                    }
+                    Flickable {
+                        anchors.fill: parent
+                        visible: Player.has && Lyrics.lines.length === 0 && Lyrics.plain !== ""
+                        contentHeight: ltx.implicitHeight; contentY: Math.max(0, (ltx.implicitHeight - height) * Player.frac)
+                        interactive: false
+                        Text { id: ltx; width: parent.width; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap
+                            text: Lyrics.plain; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 11; lineHeight: 1.25 }
+                    }
+                    Text {
+                        anchors.centerIn: parent; width: parent.width; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap
+                        visible: Lyrics.lines.length === 0 && Lyrics.plain === ""
+                        text: !Player.has ? Tr.t("Nothing playing")
+                            : (Lyrics.loading ? Tr.t("Looking for the lyrics...")
+                            : (Lyrics.lyOff ? Tr.t("Lyrics are off: Settings > Language & region") : Tr.t("No lyrics for this song")))
+                        color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12
+                    }
+                }
+                // the words screen keeps a play / pause where the buttons were
+                Item {
+                    width: 34; height: 34; anchors.horizontalCenter: parent.horizontalCenter; y: parent.height - 40
+                    Blob { anchors.fill: parent; kind: Player.playing ? Look.shape : "circle"; color: isl.pal ? isl.pal.primary : "white" }
+                    MIcon { anchors.centerIn: parent; size: 17; filled: true; name: Player.playing ? "pause" : "play_arrow"; glyph: ""
+                        color: isl.pal ? isl.pal.inkPrimary : "black" }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Player.toggle() }
+                }
+            }
+            // back to the info card (Today, System, About) without closing the island first
+            Item {
+                x: parent.width - 38; y: 8; width: 28; height: 28
+                Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (14); color: backM.containsMouse ? (isl.pal ? isl.pal.cardHi : "#444") : "transparent"
+                    Behavior on color { ColorAnimation { duration: 140 } } }
+                MIcon { anchors.centerIn: parent; size: 16; name: "keyboard_arrow_left"; glyph: ""; color: isl.pal ? isl.pal.dim : "#aaa" }
+                MouseArea { id: backM; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                    onClicked: { isl.mediaLyr = false; isl.pinned = false; isl.infoOpen = true; if (!isl.hovering) pinT.restart() } }
+            }
+            // the words, or the player again
+            Rectangle {
+                x: parent.width - 122; y: 40; width: 82; height: 24; radius: Look.sq ? 0 : (12)
+                color: isl.mediaLyr ? (isl.pal ? Qt.rgba(isl.pal.primary.r, isl.pal.primary.g, isl.pal.primary.b, 0.22) : "#333")
+                                    : (isl.pal ? Qt.rgba(isl.pal.fg.r, isl.pal.fg.g, isl.pal.fg.b, 0.07) : "#333")
+                Behavior on color { ColorAnimation { duration: 160 } }
+                Text { anchors.centerIn: parent; text: isl.mediaLyr ? Tr.t("Player") : Tr.t("Lyrics")
+                    color: isl.mediaLyr ? (isl.pal ? isl.pal.primary : "white") : (isl.pal ? isl.pal.dim : "#aaa")
+                    font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.DemiBold }
+                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: isl.mediaLyr = !isl.mediaLyr }
             }
             MouseArea { x: parent.width - 40; y: parent.height - 40; width: 30; height: 30; cursorShape: Qt.PointingHandCursor
                 visible: isl.pinned; onClicked: isl.pinned = false

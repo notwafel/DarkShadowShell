@@ -60,6 +60,8 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd("$HOME/.local/bin/rice-bar start")
    hl.exec_cmd("$HOME/.local/bin/rice-walls awww")
    hl.exec_cmd("$HOME/.local/bin/rice-notifyd")
+   -- the password window for admin buttons (Settings > login screen, power profiles): pkexec needs a polkit agent
+   hl.exec_cmd("$HOME/.local/bin/rice-services polkit")
    hl.exec_cmd("hypridle")
    hl.exec_cmd("$HOME/.local/bin/border-sync")
    hl.exec_cmd("$HOME/.local/bin/ws-watch")

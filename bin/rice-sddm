@@ -41,10 +41,23 @@ theme_now() {
   echo "$v"
 }
 sudo_run() {
-  # from Settings (no terminal): pkexec shows a password window; in a terminal: sudo
-  if [ -t 0 ] && command -v sudo >/dev/null 2>&1; then sudo "$@"
-  elif command -v pkexec >/dev/null 2>&1; then pkexec "$@"
-  else sudo "$@"; fi
+  # in a terminal: sudo asks there. From Settings: pkexec's window, but only when its agent runs: without one
+  # pkexec only says "authentication is needed to run ... as the super user" and nothing happens
+  if [ -t 0 ] && command -v sudo >/dev/null 2>&1; then sudo "$@"; return; fi
+  if command -v pkexec >/dev/null 2>&1 &&
+     pgrep -u "$(id -u)" -f 'polkit.*agent|hyprpolkitagent|polkit-gnome-authentication' >/dev/null 2>&1; then
+    pkexec "$@"; return
+  fi
+  [ -n "${RICE_SDDM_TERM:-}" ] && { echo "no password window: a polkit agent is not running"; return 1; }
+  # no window to type in: the step goes to a terminal, where sudo can ask
+  local t="${TERMINAL:-}"
+  if [ -z "$t" ] || ! command -v "$t" >/dev/null 2>&1; then
+    for t in rice-term kitty foot alacritty wezterm konsole gnome-terminal; do command -v "$t" >/dev/null 2>&1 && break; done
+  fi
+  [ -x "$HOME/.local/bin/rice-term" ] && t="$HOME/.local/bin/rice-term"
+  command -v "$t" >/dev/null 2>&1 || { echo "no password window (polkit agent) and no terminal for sudo"; return 1; }
+  echo "A terminal opens for your password: no polkit agent is running" >&2
+  RICE_SDDM_TERM=1 "$t" -e bash -c '"$@"' _ "$@"
 }
 pkg_cmd() {
   . /etc/os-release 2>/dev/null

@@ -95,7 +95,7 @@ trap cleanup EXIT
 if [ "$DRY_RUN" != 1 ] && [ "${RICE_UPDATE_LOCK:-0}" != 1 ]; then
   mkdir -p "$HOME/.cache/rice"
   exec 9>"$HOME/.cache/rice/update.lock"
-  flock -n 9 || { fail "Another update is already running. Wait for it to finish."; exit 1; }
+  flock -n 9 || { fail "Another update is already running: one that Settings started may be waiting in a terminal for your answer. Finish it there, or close that terminal, then run this again."; exit 1; }
 fi
 
 # ------------------------------------------------------------------ helpers

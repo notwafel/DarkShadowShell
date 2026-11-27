@@ -378,6 +378,25 @@ os.utime(mark, (old, old))
 assert m.terminal_active() is False, "an old terminal marker still blocked"
 PYC
 
+# ---- rice-update watch: a shell restart does not check GitHub again
+mkdir -p "$tmp/upd3/home/.cache/rice"
+HOME="$tmp/upd3/home" python3 - "$root/bin/rice-update" <<'PYC' && ok "the last update check survives a shell restart" \
+  || bad "a shell restart checked GitHub again at once"
+import importlib.machinery, importlib.util, json, os, sys, time
+loader = importlib.machinery.SourceFileLoader("ru3", sys.argv[1])
+spec = importlib.util.spec_from_loader("ru3", loader)
+m = importlib.util.module_from_spec(spec)
+loader.exec_module(m)
+assert m.last_checked() == 0.0
+now = int(time.time()) - 60
+json.dump({"checked": now}, open(m.STATE, "w"))
+assert abs(m.last_checked() - now) < 2
+open(m.STATE, "w").write("{not json")
+assert m.last_checked() == 0.0
+json.dump({"checked": now + 86400}, open(m.STATE, "w"))
+assert m.last_checked() <= time.time() + 1, "a future timestamp was not clamped"
+PYC
+
 # ---- the other supported distros: Update Center checks and updates what that distro has
 mkdir -p "$tmp/dis"
 cat >"$tmp/dis/rice-term" <<'EOS'

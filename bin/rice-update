@@ -504,6 +504,15 @@ def mtime(p):
         return 0
 
 
+def last_checked():
+    """when the last check ran, kept across restarts: a shell that restarts (an update, a reload) used to check
+    again 45 s later, so every push gave a new "Update is Available" within a minute"""
+    try:
+        return min(time.time(), float(json.load(open(STATE)).get("checked") or 0))
+    except (OSError, ValueError, TypeError):
+        return 0.0
+
+
 def watch():
     c = cfg()
     if c.get("watch") is False:
@@ -516,7 +525,7 @@ def watch():
     except OSError:
         return  # already running
     time.sleep(FIRST_WAIT)
-    last, seen = 0.0, 0.0
+    last, seen = last_checked(), mtime(STATE)
     while True:
         # Settings > Language & region > Check for updates is read again every tick: off stops this one at once
         c = cfg()
@@ -534,7 +543,9 @@ def watch():
                 m = mtime(STATE)
                 if m and m != seen:
                     seen = m
-                    maybe_notify(json.load(open(STATE)))
+                    st = json.load(open(STATE))
+                    last = max(last, float(st.get("checked") or 0))
+                    maybe_notify(st)
         except Exception:
             pass
         time.sleep(TICK)

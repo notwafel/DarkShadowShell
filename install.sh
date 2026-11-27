@@ -870,7 +870,14 @@ step_settings() {
 }
 
 step_apps() {
-  local d n
+  local d n stopped=0
+  # V6.84: an update swaps the shell's files under a running Quickshell. It reloads on every change, so a reload
+  # between two swaps saw a mix of old and new files and crashed (and the restart loop gave up until the next
+  # session). The shell is stopped for the swap and started again here, once all of its files are in place.
+  if [ "$MODE" = update ] && [ "$DRY_RUN" != 1 ] && [ -x "$BIN/rice-desktop" ] &&
+     { [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] || [ -n "${NIRI_SOCKET:-}" ]; }; then
+    task "Stopping the desktop shell for the file swap" t "$BIN/rice-desktop" stop && stopped=1
+  fi
   n="$(find "$ROOT/bin" -maxdepth 1 -type f | wc -l)"
   task "Helper scripts ($n)  ->  ~/.local/bin" copy_bins
   [ -d "$ROOT/sounds" ] && task "Notification sounds  ->  ~/.local/share/rice/sounds" copy_tree "$ROOT/sounds" "$HOME/.local/share/rice/sounds"
@@ -900,6 +907,8 @@ step_apps() {
   if ! printf '%s' ":$PATH:" | grep -q ":$HOME/.local/bin:"; then
     warn "\$HOME/.local/bin is not in your PATH. Add it in your shell config (fish: fish_add_path \$HOME/.local/bin)"
   fi
+  [ "$stopped" = 1 ] && task "Starting the desktop shell again" t "$BIN/rice-desktop" restart
+  return 0
 }
 copy_bins() { local f; for f in "$ROOT"/bin/*; do [ -f "$f" ] && put "$f" "$BIN/$(basename "$f")"; done; return 0; }
 

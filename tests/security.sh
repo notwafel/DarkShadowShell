@@ -477,5 +477,10 @@ grep -q 'wantTint && colorMode === "auto"' "$root/quickshell/rice-desktop/Vibe.q
 grep -q 'setAutoSource' "$root/quickshell/rice-settings/ThemePage.qml" \
   && ok "Auto offers the wallpaper or the cover" || bad "Auto has no source to choose"
 
+# ---- V6.84: an update stops the shell for the swap, so it never reloads half old and half new files
+grep -q 'Stopping the desktop shell for the file swap' "$root/install.sh" && grep -q 'Starting the desktop shell again' "$root/install.sh" \
+  && ok "an update stops the shell for the file swap and starts it again" \
+  || bad "the shell reloads between two swaps during an update"
+
 bash -n "$root/install.sh" && ok "install.sh parses" || bad "install.sh syntax"
 echo "# $n checks passed"

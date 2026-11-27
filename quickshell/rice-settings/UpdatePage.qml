@@ -20,7 +20,7 @@ Item {
     property bool starting: false
     property int now: Math.floor(Date.now() / 1000)
 
-    readonly property bool running: lv.state === "running" || starting
+    readonly property bool running: lv.state === "running" || lv.state === "terminal" || starting
     readonly property bool finished: !running && (lv.state === "done" || lv.state === "failed")
     readonly property bool failed: !running && lv.state === "failed"
     readonly property bool hasUpdate: !!st.update
@@ -232,7 +232,7 @@ Item {
                 width: parent.width - 124 - 24
                 spacing: 6
                 T { kind: "title"; font.pixelSize: 26; font.weight: Font.Medium; color: M3.inkPrimaryC; width: parent.width; wrapMode: Text.WordWrap
-                    text: page.running ? I18n.t("Updating...")
+                    text: page.running ? (page.lv.state === "terminal" ? I18n.t("Continuing in the terminal") : I18n.t("Updating..."))
                         : page.failed ? I18n.t("The update did not finish")
                         : page.finished && !page.hasUpdate && page.lv.ended && page.now - page.lv.ended < 3600 ? I18n.t("Updated to V%1", page.st.installed || page.lv.now || "?")
                         : page.hasUpdate ? I18n.t("V%1 is available", page.st.latest)
@@ -240,7 +240,8 @@ Item {
                         : page.checking ? I18n.t("Looking for updates...")
                         : I18n.t("You are up to date") }
                 T { kind: "reading"; font.pixelSize: 13; color: M3.inkPrimaryC; opacity: 0.85; width: parent.width; wrapMode: Text.WordWrap
-                    text: page.running ? (page.current ? page.current.t : I18n.t("Getting the newest version from GitHub..."))
+                    text: page.running ? (page.lv.state === "terminal" ? I18n.t("A terminal opened to show what changes and ask: answer y there.")
+                            : (page.current ? page.current.t : I18n.t("Getting the newest version from GitHub...")))
                         : page.failed ? I18n.t("Nothing is broken: what was done stays, the rest keeps your old files. Try again, or look at the steps below.")
                         : page.hasUpdate ? (page.st.installed !== page.st.latest ? I18n.t("You have V%1.", page.st.installed) : I18n.t("%1 new changes on GitHub.", page.st.changes))
                         : I18n.t("DarkShadow's Shell V%1", page.st.installed || "?") + (page.st.checked ? "  ·  " + I18n.t("checked %1", page.ago(page.st.checked)) : "") }

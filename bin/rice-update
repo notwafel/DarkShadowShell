@@ -261,7 +261,7 @@ def terminal_update():
     mark = CACHE + "/update-terminal"
     try:
         if time.time() - os.path.getmtime(mark) < 60:
-            return
+            return False
     except OSError:
         pass
     os.makedirs(CACHE, exist_ok=True)
@@ -269,14 +269,20 @@ def terminal_update():
     env = dict(os.environ)
     for k in ("RICE_GUI", "NO_COLOR", "GIT_TERMINAL_PROMPT", "GCM_INTERACTIVE"):
         env.pop(k, None)
+    # the terminal's rice-update reports running / done, so Settings follows it instead of showing a failure
+    env["RICE_LIVE"] = "1"
     t = os.environ.get("TERMINAL") or "kitty"
     if not shutil.which(t):
         t = next((x for x in ("kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal") if shutil.which(x)), t)
     cmd = [t, "-e", HOME + "/.local/bin/rice-update"]
     if os.access(HOME + "/.local/bin/rice-term", os.X_OK):        # your terminal (Settings > Look & Feel)
         cmd = [HOME + "/.local/bin/rice-term", "-e", HOME + "/.local/bin/rice-update"]
-    subprocess.Popen(cmd, start_new_session=True, env=env,
-                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        subprocess.Popen(cmd, start_new_session=True, env=env,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except OSError:
+        return False
 
 
 def installer_changes(r):
@@ -343,7 +349,7 @@ def gui(args):
         print("already updating")
         return 0
     st = live()
-    if st.get("state") == "running" and alive(st.get("pid")):
+    if st.get("state") == "terminal" or (st.get("state") == "running" and alive(st.get("pid"))):
         print("already updating")
         return 0
     r = repo()
@@ -367,8 +373,10 @@ def gui(args):
     if installer_changes(r):
         log.write("    \u2139 This update changes the installer, so it is asked about in a terminal: one opened now.\n"
                   "      Answer y there (it may ask for your password). Nothing was changed yet.\n")
-        put_live(state="failed", code=1, started=t0, ended=int(time.time()), pid=0, was=installed())
-        terminal_update()
+        put_live(state="terminal", code=-1, started=t0, ended=0, pid=0, was=installed())
+        if not terminal_update():
+            log.write("    \u2718 No terminal could be opened. Run  rice-update  in one to apply it.\n")
+            put_live(state="failed", code=1, started=t0, ended=int(time.time()), pid=0, was=installed())
         os._exit(0)
     put_live(state="running", code=-1, started=t0, ended=0, pid=os.getpid(), was=installed())
     env = dict(os.environ, RICE_GUI="1", RICE_UPDATE_LOCK="1", NO_COLOR="1", GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never")
@@ -409,7 +417,9 @@ def packages_pending():
 def update_all(args):
     """one action for both places that show updates: a terminal when packages wait, else the quiet GUI update"""
     if packages_pending() > 0:
-        terminal_update()
+        if not terminal_update():
+            # a terminal opened a moment ago (the once-a-minute guard): that one is this update
+            put_live(state="terminal", code=-1, started=int(time.time()), ended=0, pid=0, was=installed())
         return 0
     return gui(args)
 
@@ -532,7 +542,20 @@ def run(args):
     env = dict(os.environ)
     for k in ("RICE_GUI", "NO_COLOR", "GIT_TERMINAL_PROMPT", "GCM_INTERACTIVE"):
         env.pop(k, None)   # a terminal the Update Center opened must ask, not act like the background update
+    live_run = os.environ.get("RICE_LIVE") == "1"
+    env.pop("RICE_LIVE", None)
+    t0 = int(time.time())
+    was = installed()
+    if live_run:
+        put_live(state="running", code=-1, started=t0, ended=0, pid=os.getpid(), was=was)
     code = subprocess.call(["./install.sh", "--update"] + args, env=env)
+    if live_run:
+        try:
+            check(offline=True)
+        except Exception:
+            pass
+        put_live(state="done" if code == 0 else "failed", code=code, started=t0, ended=int(time.time()), pid=0,
+                 was=was, now=installed())
     print()
     try:
         input("Press Enter to close")

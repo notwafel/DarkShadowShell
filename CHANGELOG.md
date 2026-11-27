@@ -1,5 +1,16 @@
 # Changelog
 
+## V6.95: the cards fold back, the player shows the words, and the login screen is clean
+- **A card closes the way it opens, backwards.** Closing was a quick InOutCubic over 280 ms while opening was an OutBack over 620: the panel vanished instead of folding back. The way out now takes as long as the way in and plays the same curve reversed. Applies to the island, the bar's cards, the Wi-Fi / Bluetooth / sound / power menus and the control center
+- **The tab strip and the "You are up to date" box are glass, not slabs.** They sat on the solid card color: two dark bands on the card. Both keep the card's color with its transparency
+- **The date is a small weekday, a dot and the day.** "Fri, 27/11" was one grey line; the weekday is now small capitals in your key color, a dot, then the date in the numbers font beside the time pill
+- **Lyrics in the player, and an arrow back.** A Lyrics pill turns the player into the song's words (the same line-by-line view as the music card); the arrow above it returns to Today / System / About without closing the island
+- **The sound, Wi-Fi and Bluetooth panels use the bar's surface.** They made their own fixed 0.94 panel in near-black 5 %: next to the island they read as a different, darker material. The bar now publishes its opacity and every menu and the volume pill use the same surface and alpha as the island
+- **The login screen keeps the wallpaper sharp and drops the box behind the avatar.** The blurred copy was made tiny and blurred hard (0x10, then scaled back up), so the screen was a smear; sync no longer makes it and removes the old one. The avatar, name and password now sit on the wallpaper under the veil, with only the password field as a surface
+- **Apps that add themselves to autostart now start.** Hyprland and niri started only what their config names; an app with "Launch at startup" (Mullvad VPN and most GTK / Electron apps) writes `~/.config/autostart/<app>.desktop` and nothing ran it. `rice-autostart` reads the system and user XDG autostart folders at login (the user's file wins; Hidden, OnlyShowIn and X-GNOME-Autostart-enabled respected) and both configs call it
+- **Infinite Desktop no longer loses a window on the way out.** A window given its canvas place while the view was panned had numbers that mean nothing at 100 %: turning it off put the window outside the screen. Both ways now check the place against the window's screen and bring anything outside to the middle
+- **A tray app's 1x1 helper window is not in the Task view.** Mullvad VPN and the like can leave one mapped; it drew a blank card and picking it focused nothing. Windows smaller than 48 px, or with no class and no title, are left out
+
 ## V6.94: a fullscreen key, for the game that shrinks itself
 - **SUPER + SHIFT + F makes the focused window fullscreen** (press it again to go back). Meant for a game that shrank itself and no longer takes its own fullscreen or borderless setting: the key asks the window manager, not the game. Change it in Settings > System > Keybinds (the pencil next to it) or see it in SUPER + /; Hyprland and niri both
 

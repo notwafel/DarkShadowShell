@@ -1,5 +1,9 @@
 # Changelog
 
+## V6.97: Update now works again after an update in a terminal
+- **The terminal that ran the update waits at "Press Enter to close" after it finishes.** It is still a live process, so its pid counted as "an update is running": Update now opened nothing, and the same block stopped Settings > Update Center. The updater now believes a pid only if its command line is the updater, and a finished update (its live state says done) never counts, even with the window still open
+- **A finished update no longer leaves a false "updating in a terminal".** The new terminal marks the state before the window opens, so the next click does not overwrite the "running" the terminal reports, and a terminal that could not be opened says it failed instead
+
 ## V6.96: SUPER + SHIFT + F really makes the window fullscreen
 - **The key asked with the old dispatcher, and with mode 1.** A Hyprland with the Lua config (0.55 and newer) refuses the old dispatcher names, and mode 1 means maximize: the window only filled its tile, so it looked as if nothing happened. The key now calls the Lua fullscreen (toggle, full screen) directly
 

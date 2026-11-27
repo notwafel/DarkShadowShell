@@ -353,11 +353,11 @@ os.environ["UPDATES_JSON"] = '{"managers":[{"id":"pacman","count":3},{"id":"aur"
 assert m.packages_pending() == 3
 PYC
 
-# ---- rice-update gui: a terminal that closed must not leave "already updating" forever
+# ---- rice-update gui: a terminal that closed (or finished but still waits at "Press Enter") must not block Update
 mkdir -p "$tmp/upd2/home"
-HOME="$tmp/upd2/home" python3 - "$root/bin/rice-update" <<'PYC' && ok "a closed update terminal stops blocking the next Update" \
-  || bad "a closed update terminal still counts as running"
-import importlib.machinery, importlib.util, os, sys, time
+HOME="$tmp/upd2/home" python3 - "$root/bin/rice-update" <<'PYC' && ok "a closed or finished update terminal stops blocking the next Update" \
+  || bad "a closed or finished update terminal still counts as running"
+import importlib.machinery, importlib.util, os, subprocess, sys, time
 loader = importlib.machinery.SourceFileLoader("ru2", sys.argv[1])
 spec = importlib.util.spec_from_loader("ru2", loader)
 m = importlib.util.module_from_spec(spec)
@@ -365,17 +365,61 @@ loader.exec_module(m)
 os.makedirs(m.CACHE, exist_ok=True)
 mark = m.CACHE + "/update-terminal"
 pidf = m.CACHE + "/update-terminal.pid"
+def live(state, pid=0):
+    m.put_live(state=state, code=-1, started=int(time.time()), ended=0, pid=pid, was="")
 assert m.terminal_active() is False
-open(pidf, "w").write(str(os.getpid()))
-assert m.terminal_active() is True, "a live terminal was not seen"
-open(pidf, "w").write("99999999")
+live("terminal")
+# a terminal that runs the updater in its own window
+p = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)", "rice-update"])
+assert m.our_update(p.pid), "the updater's own process was not recognised"
+open(pidf, "w").write(str(p.pid))
+assert m.terminal_active() is True, "a live update terminal was not seen"
+p.terminate(); p.wait()
 assert m.terminal_active() is False, "a closed terminal still blocked"
-os.remove(pidf)
+assert not os.path.exists(pidf), "the pid of a closed terminal was kept"
+# a terminal that hands its window to another process (gnome-terminal): the fresh marker counts
 open(mark, "w").write("1")
 assert m.terminal_active() is True, "a terminal that hands off its window was not seen"
 old = time.time() - 1000
 os.utime(mark, (old, old))
 assert m.terminal_active() is False, "an old terminal marker still blocked"
+os.remove(mark)
+# the update ended, the window stays open at "Press Enter to close" (its pid is still alive)
+other = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+live("done")
+open(pidf, "w").write(str(other.pid))
+assert m.terminal_active() is False, "a finished update with an open window still blocked"
+# ... and the next Update opens a new terminal instead of treating that open window as it
+stale = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)", "rice-update"])
+live("done")
+open(pidf, "w").write(str(stale.pid))
+class Fake: pid = 4242
+opened = []
+real = m.subprocess.Popen
+m.subprocess.Popen = lambda *a, **k: (opened.append(a[0]), Fake())[1]
+try:
+    assert m.terminal_update() is True
+finally:
+    m.subprocess.Popen = real
+assert opened, "a finished update did not open a new terminal"
+assert m.live().get("state") == "terminal", "the new terminal did not mark the update as started"
+stale.terminate(); stale.wait()
+# a pid number that now belongs to something else is not an update (no fresh "opening" marker either)
+try:
+    os.remove(mark)
+except OSError:
+    pass
+live("terminal")
+open(pidf, "w").write(str(other.pid))
+assert m.terminal_active() is False, "a reused pid blocked the next Update"
+assert not os.path.exists(pidf), "a reused pid was kept in the pid file"
+assert not m.our_update(other.pid), "someone else's process was taken for the updater"
+# an update that is running already is not opened a second time
+upd = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)", "rice-update"])
+live("running", upd.pid)
+assert m.terminal_update() is True, "a running update opened a second terminal"
+upd.terminate(); upd.wait()
+other.terminate(); other.wait()
 PYC
 
 # ---- rice-update watch: a shell restart does not check GitHub again

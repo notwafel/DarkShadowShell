@@ -1,5 +1,12 @@
 # Changelog
 
+## V6.84: your wallpaper stays, the live one keeps playing, and Auto is yours
+- **The launcher's app icons sit on the shape you chose** (Edit mode > Icons): it drew its own default (or a cookie on the frequent apps) while the dock used your shape. Both read the same setting now, and the dock's own shape and the pill style's squircle next to it
+- **"Auto" follows your wallpaper again.** The cover of the song that plays repainted the shell whatever scheme you picked, so your grey came back as the album's colors on the next song. The cover's colors now belong to Auto only, and Auto has a choice next to it: **Your wallpaper** (as it always did) or **Now playing**
+- **An update no longer crashes the shell.** The installer swapped the shell's files under a running Quickshell, which reloads after every change: a reload between two swaps read a mix of old and new files, died, and the restart loop gave up until the next session (the reason a PC restart helped). The shell is stopped for the swap and started again once every file is in place
+- **An update keeps your wallpaper.** It put a random one of ours on when the remembered picture was gone, and could delete a retired wallpaper while it was on your screen. The one you pick is remembered (`~/.config/rice/wallpaper`), put back by an update, and never removed while it is shown
+- **A live wallpaper keeps playing when the colors change.** The color scheme ran the wallpaper script on the video, which stopped mpvpaper and left a still PNG. It now colors from the video's still frame and leaves the wallpaper alone
+
 ## V6.83: one Update Center, and packages from every supported distro
 - **Settings > Update Center and the dashboard's About tab do the same thing** (they did not): both show the shell, the system's packages, Flatpak and Snap, and the AUR ones, and both press the same button. One call decides: the shell updates in the background when nothing else waits, or everything runs in a terminal when packages do (they need your password)
 - **AUR packages are only shown.** An update no longer runs `paru -Syu`/`yay -Syu` (one broken build could take the rest with it); the packages the shell itself needs are the only ones `install.sh` upgrades, and it says so

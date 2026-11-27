@@ -353,6 +353,31 @@ os.environ["UPDATES_JSON"] = '{"managers":[{"id":"pacman","count":3},{"id":"aur"
 assert m.packages_pending() == 3
 PYC
 
+# ---- rice-update gui: a terminal that closed must not leave "already updating" forever
+mkdir -p "$tmp/upd2/home"
+HOME="$tmp/upd2/home" python3 - "$root/bin/rice-update" <<'PYC' && ok "a closed update terminal stops blocking the next Update" \
+  || bad "a closed update terminal still counts as running"
+import importlib.machinery, importlib.util, os, sys, time
+loader = importlib.machinery.SourceFileLoader("ru2", sys.argv[1])
+spec = importlib.util.spec_from_loader("ru2", loader)
+m = importlib.util.module_from_spec(spec)
+loader.exec_module(m)
+os.makedirs(m.CACHE, exist_ok=True)
+mark = m.CACHE + "/update-terminal"
+pidf = m.CACHE + "/update-terminal.pid"
+assert m.terminal_active() is False
+open(pidf, "w").write(str(os.getpid()))
+assert m.terminal_active() is True, "a live terminal was not seen"
+open(pidf, "w").write("99999999")
+assert m.terminal_active() is False, "a closed terminal still blocked"
+os.remove(pidf)
+open(mark, "w").write("1")
+assert m.terminal_active() is True, "a terminal that hands off its window was not seen"
+old = time.time() - 1000
+os.utime(mark, (old, old))
+assert m.terminal_active() is False, "an old terminal marker still blocked"
+PYC
+
 # ---- the other supported distros: Update Center checks and updates what that distro has
 mkdir -p "$tmp/dis"
 cat >"$tmp/dis/rice-term" <<'EOS'

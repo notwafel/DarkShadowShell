@@ -258,16 +258,27 @@ def check(offline=False):
     return out
 
 
+def terminal_active():
+    """a terminal opened for the update a moment ago, or one still on screen: its pid is in update-terminal.pid.
+    (the terminal that is gone left the live state on "terminal": without this, every later Update did nothing)"""
+    try:
+        return alive(int(open(CACHE + "/update-terminal.pid").read().strip()))
+    except (OSError, ValueError):
+        pass
+    # a terminal that hands the window to another process (gnome-terminal) is gone at once: its fresh marker counts
+    try:
+        return time.time() - os.path.getmtime(CACHE + "/update-terminal") < 90
+    except OSError:
+        return False
+
+
 def terminal_update():
     """ONE terminal with rice-update in it (at most one a minute), without the background update's settings: an old
     installer (before V4.56) that saw RICE_GUI in its terminal opened another terminal instead of asking, endlessly"""
     mark = CACHE + "/update-terminal"
-    try:
-        if time.time() - os.path.getmtime(mark) < 60:
-            # a terminal for this same update opened a moment ago: that one is this update, not a failure
-            return True
-    except OSError:
-        pass
+    if terminal_active():
+        # a terminal for this same update opened a moment ago: that one is this update, not a failure
+        return True
     os.makedirs(CACHE, exist_ok=True)
     open(mark, "w").write(str(int(time.time())))
     env = dict(os.environ)
@@ -282,8 +293,12 @@ def terminal_update():
     if os.access(HOME + "/.local/bin/rice-term", os.X_OK):        # your terminal (Settings > Look & Feel)
         cmd = [HOME + "/.local/bin/rice-term", "-e", HOME + "/.local/bin/rice-update"]
     try:
-        subprocess.Popen(cmd, start_new_session=True, env=env,
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        p = subprocess.Popen(cmd, start_new_session=True, env=env,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            open(CACHE + "/update-terminal.pid", "w").write(str(p.pid))
+        except OSError:
+            pass
         return True
     except OSError:
         return False
@@ -353,7 +368,10 @@ def gui(args):
         print("already updating")
         return 0
     st = live()
-    if st.get("state") == "terminal" or (st.get("state") == "running" and alive(st.get("pid"))):
+    if st.get("state") == "terminal" and terminal_active():
+        print("already updating")
+        return 0
+    if st.get("state") == "running" and alive(st.get("pid")):
         print("already updating")
         return 0
     r = repo()

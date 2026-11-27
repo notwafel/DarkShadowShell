@@ -243,7 +243,10 @@ def check(offline=False):
     out = {"installed": have, "latest": new or have, "update": newer or ahead > 0,
            "changes": ahead, "commit": getattr(latest, "sha", ""),
            "news": news(getattr(latest, "log", ""), new or have)[:4],
-           "checked": int(time.time()), "error": err if not new else ""}
+           "checked": int(time.time()),
+           # a failed fetch used to be dropped whenever any version was known, so the page showed the last
+           # version it had seen (the stale branch) as a fresh answer: "Check for updates" looked dead
+           "error": err}
     if is_zip(repo()):
         out["update"] = True
         out["error"] = ZIP_MSG

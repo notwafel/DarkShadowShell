@@ -243,7 +243,8 @@ Item {
                     text: page.running ? (page.lv.state === "terminal" ? I18n.t("A terminal opened to show what changes and ask: answer y there.")
                             : (page.current ? page.current.t : I18n.t("Getting the newest version from GitHub...")))
                         : page.failed ? I18n.t("Nothing is broken: what was done stays, the rest keeps your old files. Try again, or look at the steps below.")
-                        : page.hasUpdate ? (page.st.installed !== page.st.latest ? I18n.t("You have V%1.", page.st.installed) : I18n.t("%1 new changes on GitHub.", page.st.changes))
+                        : page.hasUpdate ? (page.st.installed !== page.st.latest ? I18n.t("You have V%1.", page.st.installed) : I18n.t("%1 new changes on GitHub.", page.st.changes)) +
+                            (page.st.checked ? "  ·  " + I18n.t("checked %1", page.ago(page.st.checked)) : "")
                         : I18n.t("DarkShadow's Shell V%1", page.st.installed || "?") + (page.st.checked ? "  ·  " + I18n.t("checked %1", page.ago(page.st.checked)) : "") }
                 T { visible: page.pkgTotal > 0 && !page.running; kind: "reading"; font.pixelSize: 12; color: M3.inkPrimaryC; opacity: 0.75
                     width: parent.width; wrapMode: Text.WordWrap

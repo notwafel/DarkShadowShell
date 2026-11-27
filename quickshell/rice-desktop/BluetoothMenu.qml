@@ -12,10 +12,12 @@ PanelWindow {
     NPal { id: sqPal; theme: "shell"; alpha: 0.94 }
     property bool open: false
     property real t: 0
-    // t runs evenly; the menu eases on its own: it grows out of the bar (quick start, soft landing) and
-    // folds back up quickly when it closes
-    Behavior on t { NumberAnimation { duration: wm.open ? 520 : 200; easing.type: Easing.Linear } }
-    readonly property real et: 1 - Math.pow(1 - t, 4)
+    // V6.86: the island's motion: 620 ms in (Light mode shorter), 280 ms out, a small overshoot so it springs,
+    // and the 8 px gap to the bar opens only at the end: the card peels off the bar instead of jumping away
+    Behavior on t { NumberAnimation { duration: wm.open ? (Look.lite ? 340 : 620) : 280
+        easing.type: wm.open ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: Look.lite ? 0 : 0.12 } }
+    readonly property real et: t
+    readonly property real gapA: 8 * Math.max(0, Math.min(1, (wm.t - 0.45) / 0.35))
     onOpenChanged: t = open ? 1 : 0
 
     // ---------- look ----------
@@ -163,19 +165,19 @@ PanelWindow {
         height: head.height + 14 + wm.listH + (wm.msg !== "" ? (wm.msg.length > 52 ? 48 : 34) : 0) + 14
         Behavior on height { NumberAnimation { duration: 360; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph } }
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-        x: wm.side ? (wm.atRight ? wm.width - wm.sideSpace - width : wm.sideSpace)
+        x: wm.side ? (wm.atRight ? wm.width - wm.sideSpace - width - wm.gapA : wm.sideSpace + wm.gapA)
                      : Math.max(12, Math.min(wm.width - width - 12, wm.cx - width / 2))
         y: wm.side ? Math.max(12, Math.min(wm.height - height - 12, (wm.cy < 0 ? wm.height / 2 : wm.cy) - 30))
-                     : (wm.atBottom ? wm.height - wm.barSpace - height : wm.barSpace)
+                     : (wm.atBottom ? wm.height - wm.barSpace - height - wm.gapA : wm.barSpace + wm.gapA)
         radius: Look.sq ? 0 : (20)
         color: wm.bg
         border.width: 1; border.color: wm.line
         opacity: Math.min(1, wm.et * 1.6)
-        scale: 0.9 + 0.1 * wm.et
+        scale: 0.94 + 0.06 * wm.et
         transformOrigin: wm.side ? (wm.atRight ? Item.Right : Item.Left) : (wm.atBottom ? Item.Bottom : Item.Top)
         // it comes out of the bar: down from a top bar, up from a bottom one, sideways from a bar on the side
-        transform: Translate { x: wm.side ? (1 - wm.et) * (wm.atRight ? 26 : -26) : 0
-                               y: wm.side ? 0 : (1 - wm.et) * (wm.atBottom ? 26 : -26) }
+        transform: Translate { x: wm.side ? (1 - wm.et) * (wm.atRight ? 10 : -10) : 0
+                               y: wm.side ? 0 : (1 - wm.et) * (wm.atBottom ? 10 : -10) }
         focus: true
         Keys.onEscapePressed: wm.hide()
         MouseArea { anchors.fill: parent }

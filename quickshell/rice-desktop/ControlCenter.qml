@@ -31,7 +31,7 @@ PanelWindow {
     // V6.85: the island's motion, so the corner menu and the island feel like one thing: the same soft overshoot
     // on the way in, a quicker way out; Light mode (slower computers) is shorter (fewer frames to draw)
     Behavior on t { NumberAnimation { duration: cc.open ? (Look.lite ? 340 : 620) : 280
-        easing.type: cc.open ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: Look.lite ? 0 : 0.9 } }
+        easing.type: cc.open ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: Look.lite ? 0 : 0.12 } }
     function ease(p) { return 1 - Math.pow(1 - p, 4) }
     // the panel follows t itself, so the small overshoot on the way in is actually seen (ease() flattened it)
     readonly property real et: t

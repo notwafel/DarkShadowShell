@@ -1,5 +1,13 @@
 # Changelog
 
+## V6.85: menus that let go, one icon size, and a music card in the island's clothes
+- **A menu closes when you click outside it.** The bar's cards (weather, music, date) and the tray menu stayed open over other windows: the click that was supposed to close them reached the app under it, because the bar's click catcher lay under the windows. While a card is up the bar's window now covers the screen, so any click outside closes the card and is spent there, not in the app behind it. The corner menus (Control Center, Wi-Fi, Bluetooth, volume, power) already closed on a click outside; they keep that, and lose the keyboard grab below
+- **An open menu no longer takes the keyboard.** The bar, the Control Center and the corner menus grabbed it while open, so every key went to the menu's Esc handler and nothing could be typed in the app behind it until the menu was noticed and closed. They leave the keyboard alone now; the Wi-Fi password field is the only thing that asks for it
+- **The corner panel opens like the island**: the same 620 ms with the same soft overshoot (and a quick 280 ms on the way out), the panel stays near the bar while it opens and the 8 px gap opens at the end, with the thin glass edge and one sweep of light over the surface. The preview in Settings > Island uses the same timing
+- **The music card wears the island's clothes.** Its title is the island's 17 semibold and its artist 13 (it was a tight 19), the cover fills the shape you picked in Settings instead of a square picture inside a second, turning shape that showed at the sides, and the volume line under the buttons can be dragged or tapped now, not only the +/- buttons
+- **The bar's icons are one size** (18): the volume icon was 22 and the battery and the music note 16 next to Wi-Fi and Bluetooth at 18, so they read as three different sets
+- **The island's player card has the same surface** as Today, System and About: a key-color gradient over it made it look lighter. The player's card is now the island's own surface, like every other card
+
 ## V6.84: your wallpaper stays, the live one keeps playing, and Auto is yours
 - **The launcher's app icons sit on the shape you chose** (Edit mode > Icons): it drew its own default (or a cookie on the frequent apps) while the dock used your shape. Both read the same setting now, and the dock's own shape and the pill style's squircle next to it
 - **"Auto" follows your wallpaper again.** The cover of the song that plays repainted the shell whatever scheme you picked, so your grey came back as the album's colors on the next song. The cover's colors now belong to Auto only, and Auto has a choice next to it: **Your wallpaper** (as it always did) or **Now playing**

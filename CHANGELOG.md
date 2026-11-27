@@ -1,5 +1,8 @@
 # Changelog
 
+## V7.05: the island's drop takes 500 ms, not 280
+- **The drop is no longer a blink.** 280 ms made the 20 px fall and the neck read as a single flash; the card now hangs attached for the first ~100 ms, the neck stretches, and it lands over 500 ms in all. The light sweep is 500 ms too
+
 ## V7.04: the island hangs for a moment, then the drop falls 20 px
 - **The drop is visible now.** The card is full size and attached to the island; for the first part of the 280 ms it just hangs there, then the neck stretches and pinches off while it falls 20 px (InOutCubic: still start, soft landing). V7.03 fell only 8-14 px with an ease that did most of it in the first 60 ms, so it read as "it appears"
 - The neck starts as wide as the pill and narrows to nothing as the card lands; the bottom bar's card also sits above the bar again (it was offset by a bar height)

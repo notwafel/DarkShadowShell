@@ -604,11 +604,11 @@ Item {
         // (a container transform: size, place and corners morph together, with a little overshoot)
         property real t: isl.big ? 1 : 0
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
-        // V7.04: the card is already its full size and attached to the island; it hangs there for the first part
+        // V7.05: the card is already its full size and attached to the island; it hangs there for the first part
         // of the motion, then the neck stretches and it falls away (InOutCubic: a still start, a soft landing).
-        // 280 ms is 2.2x shorter than V6.98; the old width/height growth from the pill made a tiny shape appear
-        // first and the rest widen after it, which read as a second animation instead of one drop
-        Behavior on t { NumberAnimation { duration: Look.lite ? 150 : 280
+        // 500 ms: 280 ms was a blink. The old width/height growth from the pill made a tiny shape appear first and
+        // the rest widen after it, which read as a second animation instead of one drop
+        Behavior on t { NumberAnimation { duration: Look.lite ? 240 : 500
             easing.type: Easing.InOutCubic } }
         property real cwA: isl.cw
         property real chA: isl.ch
@@ -655,7 +655,7 @@ Item {
                 running: isl.big
                 PauseAnimation { duration: 90 }
                 NumberAnimation { target: sheen; property: "x"; from: -sheen.width; to: card.width + sheen.width
-                    duration: 280; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
+                    duration: 500; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
             }
         }
 

@@ -190,7 +190,9 @@ def snapshot_tool():
 def terminal(script, title):
     """runs a bash script in the user's terminal; it waits for Enter at the end so it can be read"""
     os.makedirs(CACHE, exist_ok=True)
-    f = CACHE + "/care-run.sh"
+    # V7.00: one file per run. A second clean-up while the first window is still open used to rewrite the script the
+    # first bash was still reading, so it could carry on in the middle of the new one and run the wrong command
+    f = CACHE + "/care-run-%d.sh" % os.getpid()
     try:
         os.remove(PIDF)
     except OSError:
@@ -198,7 +200,7 @@ def terminal(script, title):
     # the pid file is there while it works: Settings (rice-care wait) looks again once it is gone
     open(f, "w").write("#!/usr/bin/env bash\nset -u\nP=\"" + PIDF + "\"\necho $$ > \"$P\"\ntrap 'rm -f \"$P\"' EXIT\n"
                        "B=$'\\e[1m'; G=$'\\e[32m'; Z=$'\\e[0m'\necho \"${B}" + title + "${Z}\"\necho\n" + script
-                       + "\nrm -f \"$P\"\necho\necho \"${G}${B}Done.${Z} Press Enter to close.\"\nread -r _\n")
+                       + "\nrm -f \"$P\"\necho\necho \"${G}${B}Done.${Z} Press Enter to close.\"\nread -r _\nrm -f \"$0\"\n")
     os.chmod(f, 0o700)
     term = BIN + "rice-term"
     cmd = [term, "--class", "rice-care", "-e", "bash", f] if os.access(term, os.X_OK) else ["kitty", "--class", "rice-care", "bash", f]

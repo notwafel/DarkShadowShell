@@ -43,13 +43,9 @@ Item {
         opacity: mp.st(0)
         scale: 0.55 + 0.45 * mp.st(0)
         rotation: -24 * (1 - mp.st(0))
-        // a halo of your shape behind it, turning while the song plays
-        Blob {
-            anchors.centerIn: parent; width: parent.width + 16; height: width
-            kind: Look.shape; color: Qt.rgba(mp.acc.r, mp.acc.g, mp.acc.b, 0.22)
-            SlowSpin { turn: 360; period: 22000; running: mp.on && Player.playing && !Look.lite }
-        }
-        ShapeImage { anchors.fill: parent; anchors.margins: 6; kind: "square"; source: Player.art; empty: mp.chip; fallbackColor: mp.dim }
+        // V6.85: like the island's player: the shape you picked, filled with the cover. It used to be a square
+        // picture inside a second, turning shape, so that shape showed at the sides of the cover
+        ShapeImage { anchors.fill: parent; kind: Look.shape; source: Player.art; empty: mp.chip; fallbackColor: mp.dim }
     }
     Column {
         x: cov.x + cov.width + 16; y: 10
@@ -75,10 +71,11 @@ Item {
                 Text { id: idt; anchors.verticalCenter: parent.verticalCenter; text: Player.p ? (Player.p.identity || "Music") : ""; color: mp.acc
                     font.family: Fonts.main; font.pixelSize: 11; font.weight: Font.DemiBold } }
         }
+        // V6.85: the island's player typography (17 demi-bold, 13 for the artist), not the tight bold 19
         Text { width: parent.width; text: Player.title; color: mp.fg; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight
-            font.family: Fonts.main; font.pixelSize: 19; font.weight: Font.Bold; lineHeight: 0.95 }
+            font.family: Fonts.main; font.pixelSize: 17; font.weight: Font.DemiBold }
         Text { width: parent.width; text: Player.artist + (Player.album !== "" ? "  ·  " + Player.album : ""); color: mp.dim; elide: Text.ElideRight
-            font.family: Fonts.main; font.pixelSize: 12 }
+            font.family: Fonts.main; font.pixelSize: 13 }
     }
 
     // ---------- the lyrics ----------
@@ -160,14 +157,22 @@ Item {
         Btn { w: 56; icon: "skip_next"; g: 0xF04AD; onHit: Player.next() }
         Btn { w: 46; icon: "volume_up"; g: 0xF057E; onHit: btns.setVol(0.05) }
     }
-    // the volume, as a thin line under the buttons
-    Rectangle {
+    // the volume, as a thin line under the buttons. V6.85: it sets the volume too (drag it or tap a point on it);
+    // before, only the + / - buttons could change it
+    Item {
         anchors.horizontalCenter: parent.horizontalCenter
-        y: btns.y + 56; width: 150; height: 4; radius: Look.sq ? 0 : (2)
-        color: Qt.rgba(mp.acc.r, mp.acc.g, mp.acc.b, 0.18)
+        y: btns.y + 48; width: 150; height: 20
         opacity: mp.st(5)
-        Rectangle { width: Math.max(4, parent.width * Math.min(1, btns.vol)); height: 4; radius: Look.sq ? 0 : (2); color: mp.acc
-            Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } } }
+        Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 4; radius: Look.sq ? 0 : (2)
+            color: Qt.rgba(mp.acc.r, mp.acc.g, mp.acc.b, 0.18) }
+        Rectangle { anchors.verticalCenter: parent.verticalCenter; width: Math.max(4, parent.width * Math.min(1, btns.vol)); height: 4; radius: Look.sq ? 0 : (2); color: mp.acc
+            Behavior on width { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } } }
+        MouseArea {
+            anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+            function put(m) { Vol.set(mp.sink, Math.max(0, Math.min(1, m.x / width))) }
+            onPressed: function(m) { put(m) }
+            onPositionChanged: function(m) { if (pressed) put(m) }
+        }
     }
 
     component Btn: Item {

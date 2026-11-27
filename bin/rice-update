@@ -252,7 +252,11 @@ def check(offline=False):
         out["error"] = ZIP_MSG
     os.makedirs(CACHE, exist_ok=True)
     try:
-        json.dump(out, open(STATE, "w"))
+        # V7.00: a reader (the watch loop, the About tab) must never see half a file: the answer goes beside the
+        # old one and is swapped in whole, as the other state files here do
+        tmp = STATE + ".new"
+        json.dump(out, open(tmp, "w"))
+        os.replace(tmp, STATE)
     except OSError:
         pass
     return out
@@ -302,7 +306,7 @@ def terminal_active():
     return live().get("state") in ("terminal", "running") and terminal_open()
 
 
-def terminal_update():
+def terminal_update(extra=None):
     """ONE terminal with rice-update in it (at most one a minute), without the background update's settings: an old
     installer (before V4.56) that saw RICE_GUI in its terminal opened another terminal instead of asking, endlessly"""
     mark = CACHE + "/update-terminal"
@@ -328,11 +332,13 @@ def terminal_update():
         t = next((x for x in ("kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal") if shutil.which(x)), t)
     # V6.99: your terminal first, then the one found, so a configured terminal that cannot start (a missing
     # display, an unknown flag) still gets a window instead of looking like a dead Update now
+    # V7.00: flags like --no-upgrade travel with the terminal (rice-update with no command passes them to install.sh)
+    tail = [HOME + "/.local/bin/rice-update"] + list(extra or [])
     tries = []
     if os.access(HOME + "/.local/bin/rice-term", os.X_OK):
-        tries.append([HOME + "/.local/bin/rice-term", "-e", HOME + "/.local/bin/rice-update"])
-    if [t, "-e", HOME + "/.local/bin/rice-update"] not in tries:
-        tries.append([t, "-e", HOME + "/.local/bin/rice-update"])
+        tries.append([HOME + "/.local/bin/rice-term", "-e"] + tail)
+    if [t, "-e"] + tail not in tries:
+        tries.append([t, "-e"] + tail)
     for cmd in tries:
         try:
             p = subprocess.Popen(cmd, start_new_session=True, env=env,
@@ -511,7 +517,7 @@ def update_all(args):
     if want == "--gui":
         return gui(args)
     if want == "--terminal" or packages_pending() > 0:
-        if not terminal_update():
+        if not terminal_update(args):
             # V6.97: no terminal opened: say it failed instead of showing an update in a terminal that is not there
             t0 = int(time.time())
             open(LIVE_LOG, "w").write("    \u2718 No terminal could be opened. Run  rice-update  in one to apply it.\n")

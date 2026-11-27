@@ -331,6 +331,48 @@ s = open(sys.argv[1]).read()
 assert 0 <= s.find("rice-mirrors") < s.find("pacman -Syu")
 PYC
 
+# ---- rice-busy: a failed read keeps the last answer instead of showing every widget over the windows
+python3 - "$root/bin/rice-busy" <<'PYB' && ok "a failed read does not report an empty desktop" || bad "a failed read hides nothing and shows the widgets"
+import importlib.machinery, importlib.util, sys
+loader = importlib.machinery.SourceFileLoader("rb2", sys.argv[1])
+spec = importlib.util.spec_from_loader("rb2", loader)
+m = importlib.util.module_from_spec(spec)
+loader.exec_module(m)
+m.hypr = lambda what: None if what == "clients" else []
+assert m.busy("DP-1") is None, "a failed read came back as False"
+PYB
+
+# ---- rice-canvasd: niri's floated list only grows when niri accepted the action, and the state file is swapped in whole
+mkdir -p "$tmp/canvas/home"
+HOME="$tmp/canvas/home" python3 - "$root/bin/rice-canvasd" <<'PYC' && ok "a refused niri action does not grow the floated list; the state is written whole" \
+  || bad "rice-canvasd grows the floated list on a failed action, or leaves a half-written state"
+import importlib.machinery, importlib.util, json, os, sys
+loader = importlib.machinery.SourceFileLoader("rc2", sys.argv[1])
+spec = importlib.util.spec_from_loader("rc2", loader)
+m = importlib.util.module_from_spec(spec)
+loader.exec_module(m)
+saved = []
+m.nwindows = lambda: [{"id": 7, "workspace_id": 1, "is_floating": False}]
+m.nstate = lambda: {"on": True, "ws": 1, "floated": []}
+m.nsave = saved.append
+m.nact = lambda name, **kw: None                 # niri refused (fullscreen, locked layout)
+m.niri_tick()
+assert saved == [], "the state was saved after a refused action"
+m.nstate = lambda: {"on": True, "ws": 1, "floated": []}
+m.nact = lambda name, **kw: {"Moved": True}
+m.niri_tick()
+assert saved and saved[-1]["floated"] == [7], saved
+m.nstate = lambda: {"on": True, "ws": 1, "floated": [7]}
+saved.clear()
+m.niri_tick()                                     # still tiling somehow: the same id must not land twice
+assert saved == [], "the same window id was added twice"
+os.makedirs(os.path.dirname(m.NSTATE), exist_ok=True)
+open(m.NSTATE, "w").write('{"on": true, "ws": 1, "floated": [7]}')
+m.nsave({"on": True, "ws": 1, "floated": [7]})
+assert json.load(open(m.NSTATE))["floated"] == [7]
+assert not os.path.exists(m.NSTATE + ".new"), "a temporary state file was left behind"
+PYC
+
 # ---- rice-update update: AUR alone does not move the shell update to a terminal
 mkdir -p "$tmp/upd/home/.local/bin"
 cat >"$tmp/upd/home/.local/bin/rice-care" <<'EOS'
@@ -453,15 +495,19 @@ loader.exec_module(m)
 os.makedirs(m.CACHE, exist_ok=True)
 m.packages_pending = lambda: (_ for _ in ()).throw(AssertionError("the package check ran"))
 calls = []
-m.terminal_update = lambda: (calls.append("terminal"), True)[1]
+m.terminal_update = lambda extra=None: (calls.append(list(extra or [])), True)[1]
 assert m.update_all(["--terminal"]) == 0
-assert calls == ["terminal"], calls
+assert calls == [[]], calls
 m.gui = lambda a: (calls.append(a), 3)[1]
 assert m.update_all(["--gui", "--no-packages"]) == 3
 assert calls[-1] == ["--no-packages"], calls
-m.terminal_update = lambda: False
+m.terminal_update = lambda *a: False
 m.update_all(["--terminal"])
 assert m.live().get("state") == "failed", "a terminal that could not open was not reported as failed"
+# a flag like --no-upgrade still reaches install.sh through the terminal (the terminal runs rice-update with it)
+m.terminal_update = lambda extra=None: (calls.append(list(extra or [])), True)[1]
+m.update_all(["--terminal", "--no-upgrade"])
+assert calls[-1] == ["--no-upgrade"], calls
 PYC
 
 grep -q '"update", "--terminal"' "$root/quickshell/rice-desktop/DynIsland.qml" \

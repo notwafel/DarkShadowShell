@@ -223,9 +223,10 @@ sync() {
   fi
   if [ -n "$w" ]; then
     if [ -n "$im" ]; then
-      # a sharp one at screen size, and a blurred one (made small first: fast)
+      # V6.95: a sharp one at screen size only. The blurred copy (0x10 on a 640 px image, ~30 px once scaled) hid
+      # the wallpaper behind the login card; the card is gone too, so the screen keeps the wallpaper and a veil
       $im "$w[0]" -resize '2560x1440^' -quality 90 "$U/bg.jpg.tmp.jpg" 2>/dev/null && mv -f "$U/bg.jpg.tmp.jpg" "$U/bg.jpg"
-      $im "$w[0]" -resize '640x360^' -blur 0x10 -resize '1920x1080^' -quality 85 "$U/blur.jpg.tmp.jpg" 2>/dev/null && mv -f "$U/blur.jpg.tmp.jpg" "$U/blur.jpg"
+      rm -f "$U/blur.jpg"
     else
       cp -f "$w" "$U/bg.jpg"; rm -f "$U/blur.jpg"
     fi
@@ -237,7 +238,7 @@ sync() {
   {
     echo "[General]"
     [ -f "$U/bg.jpg" ] && echo "background=$U/bg.jpg"
-    [ -f "$U/blur.jpg" ] && echo "backgroundBlur=$U/blur.jpg"
+
     [ -n "$lv" ] && [ -f "$lv" ] && echo "backgroundVideo=$lv"
     [ -f "$U/font.ttf" ] && echo "font=$U/font.ttf"
     echo "avatarDir=$U/faces"

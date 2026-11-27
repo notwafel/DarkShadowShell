@@ -40,13 +40,16 @@ theme_now() {
   done
   echo "$v"
 }
+agent_runs() { pgrep -u "$(id -u)" -f 'polkit.*agent|hyprpolkitagent|polkit-gnome-authentication' >/dev/null 2>&1; }
 sudo_run() {
   # in a terminal: sudo asks there. From Settings: pkexec's window, but only when its agent runs: without one
   # pkexec only says "authentication is needed to run ... as the super user" and nothing happens
   if [ -t 0 ] && command -v sudo >/dev/null 2>&1; then sudo "$@"; return; fi
-  if command -v pkexec >/dev/null 2>&1 &&
-     pgrep -u "$(id -u)" -f 'polkit.*agent|hyprpolkitagent|polkit-gnome-authentication' >/dev/null 2>&1; then
-    pkexec "$@"; return
+  if command -v pkexec >/dev/null 2>&1; then
+    # the session may have started before the shell started the agent at login (V6.86): start it now, then ask.
+    # Without this, an update could not put the theme in until the next log out and back in
+    agent_runs || { [ -x "$HOME/.local/bin/rice-services" ] && "$HOME/.local/bin/rice-services" polkit >/dev/null 2>&1; }
+    if agent_runs; then pkexec "$@"; return; fi
   fi
   [ -n "${RICE_SDDM_TERM:-}" ] && { echo "no password window: a polkit agent is not running"; return 1; }
   # no window to type in: the step goes to a terminal, where sudo can ask

@@ -1,5 +1,8 @@
 # Changelog
 
+## V6.89: the login screen can be put in without logging out first
+- **An update now installs the new SDDM theme in the same session.** The password window needs a polkit agent, and the shell only started one at login since V6.86: a session that began before that had none, so the theme step could not ask and kept the old look. `rice-sddm` starts the agent itself (`rice-services polkit`) before pkexec, so Settings and the updater can put the theme in right away
+
 ## V6.88: the shapes stay, the island does not jump, and the words sit on the card
 - **The cover is a rounded square in the bar's music card only.** The island's player and the Control Center's (where your notifications are) got the shape back: cropped into a cookie the cover lost its edges only in that one small card, and the rest never needed changing. The Control Center's song text is back to 15/12 as well
 - **Clicking the island no longer makes it jump.** The click also started the "a drop landed" squeeze (9% flatter, with a bouncy return) while the card grew out of the pill, so the island seemed to jump up and snap back before the real animation. The squeeze stays for notifications and the volume/workspace flashes

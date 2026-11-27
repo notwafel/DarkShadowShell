@@ -14,8 +14,8 @@ PanelWindow {
     property real t: 0
     // V6.86: the island's motion: 620 ms in (Light mode shorter), 280 ms out, a small overshoot so it springs,
     // and the 8 px gap to the bar opens only at the end: the card peels off the bar instead of jumping away
-    Behavior on t { NumberAnimation { duration: wm.open ? (Look.lite ? 340 : 620) : 280
-        easing.type: wm.open ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: Look.lite ? 0 : 0.12 } }
+    Behavior on t { NumberAnimation { duration: Look.lite ? 340 : 620
+        easing.type: wm.open ? Easing.OutBack : Easing.InBack; easing.overshoot: Look.lite ? 0 : 0.12 } }
     readonly property real et: t
     readonly property real gapA: 8 * Math.max(0, Math.min(1, (wm.t - 0.45) / 0.35))
     onOpenChanged: t = open ? 1 : 0

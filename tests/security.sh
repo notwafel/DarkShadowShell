@@ -187,7 +187,9 @@ grep -q '"outdated": true' "$tmp/sd/state" && ok "a changed theme.conf marks the
 printf '%s\n' '[General]' 'clock=stacked' >"$tmp/sd/theme/theme.conf"
 sd_state >"$tmp/sd/state"
 grep -q '"outdated": false' "$tmp/sd/state" && ok "the same theme.conf is not outdated" || bad "the same theme.conf was called outdated"
-grep -q 'MODE" = update.*outdated' "$root/install.sh" && ok "an update puts the new login screen in" || bad "an update leaves the login screen old"
+grep -q 'MODE" = update.*sddm_need' "$root/install.sh" && ok "an update puts the new login screen in" || bad "an update leaves the login screen old"
+grep -q '"installed": false.*"dm": "sddm"' "$root/install.sh" \
+  && ok "an update also puts in a login theme that never got in" || bad "a login theme that never got in is never installed"
 
 # ---- rice-busy: a window far away on the Infinite Desktop's canvas does not hide the widgets
 python3 - "$root/bin/rice-busy" <<'PYB' && ok "only a tiled window on that screen hides the widgets" || bad "a window off the screen hides the widgets"

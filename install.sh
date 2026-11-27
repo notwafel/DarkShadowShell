@@ -1150,7 +1150,12 @@ step_finish() {
     sddm_st="$("$BIN/rice-sddm" state 2>/dev/null || true)"
     # the theme lives in /usr/share and only its wallpaper followed your wallpaper so far: an update brought new
     # theme files too, and they are put in (it asks for your password; when that is cancelled the old one stays)
-    if [ "$MODE" = update ] && [[ "$sddm_st" == *'"outdated": true'* ]]; then
+    # V6.90: and when SDDM is the login screen but the theme never got in (an update before the agent fix), the
+    # update puts it in too: nothing else would ever come back to it
+    local sddm_need=false
+    [[ "$sddm_st" == *'"outdated": true'* ]] && sddm_need=true
+    [[ "$sddm_st" == *'"installed": false'* && "$sddm_st" == *'"dm": "sddm"'* ]] && sddm_need=true
+    if [ "$MODE" = update ] && [ "$sddm_need" = true ]; then
       T=300 task "Login screen (SDDM): the new theme" t "$BIN/rice-sddm" install \
         || warn "The login screen keeps its old look (Settings > Desktop > Idle & Lockscreen > Login screen > Update it)"
     fi

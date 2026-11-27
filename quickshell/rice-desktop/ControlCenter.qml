@@ -425,15 +425,21 @@ PanelWindow {
                             color: cc.primary
                             track: pal.track
                         }
-                        ShapeImage { anchors.centerIn: parent; width: 118; height: 118; kind: "cookie"; source: Player.art; empty: cc.cardHi
-                            SlowSpin { turn: 360; period: 24000; running: cc.open && Player.playing && !Look.lite } }
+                        // a rounded square, cropped to fill: the same as the bar's music card (cropped into a
+                        // cookie it looked wrong)
+                        Rectangle {
+                            anchors.centerIn: parent; width: 118; height: 118; radius: Look.sq ? 0 : 22; clip: true; color: cc.cardHi
+                            Image { id: ccArt; anchors.fill: parent; source: Player.art || ""; fillMode: Image.PreserveAspectCrop; asynchronous: true }
+                            MIcon { anchors.centerIn: parent; size: 30; name: "music_note"; glyph: String.fromCodePoint(0xF075A); color: cc.dim
+                                visible: ccArt.status !== Image.Ready }
+                        }
                     }
                     Column {
                         x: art.x + art.width + 12; anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - x - 14
                         spacing: 4
-                        Text { width: parent.width; elide: Text.ElideRight; text: Player.title; color: cc.fg; font.family: Fonts.main; font.pixelSize: 15; font.weight: Font.DemiBold }
-                        Text { width: parent.width; elide: Text.ElideRight; text: Player.artist; color: cc.dim; font.family: Fonts.main; font.pixelSize: 12; visible: text !== "" }
+                        Text { width: parent.width; elide: Text.ElideRight; text: Player.title; color: cc.fg; font.family: Fonts.main; font.pixelSize: 17; font.weight: Font.DemiBold }
+                        Text { width: parent.width; elide: Text.ElideRight; text: Player.artist; color: cc.dim; font.family: Fonts.main; font.pixelSize: 13; visible: text !== "" }
                         WavyLine {
                             width: parent.width; height: 22
                             value: Player.frac

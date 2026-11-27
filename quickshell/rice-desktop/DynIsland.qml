@@ -864,10 +864,14 @@ Item {
         // ---------- the player ----------
         Face {
             name: "media"; inCard: true; width: 470; height: 184
-            ShapeImage {
-                x: 16; y: 16; width: 78; height: 78
-                kind: Look.shape; source: Player.art
-                empty: isl.pal ? isl.pal.container : "#333"; fallbackColor: isl.pal ? isl.pal.inkContainer : "#ccc"
+            // a rounded square cropped to fill, like the bar's music card (the album art inside a cookie or a
+            // flower lost its edges)
+            Rectangle {
+                x: 16; y: 16; width: 78; height: 78; radius: Look.sq ? 0 : 16; clip: true
+                color: isl.pal ? isl.pal.container : "#333"
+                Image { id: islArt; anchors.fill: parent; source: Player.art || ""; fillMode: Image.PreserveAspectCrop; asynchronous: true }
+                MIcon { anchors.centerIn: parent; size: 22; name: "music_note"; glyph: String.fromCodePoint(0xF075A)
+                    color: isl.pal ? isl.pal.inkContainer : "#ccc"; visible: islArt.status !== Image.Ready }
             }
             Column {
                 x: 110; y: 18; width: parent.width - 110 - 70; spacing: 3

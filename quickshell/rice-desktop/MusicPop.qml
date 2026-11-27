@@ -43,9 +43,14 @@ Item {
         opacity: mp.st(0)
         scale: 0.55 + 0.45 * mp.st(0)
         rotation: -24 * (1 - mp.st(0))
-        // V6.85: like the island's player: the shape you picked, filled with the cover. It used to be a square
-        // picture inside a second, turning shape, so that shape showed at the sides of the cover
-        ShapeImage { anchors.fill: parent; kind: Look.shape; source: Player.art; empty: mp.chip; fallbackColor: mp.dim }
+        // the cover: a rounded square with the picture cropped to fill it, not the picked shape. Cropped into a
+        // flower or a cookie the album art looked wrong; a plain rounded square always fits.
+        Rectangle {
+            anchors.fill: parent; radius: Look.sq ? 0 : 20; clip: true; color: mp.chip
+            Image { id: artI; anchors.fill: parent; source: Player.art || ""; fillMode: Image.PreserveAspectCrop; asynchronous: true }
+            MIcon { anchors.centerIn: parent; size: 30; name: "music_note"; glyph: String.fromCodePoint(0xF075A); color: mp.dim
+                visible: artI.status !== Image.Ready }
+        }
     }
     Column {
         x: cov.x + cov.width + 16; y: 10

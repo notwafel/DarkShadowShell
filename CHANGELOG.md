@@ -1,5 +1,9 @@
 # Changelog
 
+## V7.08: the island droplet and the card are one shape, one color
+- **No color difference between the droplet and the panel.** The neck and the card body are now painted as a single path in one fill, so they are exactly the same color and alpha. Before, they were two translucent layers (the surface is 90% opaque) and where they met it was darker, so the droplet read as a different color stuck on a ready panel
+- **The whole panel is drawn out of the island.** It unrolls from no height to full height by ~70% of the 500 ms, then the neck (the droplet) pinches off and the card sits 16 px below; the content is revealed by the clip, so it is drawn, not faded in
+
 ## V7.07: the island card is drawn out of the island, not a drop on a ready panel
 - **The whole card appears with the animation.** It starts on the pill with no height and unrolls down to its full height as the drop falls; the content is revealed by the clip from the top down. Before, the panel was already full size and only a small drop moved onto it
 - Width is full from the first frame, so there is still no small shape that widens first; the neck keeps the unrolling card one shape with the island until it pinches off

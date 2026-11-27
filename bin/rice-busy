@@ -66,7 +66,9 @@ def busy(mon_name):
     mons = hypr("monitors")
     clients = hypr("clients")
     if not mons or clients is None:
-        return False
+        # V7.00: a read that failed is not an empty desktop. Saying "0" here showed every widget over the windows
+        # until the next event; the caller keeps its last answer instead
+        return None
     mon = None
     for m in mons:
         if (mon_name and m.get("name") == mon_name) or (not mon_name and m.get("focused")):
@@ -106,7 +108,7 @@ def niri_busy(mon_name):
     wss = niri_j("workspaces")
     wins = niri_j("windows")
     if not wss or wins is None:
-        return False
+        return None
     if not mon_name:
         f = next((w for w in wss if w.get("is_focused")), None)
         mon_name = f.get("output") if f else ""
@@ -121,6 +123,8 @@ def niri_main(mon):
 
     def say():
         b = niri_busy(mon)
+        if b is None:
+            return
         if b != last[0]:
             last[0] = b
             print("1" if b else "0", flush=True)
@@ -160,6 +164,8 @@ def main():
     def say():
         nonlocal last
         b = busy(mon)
+        if b is None:
+            return
         if b != last:
             last = b
             print("1" if b else "0", flush=True)

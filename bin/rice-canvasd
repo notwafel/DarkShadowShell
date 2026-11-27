@@ -316,7 +316,11 @@ def nstate():
 def nsave(st):
     try:
         os.makedirs(os.path.dirname(NSTATE), exist_ok=True)
-        json.dump(st, open(NSTATE, "w"))
+        # V7.00: the daemon writes this every 0.6 s while another copy may toggle; a crash mid-write used to leave
+        # a truncated file, which reads back as "off" with no floated windows to put back
+        tmp = NSTATE + ".new"
+        json.dump(st, open(tmp, "w"))
+        os.replace(tmp, NSTATE)
     except OSError:
         pass
 
@@ -354,10 +358,14 @@ def niri_tick():
     if not st.get("on"):
         return
     changed = False
+    floated = st.setdefault("floated", [])
     for w in nwindows():
         if w.get("workspace_id") == st.get("ws") and not w.get("is_floating"):
-            nact("MoveWindowToFloating", id=w["id"])
-            st.setdefault("floated", []).append(w["id"])
+            # V7.00: a refused action (fullscreen, a locked layout) used to add the same id again every tick, so the
+            # list grew without end and was rewritten to disk each time
+            if nact("MoveWindowToFloating", id=w["id"]) is None or w["id"] in floated:
+                continue
+            floated.append(w["id"])
             changed = True
     if changed:
         nsave(st)

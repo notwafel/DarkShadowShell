@@ -569,20 +569,22 @@ Item {
         // (a container transform: size, place and corners morph together, with a little overshoot)
         property real t: isl.big ? 1 : 0
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
-        // slow and soft on the way in, quicker on the way out (the motion V6.98 had: V6.99 shortened it by half and
-        // the card stopped peeling off the pill)
-        Behavior on t { NumberAnimation { duration: Look.lite ? 340 : 620
-            easing.type: isl.big ? Easing.OutBack : Easing.InBack; easing.overshoot: Look.lite ? 0 : 0.12 } }
+        // V7.02: the card is already its full size and sits on the island; what moves is the drop that detaches it.
+        // 250 ms (2.5x shorter than V6.98): the old width/height growth from the pill made a tiny shape appear first
+        // and the rest widen after it, which read as a second animation instead of one drop
+        Behavior on t { NumberAnimation { duration: Look.lite ? 140 : 250
+            easing.type: isl.big ? Easing.OutCubic : Easing.InCubic } }
         property real cwA: isl.cw
         property real chA: isl.ch
         Behavior on cwA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         Behavior on chA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         readonly property real tc: Math.max(0, t)
-        // V6.85 liquid glass: the card grows out of the pill and stays glued to it while it peels away; the gap
-        // opens only in the last part, so it detaches at the end instead of jumping off at the first frame
-        readonly property real gapA: 8 * Math.max(0, Math.min(1, (tc - 0.45) / 0.35))
-        width: Math.max(isl.bh, isl.width + (cwA - isl.width) * tc)
-        height: Math.max(isl.bh * 0.6, isl.bh + (chA - isl.bh) * tc)
+        // V6.85 liquid glass: the card stays glued to the pill and peels away; the gap opens only in the last part,
+        // so it detaches at the end instead of jumping off at the first frame. V7.02: it is already full width and
+        // height at the first frame (a wide drop under the island), so there is no small "start" that grows
+        readonly property real gapA: 8 * tc
+        width: cwA
+        height: chA
         // centred on the island, but always on the screen
         readonly property real want: isl.partMid < 0 || width <= isl.width ? (isl.width - width) / 2
             : Math.max(isl.width - width, Math.min(0, isl.partMid - isl.x - width / 2))
@@ -617,7 +619,7 @@ Item {
                 running: isl.big
                 PauseAnimation { duration: 90 }
                 NumberAnimation { target: sheen; property: "x"; from: -sheen.width; to: card.width + sheen.width
-                    duration: 620; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
+                    duration: 250; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
             }
         }
 

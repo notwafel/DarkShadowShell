@@ -1,5 +1,9 @@
 # Changelog
 
+## V7.02: the island card drops off the bar already wide, in 250 ms
+- **No small start that widens.** The card is its full size on the first frame and sits on the island; what moves is the drop that detaches it (8 px, over the whole motion) and its corners. The old width/height growth from the pill made a tiny shape appear and the rest widen after it
+- **2.5x faster:** 250 ms in and out (620 ms in V6.98, 400/320 in V6.99); the light sweep is 250 ms too
+
 ## V7.01: the island card peels off the pill again (the V6.98 motion)
 - **The card's motion is back to what it was in V6.98:** 620 ms in and out, the clamped start so it grows out of the pill and stays glued to it while it peels away, and the light sweep at 620 ms. V6.99 shortened it to 400/320 ms and started it as an exact copy of the pill, so the panel read as a block growing out of the island instead of the island peeling off the bar
 - The words screen from V6.99 stays: wider, the cover in your shape, the glow and the volume line

@@ -181,7 +181,9 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "rice-wifi"
-    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    // V6.85: no keyboard grab; only the password field takes it (OnDemand), so an open menu
+    // does not swallow typing in the app behind it
+    WlrLayershell.keyboardFocus: wm.askFor !== "" ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     MouseArea { anchors.fill: parent; onClicked: wm.hide() }
 
     readonly property int shown: Math.min(Math.max(nets.length, 1), maxRows)

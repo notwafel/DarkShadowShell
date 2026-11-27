@@ -139,9 +139,9 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "rice-cc"
-    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    // no keyboard grab: an open menu used to swallow every key, so nothing could be typed until it was closed
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     MouseArea { anchors.fill: parent; onClicked: cc.open = false }
-    Item { focus: cc.open; Keys.onEscapePressed: cc.open = false }
 
     // ---------- pieces ----------
     // a long slider with its icon inside (brightness, volume, microphone)

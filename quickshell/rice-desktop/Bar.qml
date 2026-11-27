@@ -188,7 +188,8 @@ PanelWindow {
     color: "transparent"
     anchors { top: !atBottom; bottom: atBottom; left: true; right: true }
     // room below for the recording island; windows only keep away from the bar itself
-    implicitHeight: barH + gap * 2 + 460      // room for the island's cards (the bar lets the pointer through there)
+    // V6.85: with a card open the window covers the whole screen, so a click anywhere outside the card closes it
+    implicitHeight: bar.sticky ? (screen ? screen.height : barH + gap * 2 + 460) : barH + gap * 2 + 460
     // V6.80: with the frame the bar takes the whole edge, ignoring the room the frame keeps at the sides (its
     // strips were placed first, so the bar was 8 px short at both ends and the wallpaper showed in its corners);
     // the frame keeps the bar's room for it instead (ScreenFrame.qml).
@@ -198,15 +199,16 @@ PanelWindow {
     exclusionMode: hideOn || !on || framed ? ExclusionMode.Ignore : ExclusionMode.Normal
     exclusiveZone: framed && !hideOn && on ? -1 : (hideOn || !on ? 0 : barH + gap * 2)
     // only the bar (and the recording island) take the pointer; auto-hide: only a thin strip at the edge
-    mask: Region { item: !bar.on ? hitNone : (bar.shownBar ? hitBar : hitStrip); Region { item: hitRec } Region { item: hitIsl } Region { item: hitMenu } Region { item: hitPop } }
+    mask: Region { item: bar.sticky ? hitAll : (!bar.on ? hitNone : (bar.shownBar ? hitBar : hitStrip))
+        Region { item: hitRec } Region { item: hitIsl } Region { item: hitMenu } Region { item: hitPop } }
     Item { id: hitMenu; x: bar.gap + trayMenu.x; y: body.y + trayMenu.y; width: trayMenu.visible ? trayMenu.width : 0; height: trayMenu.height }
     Item { id: hitPop; x: bar.gap + barPop.x; y: body.y + barPop.y; width: barPop.visible ? barPop.width : 0; height: barPop.height }
-    // a card of the island or the tray menu is open: Esc, a click on the desktop (shell.qml) or another window closes it
-    readonly property bool sticky: isl.sticky || trayMenu.open || barPop.open
+    // a card of the island or the tray menu is open: a click outside it (shell.qml) or the same icon closes it.
+    // V6.85: the bar never takes the keyboard. It used to grab it while a card was open, so every key went to the
+    // bar's Esc handler and nothing could be typed until the card was noticed and closed
+    readonly property bool sticky: (isl && isl.sticky) || (trayMenu && trayMenu.open) || (barPop && barPop.open)
     function closeCards() { isl.closeCards(); trayMenu.close(); barPop.close() }
-    onStickyChanged: if (sticky) keyCatch.forceActiveFocus()
-    Item { id: keyCatch; focus: true; Keys.onEscapePressed: bar.closeCards() }
-    WlrLayershell.keyboardFocus: sticky ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     // the island when it has grown out of the bar
     Item { id: hitIsl; x: bar.gap + isl.x + isl.ux; y: body.y + isl.y + isl.uy; width: isl.visible && bar.shownBar ? isl.uw : 0; height: isl.uh }
     Item { id: hitBar; width: parent.width; height: bar.barH + bar.gap * 2; y: bar.atBottom ? parent.height - height : 0 }
@@ -214,6 +216,10 @@ PanelWindow {
     Item { id: hitAll; anchors.fill: parent }
     Item { id: hitNone; width: 0; height: 0 }
     Item { id: hitStrip; width: parent.width; height: 3; y: bar.atBottom ? parent.height - 3 : 0 }
+    // a card is open: a click anywhere else (an app's window too) closes it, and is spent here so it does not
+    // reach that window as well
+    MouseArea { anchors.fill: parent; enabled: bar.sticky; acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+        onClicked: bar.closeCards() }
     // niri: blur behind the bar's backgrounds, the island, its card and the tray menu (Hyprland: a layer rule).
     // These follow the island and its card in window coordinates, so the blur moves with them.
     Item { id: blurIsl; x: bar.gap + isl.x; y: body.y + isl.y; width: isl.ghost || !isl.visible ? 0 : isl.width; height: isl.height }

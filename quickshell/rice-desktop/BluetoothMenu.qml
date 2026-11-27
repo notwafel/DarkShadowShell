@@ -151,7 +151,7 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "rice-bluetooth"
-    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     MouseArea { anchors.fill: parent; onClicked: wm.hide() }
 
     readonly property int shown: Math.min(Math.max(nets.length, 1), maxRows)

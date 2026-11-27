@@ -9,7 +9,7 @@ PanelWindow {
     screen: Mon.screen
     id: wm
     // Minimal mode: the bar's own tinted surface, so the menu matches the bar (V5.02: it was near black)
-    NPal { id: sqPal; theme: "shell"; alpha: 0.94 }
+    NPal { id: sqPal; theme: "shell"; alpha: Math.min(1, BarSvc.barAlpha + 0.04) }
     property bool open: false
     property real t: 0
     // V6.86: the island's motion: 620 ms in (Light mode shorter), 280 ms out, a small overshoot so it springs,
@@ -25,8 +25,8 @@ PanelWindow {
     readonly property color dim: Qt.rgba(0.965, 0.961, 0.957, 0.6)
     readonly property color line: Qt.rgba(1, 1, 1, 0.09)
     readonly property color hot: Qt.rgba(1, 1, 1, 0.07)
-    readonly property real alpha: Look.flat ? 1 : 0.62
-    readonly property color bg: Look.sq ? sqPal.minSurface : Qt.rgba(0.05, 0.05, 0.05, alpha)
+    // the same surface as the bar and its island (it used to be a near-black 5 % panel, darker than the island)
+    readonly property color bg: sqPal.surface
     property var bc: ({})
     // V4.95: opened from the dock ("dock:SPACE" after the place): it opens above the dock, not by the bar
     property real dockSpace: -1

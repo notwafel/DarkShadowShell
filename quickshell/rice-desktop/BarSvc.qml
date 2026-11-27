@@ -16,6 +16,7 @@ Singleton {
     property bool recOn: false          // screen recording (shared: every bar shows the same island)
     property real recStart: 0
     property bool micMuted: false
+    property real barAlpha: 0.72       // the bar's opacity: the menus are other windows and cannot read it themselves
     function refresh() { if (!svcProc.running) svcProc.running = true }
     // after a click: rice-cc writes the new state first (it used to be a 700 ms timer in each bar)
     function refreshSoon() { soon.restart() }

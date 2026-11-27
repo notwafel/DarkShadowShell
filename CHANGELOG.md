@@ -1,5 +1,9 @@
 # Changelog
 
+## V6.90: the login screen gets in on the update that finds it missing
+- **An update installs the login screen when SDDM is the display manager but the theme never got in.** The update only ever refreshed a theme that was already in `/usr/share`; a session where an earlier update could not ask for the password kept SDDM's own look for good. Now the missing theme counts as something to put in
+- **The password window is given a moment to appear.** After the shell starts its polkit agent, `pkexec` was asked at once and could find no agent yet; it now waits up to 3 seconds before falling back to a terminal
+
 ## V6.89: the login screen can be put in without logging out first
 - **An update now installs the new SDDM theme in the same session.** The password window needs a polkit agent, and the shell only started one at login since V6.86: a session that began before that had none, so the theme step could not ask and kept the old look. `rice-sddm` starts the agent itself (`rice-services polkit`) before pkexec, so Settings and the updater can put the theme in right away
 

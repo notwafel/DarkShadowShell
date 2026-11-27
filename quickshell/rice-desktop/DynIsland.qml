@@ -75,7 +75,7 @@ Item {
     }
     function openInfo(tab, toggle) {
         if (toggle && infoOpen && infoTab === tab) { infoOpen = false; return }
-        infoTab = tab; pinned = false; hoverOpen = false; infoOpen = true; bump.restart()
+        infoTab = tab; pinned = false; hoverOpen = false; infoOpen = true
         if (!hovering) pinT.restart()
     }
 

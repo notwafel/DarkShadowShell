@@ -569,12 +569,12 @@ Item {
     Canvas {
         id: neck
         x: card.x
-        y: isl.bh
+        y: isl.down ? isl.bh : card.y + card.height
         width: Math.max(1, card.width)
         height: Math.max(0, card.gapA)
-        visible: isl.down && isl.big && card.opacity > 0.05 && neck.tw > 1
+        visible: isl.big && card.opacity > 0.05 && neck.tw > 1 && height > 0.5
         opacity: Math.min(1, neck.tw / 30)
-        readonly property real tw: Math.max(0, Math.min(150, card.width * 0.3) * (1 - 1.35 * card.tc))
+        readonly property real tw: Math.max(0, Math.min(card.width * 0.45, isl.width * 0.8) * (1 - card.tc))
         readonly property real cx: Math.max(40, Math.min(width - 40, isl.width / 2 - card.x))
         onTwChanged: requestPaint()
         onWidthChanged: requestPaint()
@@ -604,31 +604,32 @@ Item {
         // (a container transform: size, place and corners morph together, with a little overshoot)
         property real t: isl.big ? 1 : 0
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
-        // V7.02: the card is already its full size and sits on the island; what moves is the drop that detaches it.
-        // 250 ms (2.5x shorter than V6.98): the old width/height growth from the pill made a tiny shape appear first
-        // and the rest widen after it, which read as a second animation instead of one drop
-        Behavior on t { NumberAnimation { duration: Look.lite ? 140 : 250
-            easing.type: isl.big ? Easing.OutCubic : Easing.InCubic } }
+        // V7.04: the card is already its full size and attached to the island; it hangs there for the first part
+        // of the motion, then the neck stretches and it falls away (InOutCubic: a still start, a soft landing).
+        // 280 ms is 2.2x shorter than V6.98; the old width/height growth from the pill made a tiny shape appear
+        // first and the rest widen after it, which read as a second animation instead of one drop
+        Behavior on t { NumberAnimation { duration: Look.lite ? 150 : 280
+            easing.type: Easing.InOutCubic } }
         property real cwA: isl.cw
         property real chA: isl.ch
         Behavior on cwA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         Behavior on chA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         readonly property real tc: Math.max(0, t)
         // V6.85 liquid glass: the card starts attached to the pill; V7.02: it is already full width and height at
-        // the first frame, so no small "start" grows first. V7.03: the 14 px it falls is the drop, and the neck
-        // (above) keeps it one shape with the island until the neck pinches off
-        readonly property real gapA: 14 * tc
+        // the first frame, so no small "start" grows first. V7.04: it falls 20 px, all of it as the neck stretches
+        // and pinches off, so the drop is visible at 280 ms
+        readonly property real gapA: 20 * tc
         width: cwA
         height: chA
         // centred on the island, but always on the screen
         readonly property real want: isl.partMid < 0 || width <= isl.width ? (isl.width - width) / 2
             : Math.max(isl.width - width, Math.min(0, isl.partMid - isl.x - width / 2))
         x: Math.max(-isl.x, Math.min(isl.areaW - isl.x - width, (isl.width - width) / 2 + (want - (isl.width - width) / 2) * Math.min(1, tc)))
-        y: isl.down ? isl.bh + gapA : isl.bh - height - gapA
+        y: isl.down ? isl.bh + gapA : -height - gapA
         radius: Look.sq ? 0 : (Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc)))
         color: isl.fill
         visible: opacity > 0.01
-        opacity: t < 0.02 ? 0 : Math.min(1, t * 4)
+        opacity: t < 0.02 ? 0 : Math.min(1, t * 6)
         clip: true
         HoverHandler { id: hovC }
         // the glass edge and one sweep of light: a plain dark rectangle reads as a panel, not as glass
@@ -654,7 +655,7 @@ Item {
                 running: isl.big
                 PauseAnimation { duration: 90 }
                 NumberAnimation { target: sheen; property: "x"; from: -sheen.width; to: card.width + sheen.width
-                    duration: 250; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
+                    duration: 280; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
             }
         }
 

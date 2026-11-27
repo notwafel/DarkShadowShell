@@ -1,5 +1,9 @@
 # Changelog
 
+## V7.04: the island hangs for a moment, then the drop falls 20 px
+- **The drop is visible now.** The card is full size and attached to the island; for the first part of the 280 ms it just hangs there, then the neck stretches and pinches off while it falls 20 px (InOutCubic: still start, soft landing). V7.03 fell only 8-14 px with an ease that did most of it in the first 60 ms, so it read as "it appears"
+- The neck starts as wide as the pill and narrows to nothing as the card lands; the bottom bar's card also sits above the bar again (it was offset by a bar height)
+
 ## V7.03: the drop leaves a neck behind, and the island's beat light stays inside the pill
 - **The card is one shape with the island until it snaps off.** It starts attached (no gap), falls 14 px, and a liquid neck between the pill and the card pinches off on the way; before, the full-size card only faded in and slid 8 px with no visible connection, so it read as "it just appears"
 - **The music beat light no longer hangs under the island.** The Vibe breathing edge was drawn around the pill, so the part below it showed as a colored fringe outside the bar; it is now inside the pill

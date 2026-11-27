@@ -562,19 +562,48 @@ Item {
         Behavior on cwA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         Behavior on chA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         readonly property real tc: Math.max(0, t)
+        // V6.85 liquid glass: the card grows out of the pill and stays glued to it while it peels away; the gap
+        // opens only in the last part, so it detaches at the end instead of jumping off at the first frame
+        readonly property real gapA: 8 * Math.max(0, Math.min(1, (tc - 0.45) / 0.35))
         width: Math.max(isl.bh, isl.width + (cwA - isl.width) * tc)
         height: Math.max(isl.bh * 0.6, isl.bh + (chA - isl.bh) * tc)
         // centred on the island, but always on the screen
         readonly property real want: isl.partMid < 0 || width <= isl.width ? (isl.width - width) / 2
             : Math.max(isl.width - width, Math.min(0, isl.partMid - isl.x - width / 2))
         x: Math.max(-isl.x, Math.min(isl.areaW - isl.x - width, (isl.width - width) / 2 + (want - (isl.width - width) / 2) * Math.min(1, tc)))
-        y: isl.down ? (isl.bh + 8) * Math.min(1, tc) : isl.bh - height - (isl.bh + 8) * Math.min(1, tc)
+        y: isl.down ? isl.bh + gapA : isl.bh - height - gapA
         radius: Look.sq ? 0 : (Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc)))
         color: isl.fill
         visible: opacity > 0.01
         opacity: t < 0.02 ? 0 : Math.min(1, t * 4)
         clip: true
         HoverHandler { id: hovC }
+        // the glass edge and one sweep of light: a plain dark rectangle reads as a panel, not as glass
+        Rectangle {
+            anchors.fill: parent; radius: parent.radius
+            color: "transparent"; border.width: 1
+            border.color: Qt.rgba(1, 1, 1, 0.16)
+            visible: !Look.sq && card.opacity > 0.5
+        }
+        Rectangle {
+            id: sheen
+            width: Math.max(2, card.width * 0.6); height: card.height * 2.2
+            y: -card.height * 0.6; rotation: 16
+            visible: sheenAnim.running && !Look.lite
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: "transparent" }
+                GradientStop { position: 0.5; color: Qt.rgba(1, 1, 1, 0.09) }
+                GradientStop { position: 1; color: "transparent" }
+            }
+            SequentialAnimation {
+                id: sheenAnim
+                running: isl.big
+                PauseAnimation { duration: 90 }
+                NumberAnimation { target: sheen; property: "x"; from: -sheen.width; to: card.width + sheen.width
+                    duration: 620; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
+            }
+        }
         // the player tints the card with your key color
         Rectangle {
             anchors.fill: parent; radius: Look.sq ? 0 : (parent.radius)

@@ -25,6 +25,8 @@ RK.actions = {
     lock      = { "SUPER + L",         exec(BIN .. "rice-lock now") },
     close     = { "SUPER + Q",         function() return hl.dsp.window.close() end },
     float     = { "SUPER + SHIFT + V", function() return hl.dsp.window.float({ action = "toggle" }) end },
+    -- V6.94: a game that shrinks itself and then refuses its own fullscreen can still be made fullscreen from here
+    fullscreen= { "SUPER + SHIFT + F", exec("hyprctl dispatch fullscreen 1"), true },
     clipboard = { "SUPER + V",         exec(BIN .. "rice-clip toggle") },
     shot      = { "Print",             exec(BIN .. "rice-hotcorner shot region") },
     shotfull  = { "SHIFT + Print",     exec(BIN .. "rice-hotcorner shot full") },

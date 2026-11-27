@@ -397,6 +397,15 @@ json.dump({"checked": now + 86400}, open(m.STATE, "w"))
 assert m.last_checked() <= time.time() + 1, "a future timestamp was not clamped"
 PYC
 
+# ---- rice-keymap: fullscreen is an action, so it can be given another key
+mkdir -p "$tmp/km/home"
+HOME="$tmp/km/home" python3 "$root/bin/rice-keymap" list 2>/dev/null | grep -q '"fullscreen".*"SUPER + SHIFT + F"' \
+  && ok "fullscreen is a keymap action" || bad "fullscreen is missing from rice-keymap"
+grep -q '"fullscreen": "Mod+Shift+F"' "$root/bin/rice-niri" \
+  && ok "niri moves its fullscreen key to the one you pick" || bad "niri's fullscreen key is fixed"
+grep -q 'fullscreen' "$root/lua/rice-keymap.lua" \
+  && ok "Hyprland binds fullscreen from rice-keymap" || bad "Hyprland has no fullscreen action"
+
 # ---- the other supported distros: Update Center checks and updates what that distro has
 mkdir -p "$tmp/dis"
 cat >"$tmp/dis/rice-term" <<'EOS'

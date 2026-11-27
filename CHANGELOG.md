@@ -1,5 +1,9 @@
 # Changelog
 
+## V7.03: the drop leaves a neck behind, and the island's beat light stays inside the pill
+- **The card is one shape with the island until it snaps off.** It starts attached (no gap), falls 14 px, and a liquid neck between the pill and the card pinches off on the way; before, the full-size card only faded in and slid 8 px with no visible connection, so it read as "it just appears"
+- **The music beat light no longer hangs under the island.** The Vibe breathing edge was drawn around the pill, so the part below it showed as a colored fringe outside the bar; it is now inside the pill
+
 ## V7.02: the island card drops off the bar already wide, in 250 ms
 - **No small start that widens.** The card is its full size on the first frame and sits on the island; what moves is the drop that detaches it (8 px, over the whole motion) and its corners. The old width/height growth from the pill made a tiny shape appear and the rest widen after it
 - **2.5x faster:** 250 ms in and out (620 ms in V6.98, 400/320 in V6.99); the light sweep is 250 ms too

@@ -288,25 +288,6 @@ Item {
     // the music's colors), only at rest
     readonly property bool breathe: Vibe.island && Player.playing && !isl.ghost && !Look.lite && !isl.big && isl.pillMode === "idle"
     VibeUser { active: isl.breathe }
-    Rectangle {
-        anchors.fill: bg; anchors.margins: -2 - 3 * Vibe.level
-        radius: Look.sq ? 0 : height / 2
-        color: "transparent"
-        border.width: 1.5 + 1.5 * Vibe.level
-        border.color: isl.pal ? isl.pal.primary : Look.accentHi
-        opacity: isl.breathe ? 0.15 + 0.75 * Vibe.level : 0
-        Behavior on opacity { NumberAnimation { duration: 120 } }
-        visible: opacity > 0.01
-    }
-    Rectangle {
-        anchors.fill: bg; anchors.margins: -6 - 6 * Vibe.level
-        radius: Look.sq ? 0 : height / 2
-        color: "transparent"
-        border.width: 4
-        border.color: isl.pal ? isl.pal.primary : Look.accentHi
-        opacity: isl.breathe ? 0.18 * Vibe.level + 0.2 * Vibe.kick : 0
-        visible: opacity > 0.01
-    }
     Shadow { anchors.fill: bg; radius: Look.sq ? 0 : (bg.radius); on: Look.shadows && Look.shadowBar && !isl.flatRest && !isl.ghost; size: Look.shadowSize * 0.5; strength: Look.shadowStrength }
     Rectangle {
         id: bg
@@ -317,6 +298,27 @@ Item {
         // inside the notch or a pill with modules it has no color of its own (no darker band)
         color: isl.flatRest ? Qt.rgba(isl.fill.r, isl.fill.g, isl.fill.b, 0) : isl.fill
         clip: true
+        // V7.03: the beat's light is inside the pill. It used to be drawn around it, so the part below the island
+        // hung outside the bar as a colored fringe (the "artifact under the island" while music played)
+        Rectangle {
+            anchors.fill: parent; anchors.margins: 2
+            radius: Look.sq ? 0 : height / 2
+            color: "transparent"
+            border.width: 1.5 + 1.5 * Vibe.level
+            border.color: isl.pal ? isl.pal.primary : Look.accentHi
+            opacity: isl.breathe ? 0.15 + 0.75 * Vibe.level : 0
+            Behavior on opacity { NumberAnimation { duration: 120 } }
+            visible: opacity > 0.01
+        }
+        Rectangle {
+            anchors.fill: parent; anchors.margins: 5
+            radius: Look.sq ? 0 : height / 2
+            color: "transparent"
+            border.width: 3
+            border.color: isl.pal ? isl.pal.primary : Look.accentHi
+            opacity: isl.breathe ? 0.18 * Vibe.level + 0.2 * Vibe.kick : 0
+            visible: opacity > 0.01
+        }
         // the whole island: left click today (calendar, weather), right click system, the wheel the volume;
         // it works whatever the island shows (the recording's buttons and the volume line sit on top of it)
         MouseArea {
@@ -561,6 +563,39 @@ Item {
     }
 
     // ---------- the card: the player or a notification, just beside the bar ----------
+    // V7.03 the drop: while the card leaves the island, a neck keeps them one shape and pinches off at the end.
+    // It is behind the island (bg) and behind the card, so only the part in the gap shows; the top is the pill's
+    // own bottom edge, the bottom disappears under the card. No neck at rest (tw reaches 0 before the card lands).
+    Canvas {
+        id: neck
+        x: card.x
+        y: isl.bh
+        width: Math.max(1, card.width)
+        height: Math.max(0, card.gapA)
+        visible: isl.down && isl.big && card.opacity > 0.05 && neck.tw > 1
+        opacity: Math.min(1, neck.tw / 30)
+        readonly property real tw: Math.max(0, Math.min(150, card.width * 0.3) * (1 - 1.35 * card.tc))
+        readonly property real cx: Math.max(40, Math.min(width - 40, isl.width / 2 - card.x))
+        onTwChanged: requestPaint()
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+        onPaint: {
+            const c = getContext("2d"), h = height, w = width
+            c.reset()
+            if (h < 0.5 || neck.tw < 1) return
+            const cx = neck.cx, tw = neck.tw, bw = Math.min(w - 8, 340), mid = h / 2
+            c.fillStyle = isl.fill.toString()
+            c.globalAlpha = isl.fill.a
+            c.beginPath()
+            c.moveTo(cx - tw / 2, 0)
+            // the waist: the control points pull inward, so the sides are concave and the neck looks like liquid
+            c.bezierCurveTo(cx - tw * 0.3, mid, cx - bw * 0.3, mid, cx - bw / 2, h)
+            c.lineTo(cx + bw / 2, h)
+            c.bezierCurveTo(cx + bw * 0.3, mid, cx + tw * 0.3, mid, cx + tw / 2, 0)
+            c.closePath()
+            c.fill()
+        }
+    }
     Shadow { anchors.fill: card; radius: Look.sq ? 0 : (card.radius); on: Look.shadows && Look.shadowBar; opacity: card.opacity; size: Look.shadowSize; strength: Look.shadowStrength }
     Rectangle {
         id: card
@@ -579,10 +614,10 @@ Item {
         Behavior on cwA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         Behavior on chA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         readonly property real tc: Math.max(0, t)
-        // V6.85 liquid glass: the card stays glued to the pill and peels away; the gap opens only in the last part,
-        // so it detaches at the end instead of jumping off at the first frame. V7.02: it is already full width and
-        // height at the first frame (a wide drop under the island), so there is no small "start" that grows
-        readonly property real gapA: 8 * tc
+        // V6.85 liquid glass: the card starts attached to the pill; V7.02: it is already full width and height at
+        // the first frame, so no small "start" grows first. V7.03: the 14 px it falls is the drop, and the neck
+        // (above) keeps it one shape with the island until the neck pinches off
+        readonly property real gapA: 14 * tc
         width: cwA
         height: chA
         // centred on the island, but always on the screen

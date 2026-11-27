@@ -482,5 +482,12 @@ grep -q 'Stopping the desktop shell for the file swap' "$root/install.sh" && gre
   && ok "an update stops the shell for the file swap and starts it again" \
   || bad "the shell reloads between two swaps during an update"
 
+# ---- V6.84: the wallpaper you picked is what an update keeps
+grep -q 'HOME/.config/rice/wallpaper' "$root/install.sh" && grep -q 'head -n1 "$HOME/.config/rice/wallpaper"' "$root/install.sh" \
+  && ok "an update puts the remembered wallpaper back, not a random one" \
+  || bad "an update can still pick a random wallpaper"
+grep -q '\[ "$dir/$name" = "$cur" \] && continue' "$root/install.sh" \
+  && ok "an update never deletes the wallpaper on the screen" || bad "a retired wallpaper can be deleted while it is shown"
+
 bash -n "$root/install.sh" && ok "install.sh parses" || bad "install.sh syntax"
 echo "# $n checks passed"

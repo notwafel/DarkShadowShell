@@ -696,15 +696,18 @@ set_look() {
   return 0
 }
 put_wallpapers() {
-  local dir f n=0
+  local dir f n=0 cur
   dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/Wallpapers"
   [ "$dir" = "/Wallpapers" ] && dir="$HOME/Pictures/Wallpapers"
   mkdir -p "$dir"
+  # V6.84: the wallpaper on your screen is never touched, even when it is one we retire
+  cur="$(cat "$HOME/.cache/hyprquickpaper-current" 2>/dev/null || true)"
   # wallpapers we replaced: remove the old ones (only a file that is exactly the old picture, never yours)
   if [ -f "$ROOT/install/retired-wallpapers.txt" ]; then
     local sum name
     while read -r sum name; do
       case "$sum" in ''|'#'*) continue ;; esac
+      [ "$dir/$name" = "$cur" ] && continue
       [ -f "$dir/$name" ] && [ "$(md5sum "$dir/$name" | cut -d' ' -f1)" = "$sum" ] && rm -f "$dir/$name" && echo "removed the old wallpaper $name"
     done <"$ROOT/install/retired-wallpapers.txt"
   fi
@@ -712,8 +715,12 @@ put_wallpapers() {
     [ -f "$f" ] || continue
     [ -e "$dir/$(basename "$f")" ] || { cp "$f" "$dir/"; n=$((n + 1)); }
   done
-  # first start (or the wallpaper you had is gone): one of ours, picked at random (V5.06)
+  # V6.84: the wallpaper you picked is remembered (rice-walls / commands.sh). An update puts that one back,
+  # not a random one: only a first install, with nothing remembered, picks one of ours (V5.06)
   f="$(cat "$HOME/.cache/hyprquickpaper-current" 2>/dev/null)"
+  if [ -z "$f" ] || [ ! -f "$f" ]; then
+    f="$(head -n1 "$HOME/.config/rice/wallpaper" 2>/dev/null || true)"
+  fi
   if [ -z "$f" ] || [ ! -f "$f" ]; then
     mkdir -p "$HOME/.cache"
     local ours=() w

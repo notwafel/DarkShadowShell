@@ -126,8 +126,10 @@ else
   fi
 fi
 
-mkdir -p "$HOME/.cache"
+mkdir -p "$HOME/.cache" "$HOME/.config/rice"
 echo "$img" > "$HOME/.cache/hyprquickpaper-current"
+# V6.84: the wallpaper you picked is remembered, so an update never puts a random one on
+[ -n "$RICE_LIVE" ] || printf "%s\n" "$img" > "$HOME/.config/rice/wallpaper"
 wait
 
 # recolor notifications and the lock screen (Shadow's Shell)

@@ -456,6 +456,12 @@ def cmd_set(f):
     if not os.path.isfile(f):
         sys.exit("rice-walls: not a file: " + f)
     os.makedirs(CACHE, exist_ok=True)
+    # V6.84: remembered for the next update (put_wallpapers never picks a random one over yours)
+    try:
+        os.makedirs(HOME + "/.config/rice", exist_ok=True)
+        open(HOME + "/.config/rice/wallpaper", "w").write(f + "\n")
+    except Exception:
+        pass
     stop_scene()
     if is_video(f):
         if not shutil.which("mpvpaper"):

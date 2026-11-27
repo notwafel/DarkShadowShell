@@ -465,5 +465,11 @@ hs="$tmp/hs/home/.config/hypr/rice-settings.lua"
 grep -q 'café' "$hs" && ok "a bind command keeps its accent" || bad "the accent was escaped or lost"
 grep -q '\\u00e9' "$hs" && bad "the Lua file has a \u escape" || ok "no \u escape in the Lua file"
 
+# ---- V6.84: the launcher's shape is the dock's (Edit mode > Icons, then the dock's own, then pills)
+grep -q 'dockCfg.style === "pills" ? "squircle"' "$root/quickshell/rice-desktop/Launcher.qml" \
+  && ok "the launcher takes the same icon shape as the dock" || bad "the launcher ignores the dock's shape"
+grep -q 'shape: ln.iShape$' "$root/quickshell/rice-desktop/LauncherM3.qml" \
+  && ok "the frequent apps do not force a shape of their own" || bad "the frequent apps still force a cookie"
+
 bash -n "$root/install.sh" && ok "install.sh parses" || bad "install.sh syntax"
 echo "# $n checks passed"

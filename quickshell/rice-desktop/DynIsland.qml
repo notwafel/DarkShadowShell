@@ -998,7 +998,7 @@ Item {
                     color: isl.pal ? isl.pal.dim : "#aaa" }
                 WavyLine {
                     x: 76; y: parent.height - 38; width: parent.width - 76 - 46; height: 18
-                    value: isl.muted ? 0 : Math.min(1, isl.vol); moving: !isl.muted; seekable: true
+                    value: isl.muted ? 0 : Math.min(1, isl.vol); moving: Player.playing && !isl.muted; seekable: true
                     color: isl.pal ? isl.pal.primary : "white"; track: isl.pal ? isl.pal.track : "#444"
                     onMoved: function(v) { if (isl.bar) Vol.set(isl.bar.sink, v) }
                 }

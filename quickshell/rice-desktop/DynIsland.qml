@@ -604,18 +604,6 @@ Item {
                     duration: 620; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
             }
         }
-        // the player tints the card with your key color
-        Rectangle {
-            anchors.fill: parent; radius: Look.sq ? 0 : (parent.radius)
-            opacity: isl.cardMode === "media" ? 1 : 0
-            Behavior on opacity { NumberAnimation { duration: 300 } }
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: isl.pal ? Qt.rgba(isl.pal.primary.r, isl.pal.primary.g, isl.pal.primary.b, 0.2) : "transparent" }
-                GradientStop { position: 0.7; color: "transparent" }
-            }
-        }
-
 
         // ---------- the info card: today (calendar, weather, the day) and system (CPU, GPU, RAM, disk) ----------
         Face {

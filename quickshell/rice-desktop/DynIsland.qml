@@ -556,7 +556,7 @@ Item {
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
         // slow and soft on the way in, quicker on the way out
         Behavior on t { NumberAnimation { duration: isl.big ? (Look.lite ? 340 : 620) : 280
-            easing.type: isl.big ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: Look.lite ? 0 : 0.9 } }
+            easing.type: isl.big ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: Look.lite ? 0 : 0.12 } }
         property real cwA: isl.cw
         property real chA: isl.ch
         Behavior on cwA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }

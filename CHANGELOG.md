@@ -1,5 +1,9 @@
 # Changelog
 
+## V6.93: a shell restart no longer checks GitHub again
+- **The background update check remembers when it last ran.** It checked 45 seconds after every start, and the shell restarts after every update or reload: a push made in between brought a new "Update is Available!" within a minute, as if it checked on every push. The last check time is kept in the saved state, so a restart waits out the configured interval (once a day by default, `every_minutes` in `~/.config/rice/update.json`, 60–10080)
+- **A check from the About tab or the Update Center also counts**, so the next automatic one is a full interval later, not a moment after
+
 ## V6.92: the bar does not jump when a card opens
 - **The bar keeps one window size, the screen's, from the first frame.** Since V6.85 the window grew to the whole screen while a card was open so a click outside could close it. That resized the layer surface under the bar, and the bar's parts are placed from its height: with the bar at the bottom, the whole bar (left, middle and right) moved for a frame before the card's own animation — the odd jump. The mask still keeps the pointer off everything but the bar and the open card, so a click outside still closes it
 

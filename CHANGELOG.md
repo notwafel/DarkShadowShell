@@ -1,5 +1,9 @@
 # Changelog
 
+## V7.01: the island card peels off the pill again (the V6.98 motion)
+- **The card's motion is back to what it was in V6.98:** 620 ms in and out, the clamped start so it grows out of the pill and stays glued to it while it peels away, and the light sweep at 620 ms. V6.99 shortened it to 400/320 ms and started it as an exact copy of the pill, so the panel read as a block growing out of the island instead of the island peeling off the bar
+- The words screen from V6.99 stays: wider, the cover in your shape, the glow and the volume line
+
 ## V7.00: the update lock cannot be kept by the shell any more, and the audit's data-loss and race fixes
 - **The update lock was handed to the shell the installer starts, and kept forever.** The lock is file descriptor 9; bash gives it to every child. The Quickshell and bar started at the end of an update kept it open, so the next update was refused with "Another update is already running" with no update running, and the button looked dead. Every program the installer starts now closes it
 - **A dry run no longer deletes the retired dashboard pages**, and `rice-gpu.lua` goes to the backup before it is rewritten or removed (a custom line in it was lost before)

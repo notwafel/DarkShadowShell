@@ -569,8 +569,9 @@ Item {
         // (a container transform: size, place and corners morph together, with a little overshoot)
         property real t: isl.big ? 1 : 0
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
-        // V6.99: shorter than it was (620 ms read as a delay, not a motion), still softer on the way in
-        Behavior on t { NumberAnimation { duration: isl.big ? (Look.lite ? 200 : 400) : (Look.lite ? 160 : 320)
+        // slow and soft on the way in, quicker on the way out (the motion V6.98 had: V6.99 shortened it by half and
+        // the card stopped peeling off the pill)
+        Behavior on t { NumberAnimation { duration: Look.lite ? 340 : 620
             easing.type: isl.big ? Easing.OutBack : Easing.InBack; easing.overshoot: Look.lite ? 0 : 0.12 } }
         property real cwA: isl.cw
         property real chA: isl.ch
@@ -580,16 +581,13 @@ Item {
         // V6.85 liquid glass: the card grows out of the pill and stays glued to it while it peels away; the gap
         // opens only in the last part, so it detaches at the end instead of jumping off at the first frame
         readonly property real gapA: 8 * Math.max(0, Math.min(1, (tc - 0.45) / 0.35))
-        // V6.99: at 0 it is exactly the pill (same width, height and corners), so no wider copy shows under the
-        // island before it has grown; the old widths were clamped to the bar height and read as a duplicate pill
-        width: isl.width + (cwA - isl.width) * tc
-        height: isl.bh + (chA - isl.bh) * tc
+        width: Math.max(isl.bh, isl.width + (cwA - isl.width) * tc)
+        height: Math.max(isl.bh * 0.6, isl.bh + (chA - isl.bh) * tc)
         // centred on the island, but always on the screen
         readonly property real want: isl.partMid < 0 || width <= isl.width ? (isl.width - width) / 2
             : Math.max(isl.width - width, Math.min(0, isl.partMid - isl.x - width / 2))
         x: Math.max(-isl.x, Math.min(isl.areaW - isl.x - width, (isl.width - width) / 2 + (want - (isl.width - width) / 2) * Math.min(1, tc)))
-        // it grows out of the island: at 0 the top is the island's top, not a copy of it just below the bar
-        y: (isl.down ? isl.bh + gapA : isl.bh - height - gapA) * tc
+        y: isl.down ? isl.bh + gapA : isl.bh - height - gapA
         radius: Look.sq ? 0 : (Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc)))
         color: isl.fill
         visible: opacity > 0.01
@@ -619,7 +617,7 @@ Item {
                 running: isl.big
                 PauseAnimation { duration: 90 }
                 NumberAnimation { target: sheen; property: "x"; from: -sheen.width; to: card.width + sheen.width
-                    duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
+                    duration: 620; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
             }
         }
 

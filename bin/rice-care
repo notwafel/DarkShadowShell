@@ -125,7 +125,7 @@ def updates(fresh=False):
             code, so, _ = run([h, "-Qua"], 120)
             # shown only: an AUR build is someone else's code, and the update here is the shell's, not the AUR's
             out.append({"id": "aur", "name": "AUR (" + h + ")", "items": pkg_lines(so, arrow),
-                        "note": "Shown only: not updated here, unless the shell needs the package", "manual": True})
+                        "note": "not updated here, unless the shell needs the package", "manual": True})
     elif has("xbps-install"):
         code, so, _ = run(["xbps-install", "-nuM"], 120)
         out.append({"id": "xbps", "name": "Void packages",

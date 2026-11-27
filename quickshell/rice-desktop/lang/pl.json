@@ -573,6 +573,7 @@
  "Your changes are in it, and it is on the clipboard": "Twoje zmiany są w nim i jest w schowku",
  "Updates are ready": "Aktualizacje gotowe",
  "not updated here": "nie aktualizowane tutaj",
+ "not updated here, unless the shell needs the package": "nie aktualizowane tutaj, chyba że shell potrzebuje pakietu",
  "NixOS system": "System NixOS",
  "Fedora Atomic (rpm-ostree)": "Fedora Atomic (rpm-ostree)",
  "Your system updates with sudo nixos-rebuild switch --upgrade; packages stay in configuration.nix": "System aktualizujesz przez sudo nixos-rebuild switch --upgrade; pakiety zostają w configuration.nix",

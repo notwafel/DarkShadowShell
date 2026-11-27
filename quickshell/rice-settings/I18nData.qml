@@ -647,6 +647,7 @@ Singleton {
             "Update everything": "Aktualizuj wszystko",
             "%1 system updates wait: they finish in a terminal (your password there)": "%1 aktualizacji systemu czeka: kończą się w terminalu (tam hasło)",
             "not updated here": "nie aktualizowane tutaj",
+            "not updated here, unless the shell needs the package": "nie aktualizowane tutaj, chyba że shell potrzebuje pakietu",
             "Continuing in the terminal": "Kontynuacja w terminalu",
             "A terminal opened to show what changes and ask: answer y there.": "Otworzył się terminal: pokaże zmiany i zapyta, odpowiedz tam y.",
             "Updates are ready": "Aktualizacje gotowe",

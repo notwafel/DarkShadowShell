@@ -1,5 +1,16 @@
 # Changelog
 
+## V7.00: the update lock cannot be kept by the shell any more, and the audit's data-loss and race fixes
+- **The update lock was handed to the shell the installer starts, and kept forever.** The lock is file descriptor 9; bash gives it to every child. The Quickshell and bar started at the end of an update kept it open, so the next update was refused with "Another update is already running" with no update running, and the button looked dead. Every program the installer starts now closes it
+- **A dry run no longer deletes the retired dashboard pages**, and `rice-gpu.lua` goes to the backup before it is rewritten or removed (a custom line in it was lost before)
+- **A check answer is written whole:** the watch loop and the About tab could read half of `update.json` while it was being written and show a fresh error
+- **Flags reach the terminal:** `rice-update update --no-upgrade` used to drop `--no-upgrade` when the update went to a terminal
+- **The niri canvas state is written whole** (a crash mid-write made every floated window stay floating with no record), and a refused niri action no longer adds the same window id every 0.6 s
+- **A failed Hyprland read is no longer reported as an empty desktop**, so the widgets and the auto-hiding bar do not cover tiled windows until the next event
+- **A clean-up or update script is named per run:** a second run could rewrite the file the first terminal's bash was still reading
+- **waybar-autohide** ran `pgrep` twice every 70 ms (~28 processes a second) for a pid that changes once a session; it is checked once a second now
+- The lyrics volume line waves only while the song plays
+
 ## V6.99: the island's cards grow out of the pill, and its words get a panel of their own
 - **Update now starts its terminal at once.** The island and the Update Center asked `rice-care` for the packages first (checkupdates, Flatpak, Snap and the AUR can take minutes), so a click did nothing visible; both now tell the updater which path they are. A terminal that cannot start falls back to the next one instead of being counted as an update in a window that never opened
 - **The card grows out of the island instead of showing a wider copy of it under the bar.** At the first frame it was clamped to the bar height and placed just below the pill, so a slightly wider pill flashed there before the motion: it now starts exactly as the pill (same width, height and corners) and the motion is shorter (400 ms in, 320 ms out; 620 ms before)

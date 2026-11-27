@@ -624,6 +624,29 @@ assert m["ostree"].get("manual") is True and d["updateable"] == 0, d
 PYC
 [ -f "$tmp/dis/ostree/dnf" ] && bad "Fedora Atomic: dnf was checked on an image system" || ok "Fedora Atomic: dnf is not asked"
 
+# ---- install.sh: the update lock (fd 9) is not handed to the shell it starts (it kept the lock forever)
+mkdir -p "$tmp/lockfd"
+(
+  exec 9>"$tmp/lockfd/lock"
+  IS_TTY=0; DRY_RUN=0; RICE_GUI=0; LOG="$tmp/lockfd/log"
+  . "$root/install/lib/ui.sh"
+  task "a child does not keep the update lock" bash -c ': >&9 2>/dev/null && echo open >"$1" || echo closed >"$1"' _ "$tmp/lockfd/seen"
+)
+[ "$(cat "$tmp/lockfd/seen" 2>/dev/null)" = closed ] \
+  && ok "a program the installer starts does not keep the update lock" \
+  || bad "the installer gives the update lock (fd 9) to the shell it starts"
+
+# ---- install.sh: a dry run changes nothing, and a file it rewrites in place is backed up
+python3 - "$root/install.sh" <<'PYC' && ok "a dry run does not delete the old dashboard pages; rice-gpu.lua goes to the backup" \
+  || bad "a dry run deletes files, or rice-gpu.lua is overwritten with no backup"
+import sys
+s = open(sys.argv[1]).read()
+a = s.index("V3.38: the dashboard is gone")
+b = s.index("V4.85: our own apps in the app menu")
+assert '[ "$DRY_RUN" = 1 ] || rm -f' in s[a:b], "the dry run still deletes the old pages"
+assert s.count("bk_one \"$f\"") >= 3, "rice-gpu.lua is not backed up before it is changed"
+PYC
+
 # ---- install.sh: the mirrors come first, and an update takes the app stores with it
 python3 - "$root/install.sh" <<'PYC' && ok "install.sh picks the mirrors before pacman and updates Flatpak and Snap on an update" \
   || bad "install.sh lost the mirror step or the app stores"

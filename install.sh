@@ -231,9 +231,11 @@ missing_cmds() {
   echo "${out[*]:-}"
 }
 # run a tool with a time limit so one stuck program can never freeze the installer
-t() { timeout "${T:-25}" "$@"; }
+# 9>&-: fd 9 is the update lock (see the top). A daemon left running with it kept the lock, so every later update
+# said "Another update is already running" with no update to find (V7.00)
+t() { timeout "${T:-25}" "$@" 9>&-; }
 # start something in the background, detached from the installer
-detach() { setsid -f "$@" >/dev/null 2>&1 </dev/null || true; }
+detach() { setsid -f "$@" >/dev/null 2>&1 </dev/null 9>&- || true; }
 # V5.06: the reboot at the end, one way after another: systemd (and with sudo when something blocks it, a program
 # holding a "do not reboot" lock or a second user logged in), elogind, then plain sudo. The terminal is there, so
 # sudo may ask for the password
@@ -296,7 +298,7 @@ sudo_keepalive() {
   [ "$DRY_RUN" = 1 ] && return 0
   info "Some steps need administrator rights (sudo)."
   sudo -v || { fail "sudo failed, skipping packages"; return 1; }
-  ( while true; do sudo -n true 2>/dev/null; sleep 50; done ) &
+  ( while true; do sudo -n true 2>/dev/null; sleep 50; done ) 9>&- &
   SUDO_PID=$!
 }
 
@@ -732,7 +734,7 @@ put_wallpapers() {
   # in a running desktop with no wallpaper yet: put it on now, with its colors (at the next login rice-walls
   # start does the same)
   if [ -n "${WAYLAND_DISPLAY:-}" ] && [ -x "$HOME/.local/bin/rice-walls" ]; then
-    setsid -f "$HOME/.local/bin/rice-walls" start >/dev/null 2>&1 </dev/null
+    setsid -f "$HOME/.local/bin/rice-walls" start >/dev/null 2>&1 </dev/null 9>&-
   fi
   echo "$n new wallpapers in $dir"
 }
@@ -902,11 +904,12 @@ step_apps() {
     task "$n  ->  ~/.config/quickshell/$d" copy_tree "$ROOT/quickshell/$d" "$HOME/.config/quickshell/$d"
   done
   # V3.38: the dashboard is gone (the bar's island took its place); its old files leave the config too
+  # V7.00: not in a dry run: it promised that nothing was changed, and these files are read by a running shell
   local old
-  for old in Dashboard DashAbout DashControl DashGrid DashHome DashPerf DashTasks DashWalls DCard DRing DSlide WallPreview; do
+  [ "$DRY_RUN" = 1 ] || for old in Dashboard DashAbout DashControl DashGrid DashHome DashPerf DashTasks DashWalls DCard DRing DSlide WallPreview; do
     rm -f "$HOME/.config/quickshell/rice-desktop/$old.qml"
   done
-  rm -f "$HOME/.config/quickshell/rice-settings/DashboardPage.qml" "$HOME/.config/quickshell/rice-settings/DashMini.qml"
+  [ "$DRY_RUN" = 1 ] || rm -f "$HOME/.config/quickshell/rice-settings/DashboardPage.qml" "$HOME/.config/quickshell/rice-settings/DashMini.qml"
   # V4.85: our own apps in the app menu (Files, Photos, Music, Videos), their icons in the wallpaper's colors
   [ "$DRY_RUN" = 1 ] || { [ -x "$BIN/rice-app" ] && task "Files, Photos, Music and Videos in the app menu" "$BIN/rice-app" install
     # our Files is the file manager (picked, or nothing picked yet): the old one leaves the app menu
@@ -948,6 +951,7 @@ write_gpu() {
   # desktop felt like 60 Hz on a 144 Hz screen)
   if [ "$nv" = 1 ] && { [ "$other" = 0 ] || [ "$nvscreen" = 1 ]; }; then
     mkdir -p "$HOME/.config/hypr"
+    bk_one "$f"      # V7.00: it is in the backup even when this run changes it in place (and can be restored)
     cat >"$f" <<'LUA'
 -- written by DarkShadow's Shell for NVIDIA graphics (install.sh)
 -- the cursor is drawn in software: with a hardware cursor it can be invisible on NVIDIA
@@ -955,9 +959,9 @@ hl.config({ cursor = { no_hardware_cursors = true } })
 LUA
     echo "NVIDIA drives the screen: software cursor"
   elif [ "$nv" = 1 ]; then
-    rm -f "$f"; echo "hybrid graphics (NVIDIA + Intel/AMD): nothing to change"
+    bk_one "$f"; rm -f "$f"; echo "hybrid graphics (NVIDIA + Intel/AMD): nothing to change"
   else
-    rm -f "$f"; echo "no NVIDIA card"
+    bk_one "$f"; rm -f "$f"; echo "no NVIDIA card"
   fi
 }
 # power modes (Performance / Balanced / Power saver in the island, the control center and Home): power-profiles-daemon.

@@ -1,5 +1,9 @@
 # Changelog
 
+## V7.07: the island card is drawn out of the island, not a drop on a ready panel
+- **The whole card appears with the animation.** It starts on the pill with no height and unrolls down to its full height as the drop falls; the content is revealed by the clip from the top down. Before, the panel was already full size and only a small drop moved onto it
+- Width is full from the first frame, so there is still no small shape that widens first; the neck keeps the unrolling card one shape with the island until it pinches off
+
 ## V7.06: the island card draws in with the drop, in the island's own colors
 - **The menu is drawn together with the animation, not already there.** The card and its content fade in over the first half of the 500 ms drop, so the menu is revealed as the card falls; before, the card was at full opacity after ~80 ms and only the last frames were seen, which read as a card that was already there
 - **The drop and the neck use the island's own color and opacity.** The neck fades with the card, so the shape that peels off is the same glass as the pill, not a separate solid blob

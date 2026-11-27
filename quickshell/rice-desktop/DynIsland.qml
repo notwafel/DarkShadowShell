@@ -615,12 +615,13 @@ Item {
         Behavior on cwA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         Behavior on chA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         readonly property real tc: Math.max(0, t)
-        // V6.85 liquid glass: the card starts attached to the pill; V7.02: it is already full width and height at
-        // the first frame, so no small "start" grows first. V7.04: it falls 20 px, all of it as the neck stretches
-        // and pinches off, so the drop is visible at 280 ms
-        readonly property real gapA: 20 * tc
+        // V6.85 liquid glass. V7.07: the whole card is drawn out of the island: it starts on the pill with no
+        // height and unrolls down to its full height while the drop falls (the content is revealed by the clip, not
+        // a ready panel with a drop on it). Width is full from the first frame, so no small shape widens first
+        readonly property real gapA: 12 * tc
+        readonly property real rev: Math.max(0, Math.min(1, tc))
         width: cwA
-        height: chA
+        height: Math.max(2, chA * rev)
         // centred on the island, but always on the screen
         readonly property real want: isl.partMid < 0 || width <= isl.width ? (isl.width - width) / 2
             : Math.max(isl.width - width, Math.min(0, isl.partMid - isl.x - width / 2))
@@ -629,9 +630,9 @@ Item {
         radius: Look.sq ? 0 : (Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc)))
         color: isl.fill
         visible: opacity > 0.01
-        // V7.06: the card draws in with the drop instead of a blink at the start; it reaches full opacity around the
-        // half of the motion, so the menu is revealed while the drop falls (not already there before it lands)
-        opacity: tc < 0.02 ? 0 : Math.min(1, tc * 1.9)
+        // V7.07: the clip above is what draws the card in (it unrolls), so opacity is only a quick guard against a
+        // first-frame flash; the content is revealed by the growing height, not by fading a ready panel
+        opacity: tc < 0.02 ? 0 : Math.min(1, tc * 3)
         clip: true
         HoverHandler { id: hovC }
         // the glass edge and one sweep of light: a plain dark rectangle reads as a panel, not as glass
@@ -1078,9 +1079,9 @@ Item {
         readonly property bool act: inCard ? (isl.big && isl.cardMode === name) : isl.faceNow === name
         x: Math.round((parent.width - width) / 2)
         y: isl.down ? 0 : Math.round(parent.height - height)
-        // it comes in once the shape has (nearly) grown to it, so it is never seen cut. V7.06: in the card it draws
-        // in with the drop (the menu is revealed as the card falls, not already there before it lands)
-        opacity: inCard ? (act ? Math.max(0, Math.min(1, (card.tc - 0.12) / 0.5)) : 0)
+        // it comes in once the shape has (nearly) grown to it, so it is never seen cut. V7.07: in the card the clip
+        // reveals it as the card unrolls (height grows), so it is opaque and gets drawn out from the top, not faded
+        opacity: inCard ? (act ? 1 : 0)
             : (act && parent.width >= width * 0.82 && parent.height >= height * 0.82 ? 1 : 0)
         scale: act ? 1 : 0.94
         visible: opacity > 0.01

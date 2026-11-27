@@ -187,9 +187,10 @@ PanelWindow {
     visible: on || ghostOnly || barK > 0.01
     color: "transparent"
     anchors { top: !atBottom; bottom: atBottom; left: true; right: true }
-    // room below for the recording island; windows only keep away from the bar itself
-    // V6.85: with a card open the window covers the whole screen, so a click anywhere outside the card closes it
-    implicitHeight: bar.sticky ? (screen ? screen.height : barH + gap * 2 + 460) : barH + gap * 2 + 460
+    // V6.92: one size from the first frame. Growing the layer surface when a card opened resized it under the bar,
+    // and every part (left, middle, right) jumped a frame before the card's own animation. The mask still keeps the
+    // pointer off everything but the bar and the open card
+    implicitHeight: screen ? screen.height : barH + gap * 2 + 460
     // V6.80: with the frame the bar takes the whole edge, ignoring the room the frame keeps at the sides (its
     // strips were placed first, so the bar was 8 px short at both ends and the wallpaper showed in its corners);
     // the frame keeps the bar's room for it instead (ScreenFrame.qml).

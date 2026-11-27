@@ -3,6 +3,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 import QtQuick
+import QtQuick.Effects
 
 // The island of the Dynamic bar style: it sits where the clock is and grows into whatever happens right now.
 //   idle    the time (and, while music plays, the cover in your shape and a small moving wave)
@@ -258,7 +259,7 @@ Item {
     // the card: which one it shows (kept while it closes)
     property string cardMode: "media"
     onCardWantChanged: if (cardWant !== "") cardMode = cardWant
-    readonly property real cw: cardMode === "notif" ? 440 : (cardMode === "info" ? 520 : 470)
+    readonly property real cw: cardMode === "notif" ? 440 : 520
     readonly property real ch: cardMode === "notif" ? 96 : (cardMode === "info" ? 318 : 184)
     readonly property bool cardShown: card.opacity > 0.01
     readonly property Item cardItem: card          // niri: the bar blurs behind it (NiriBlur)
@@ -568,8 +569,8 @@ Item {
         // (a container transform: size, place and corners morph together, with a little overshoot)
         property real t: isl.big ? 1 : 0
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
-        // slow and soft on the way in, quicker on the way out
-        Behavior on t { NumberAnimation { duration: Look.lite ? 340 : 620
+        // V6.99: shorter than it was (620 ms read as a delay, not a motion), still softer on the way in
+        Behavior on t { NumberAnimation { duration: isl.big ? (Look.lite ? 200 : 400) : (Look.lite ? 160 : 320)
             easing.type: isl.big ? Easing.OutBack : Easing.InBack; easing.overshoot: Look.lite ? 0 : 0.12 } }
         property real cwA: isl.cw
         property real chA: isl.ch
@@ -579,13 +580,16 @@ Item {
         // V6.85 liquid glass: the card grows out of the pill and stays glued to it while it peels away; the gap
         // opens only in the last part, so it detaches at the end instead of jumping off at the first frame
         readonly property real gapA: 8 * Math.max(0, Math.min(1, (tc - 0.45) / 0.35))
-        width: Math.max(isl.bh, isl.width + (cwA - isl.width) * tc)
-        height: Math.max(isl.bh * 0.6, isl.bh + (chA - isl.bh) * tc)
+        // V6.99: at 0 it is exactly the pill (same width, height and corners), so no wider copy shows under the
+        // island before it has grown; the old widths were clamped to the bar height and read as a duplicate pill
+        width: isl.width + (cwA - isl.width) * tc
+        height: isl.bh + (chA - isl.bh) * tc
         // centred on the island, but always on the screen
         readonly property real want: isl.partMid < 0 || width <= isl.width ? (isl.width - width) / 2
             : Math.max(isl.width - width, Math.min(0, isl.partMid - isl.x - width / 2))
         x: Math.max(-isl.x, Math.min(isl.areaW - isl.x - width, (isl.width - width) / 2 + (want - (isl.width - width) / 2) * Math.min(1, tc)))
-        y: isl.down ? isl.bh + gapA : isl.bh - height - gapA
+        // it grows out of the island: at 0 the top is the island's top, not a copy of it just below the bar
+        y: (isl.down ? isl.bh + gapA : isl.bh - height - gapA) * tc
         radius: Look.sq ? 0 : (Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc)))
         color: isl.fill
         visible: opacity > 0.01
@@ -615,7 +619,7 @@ Item {
                 running: isl.big
                 PauseAnimation { duration: 90 }
                 NumberAnimation { target: sheen; property: "x"; from: -sheen.width; to: card.width + sheen.width
-                    duration: 620; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
+                    duration: 420; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
             }
         }
 
@@ -931,27 +935,38 @@ Item {
                     Btn { icon: "skip_next"; onHit: Player.next() }
                 }
             }
-            // the words of the song, in place of the player
+            // the words of the song, in place of the player: the cover in your shape top left, the words with a
+            // soft glow, and a volume line you can drag (V6.99)
             Item {
                 id: mediaWords
                 anchors.fill: parent
                 visible: isl.mediaLyr
+                ShapeImage {
+                    x: 16; y: 14; width: 56; height: 56
+                    kind: Look.shape; source: Player.art
+                    empty: isl.pal ? isl.pal.container : "#333"; fallbackColor: isl.pal ? isl.pal.inkContainer : "#ccc"
+                }
                 Column {
-                    x: 22; y: 14; width: parent.width - 44; spacing: 2
+                    x: 84; y: 14; width: parent.width - 84 - 130; spacing: 2
                     Text { width: parent.width; elide: Text.ElideRight; text: Player.title; color: isl.pal ? isl.pal.fg : "white"
                         font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
                     Text { width: parent.width; elide: Text.ElideRight; text: Player.artist; color: isl.pal ? isl.pal.dim : "#aaa"
                         font.family: Fonts.main; font.pixelSize: 11 }
                 }
                 Item {
-                    x: 22; y: 44; width: parent.width - 44; height: 88
+                    x: 18; y: 76; width: parent.width - 36; height: 60
                     LyricLine {
                         anchors.fill: parent; anchors.leftMargin: 4; anchors.rightMargin: 4
                         visible: Player.has && Lyrics.lines.length > 0
-                        size: 21; minSize: 13; maxRows: 2
+                        size: 19; minSize: 12; maxRows: 2
                         sung: isl.pal ? isl.pal.primary : "white"
                         dim: isl.pal ? Qt.rgba(isl.pal.fg.r, isl.pal.fg.g, isl.pal.fg.b, 0.34) : Qt.rgba(1, 1, 1, 0.34)
                         live: isl.big && isl.cardMode === "media" && isl.mediaLyr && !Look.lite
+                        // a soft light around the words, so they sit on the glass instead of reading flat
+                        layer.enabled: visible && !Look.lite
+                        layer.effect: MultiEffect { shadowEnabled: true; shadowBlur: 1
+                            shadowColor: isl.pal ? Qt.rgba(isl.pal.primary.r, isl.pal.primary.g, isl.pal.primary.b, 0.55) : Qt.rgba(1, 1, 1, 0.4)
+                            shadowVerticalOffset: 0; shadowHorizontalOffset: 0 }
                     }
                     Flickable {
                         anchors.fill: parent
@@ -970,14 +985,26 @@ Item {
                         color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 12
                     }
                 }
-                // the words screen keeps a play / pause where the buttons were
+                // the play button at the left, beside the volume line: the middle of the words is for the words
                 Item {
-                    width: 34; height: 34; anchors.horizontalCenter: parent.horizontalCenter; y: parent.height - 40
+                    x: 16; y: parent.height - 42; width: 30; height: 30
                     Blob { anchors.fill: parent; kind: Player.playing ? Look.shape : "circle"; color: isl.pal ? isl.pal.primary : "white" }
                     MIcon { anchors.centerIn: parent; size: 17; filled: true; name: Player.playing ? "pause" : "play_arrow"; glyph: ""
                         color: isl.pal ? isl.pal.inkPrimary : "black" }
                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Player.toggle() }
                 }
+                MIcon { x: 54; y: parent.height - 37; size: 15; filled: true
+                    name: isl.muted ? "volume_off" : (isl.vol < 0.5 ? "volume_down" : "volume_up"); glyph: ""
+                    color: isl.pal ? isl.pal.dim : "#aaa" }
+                WavyLine {
+                    x: 76; y: parent.height - 38; width: parent.width - 76 - 46; height: 18
+                    value: isl.muted ? 0 : Math.min(1, isl.vol); moving: !isl.muted; seekable: true
+                    color: isl.pal ? isl.pal.primary : "white"; track: isl.pal ? isl.pal.track : "#444"
+                    onMoved: function(v) { if (isl.bar) Vol.set(isl.bar.sink, v) }
+                }
+                Text { x: parent.width - 40; y: parent.height - 37; width: 26; horizontalAlignment: Text.AlignRight
+                    text: isl.muted ? "0" : Math.round(isl.vol * 100); color: isl.pal ? isl.pal.dim : "#aaa"
+                    font.family: Fonts.numbers; font.pixelSize: 11 }
             }
             // back to the info card (Today, System, About) without closing the island first
             Item {

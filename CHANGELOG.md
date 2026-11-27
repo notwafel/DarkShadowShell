@@ -1,5 +1,10 @@
 # Changelog
 
+## V6.99: the island's cards grow out of the pill, and its words get a panel of their own
+- **Update now starts its terminal at once.** The island and the Update Center asked `rice-care` for the packages first (checkupdates, Flatpak, Snap and the AUR can take minutes), so a click did nothing visible; both now tell the updater which path they are. A terminal that cannot start falls back to the next one instead of being counted as an update in a window that never opened
+- **The card grows out of the island instead of showing a wider copy of it under the bar.** At the first frame it was clamped to the bar height and placed just below the pill, so a slightly wider pill flashed there before the motion: it now starts exactly as the pill (same width, height and corners) and the motion is shorter (400 ms in, 320 ms out; 620 ms before)
+- **The words screen is a panel of its own:** wider, the cover in your shape top left, a soft glow on the lyrics, the play button moved beside a volume line you can drag
+
 ## V6.98: a dead update no longer leaves the update screen stuck on "running"
 - **When the update process is gone, its state is cleared.** A killed update or a reboot left `update-live.json` on "running" with no process behind it: the Update Center button ignored every click and Settings opened on the update page with a spinner that never ended. Any read of the state (the Update Center, the badge) now checks the recorded pid and turns a dead "running" or "terminal" into "failed", so the buttons work again
 - No process to find in `ps` is the clue: only the state file was left

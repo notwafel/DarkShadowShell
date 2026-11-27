@@ -1,5 +1,8 @@
 # Changelog
 
+## V6.94: a fullscreen key, for the game that shrinks itself
+- **SUPER + SHIFT + F makes the focused window fullscreen** (press it again to go back). Meant for a game that shrank itself and no longer takes its own fullscreen or borderless setting: the key asks the window manager, not the game. Change it in Settings > System > Keybinds (the pencil next to it) or see it in SUPER + /; Hyprland and niri both
+
 ## V6.93: a shell restart no longer checks GitHub again
 - **The background update check remembers when it last ran.** It checked 45 seconds after every start, and the shell restarts after every update or reload: a push made in between brought a new "Update is Available!" within a minute, as if it checked on every push. The last check time is kept in the saved state, so a restart waits out the configured interval (once a day by default, `every_minutes` in `~/.config/rice/update.json`, 60–10080)
 - **A check from the About tab or the Update Center also counts**, so the next automatic one is a full interval later, not a moment after

@@ -587,5 +587,19 @@ open(m.LIVE_DIR + "/" + m.key("/videos/sea.mp4") + ".jpg", "w").write("x")
 assert m.cmd_still("/videos/sea.mp4") == 0
 PYW
 
+# ---- rice-autostart: the apps that put themselves in ~/.config/autostart run (Mullvad VPN and the like)
+as="$tmp/as"; mkdir -p "$as/a" "$as/b" "$as/home"
+printf '[Desktop Entry]\nType=Application\nName=Good\nExec=touch "$HOME/good"\n' >"$as/a/good.desktop"
+printf '[Desktop Entry]\nType=Application\nName=Hidden\nHidden=true\nExec=touch "$HOME/hidden"\n' >"$as/a/hidden.desktop"
+printf '[Desktop Entry]\nType=Application\nName=Elsewhere\nOnlyShowIn=GNOME;\nExec=touch "$HOME/elsewhere"\n' >"$as/a/elsewhere.desktop"
+printf '[Desktop Entry]\nType=Application\nName=Off\nX-GNOME-Autostart-enabled=false\nExec=touch "$HOME/off"\n' >"$as/a/off.desktop"
+asrun() { HOME="$as/home" RICE_AUTOSTART_DIRS="$as/a:$as/b" XDG_CURRENT_DESKTOP=Hyprland python3 "$root/bin/rice-autostart" "$@"; }
+asrun --list | grep -q 'good.desktop.*run' && ok "rice-autostart lists the app" || bad "rice-autostart did not list the app"
+asrun
+for _ in $(seq 50); do [ -f "$as/home/good" ] && break; sleep 0.02; done
+[ -f "$as/home/good" ] && ok "rice-autostart starts the app" || bad "rice-autostart did not start the app"
+[ ! -e "$as/home/hidden" ] && [ ! -e "$as/home/elsewhere" ] && [ ! -e "$as/home/off" ] \
+  && ok "rice-autostart leaves out hidden, off and other desktops' apps" || bad "rice-autostart started a skipped app"
+
 bash -n "$root/install.sh" && ok "install.sh parses" || bad "install.sh syntax"
 echo "# $n checks passed"

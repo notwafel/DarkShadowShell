@@ -805,6 +805,8 @@ def startup(f, s):
         # the wallpaper (not when Settings > Wallpaper says the shell sets none)
         b + "rice-walls awww",
         b + "rice-notifyd",
+        # apps that put themselves in autostart (Mullvad VPN and the like): ~/.config/autostart, as XDG says
+        b + "rice-autostart",
         "hypridle",
         b + "rice-bar start",
         b + "rice-desktop start",

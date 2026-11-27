@@ -9,6 +9,13 @@ Text {
     property string glyph: ""
     property real size: 20
     property bool filled: false
+    // the weight of the symbol font: it is a variable font and the thin outlines (power, Bluetooth, the bell) looked
+    // lighter than Wi-Fi at the same size. Nerd Font icons have no axes, so this does nothing without the symbols
+    property real weight: 400
+    Component.onCompleted: {
+        if (!DashFont.symbols || weight === 400) return
+        try { font.variableAxes = { "wght": weight } } catch (e) { }
+    }
     text: DashFont.symbols ? name : glyph
     font.family: DashFont.symbols ? "Material Symbols Rounded" : DashFont.nerd
     font.pixelSize: DashFont.symbols ? size * 1.12 : size * 0.92

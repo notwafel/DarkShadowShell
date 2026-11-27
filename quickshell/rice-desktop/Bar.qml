@@ -509,7 +509,7 @@ PanelWindow {
 
     Component { id: mVolume
         Item { property bool shown: true; width: 24; height: bar.barH
-            MIcon { anchors.centerIn: parent; size: 18; color: bar.muted ? bar.dim : bar.fg
+            MIcon { anchors.centerIn: parent; size: 18; weight: 500; color: bar.muted ? bar.dim : bar.fg
                 name: bar.muted ? "volume_off" : (bar.vol < 0.34 ? "volume_mute" : (bar.vol < 0.67 ? "volume_down" : "volume_up"))
                 glyph: String.fromCodePoint(bar.muted ? 0xF0581 : (bar.vol < 0.34 ? 0xF057F : (bar.vol < 0.67 ? 0xF0580 : 0xF057E))) }
             MouseArea { id: vm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -525,7 +525,7 @@ PanelWindow {
 
     Component { id: mNetwork
         Item { property bool shown: true; width: 22; height: bar.barH
-            MIcon { anchors.centerIn: parent; size: 18; color: bar.svc.network ? bar.fg : bar.dim
+            MIcon { anchors.centerIn: parent; size: 18; weight: 500; color: bar.svc.network ? bar.fg : bar.dim
                 name: bar.svc.network ? "wifi" : "wifi_off"
                 glyph: String.fromCodePoint(bar.svc.network ? 0xF05A9 : 0xF05AA) }
             MouseArea { id: nm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -539,7 +539,7 @@ PanelWindow {
 
     Component { id: mBluetooth
         Item { property bool shown: true; width: 22; height: bar.barH
-            MIcon { anchors.centerIn: parent; size: 18; color: bar.svc.bluetooth ? bar.fg : bar.dim
+            MIcon { anchors.centerIn: parent; size: 18; weight: 500; color: bar.svc.bluetooth ? bar.fg : bar.dim
                 name: bar.svc.bluetooth ? "bluetooth" : "bluetooth_disabled"
                 glyph: String.fromCodePoint(bar.svc.bluetooth ? 0xF00AF : 0xF00B2) }
             MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -554,7 +554,7 @@ PanelWindow {
     Component { id: mBattery
         Item { readonly property bool shown: bar.hasBatt; width: bt.implicitWidth + 4; height: bar.barH
             Row { id: bt; anchors.centerIn: parent; spacing: 5
-                MIcon { size: 18; anchors.verticalCenter: parent.verticalCenter
+                MIcon { size: 18; weight: 500; anchors.verticalCenter: parent.verticalCenter
                     color: !bar.charging && bar.battPct <= 15 ? "#ff6b6b" : bar.fg
                     name: bar.charging ? "battery_charging_full" : "battery_full"
                     glyph: String.fromCodePoint(bar.charging ? 0xF0084 : 0xF0079) }
@@ -565,7 +565,7 @@ PanelWindow {
 
     Component { id: mNotify
         Item { property bool shown: true; width: 22; height: bar.barH
-            MIcon { anchors.centerIn: parent; size: 18; color: bar.svc.dnd ? bar.dim : bar.fg
+            MIcon { anchors.centerIn: parent; size: 18; weight: 500; color: bar.svc.dnd ? bar.dim : bar.fg
                 name: bar.svc.dnd ? "notifications_off" : "notifications"
                 glyph: String.fromCodePoint(bar.svc.dnd ? 0xF009B : 0xF009A) }
             MouseArea { id: dm; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton; cursorShape: Qt.PointingHandCursor
@@ -748,7 +748,7 @@ PanelWindow {
                 Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
                 readonly property color ic: bar.goo && playing ? gp.inkPrimary : bar.fg
                 Row { anchors.centerIn: parent; spacing: 3
-                    MIcon { anchors.verticalCenter: parent.verticalCenter; size: 18; name: "music_note"; glyph: String.fromCodePoint(0xF075A); color: mu.ic }
+                    MIcon { anchors.verticalCenter: parent.verticalCenter; size: 18; weight: 500; name: "music_note"; glyph: String.fromCodePoint(0xF075A); color: mu.ic }
                     Row { visible: mu.playing; anchors.verticalCenter: parent.verticalCenter; spacing: 2; height: 12
                         Repeater { model: 3
                             Rectangle { width: 3; radius: Look.sq ? 0 : (1.5); anchors.bottom: parent.bottom; color: mu.ic
@@ -764,7 +764,7 @@ PanelWindow {
     }
     Component { id: mPower
         Item { property bool shown: true; width: 22; height: bar.barH
-            MIcon { anchors.centerIn: parent; name: "power_settings_new"; glyph: String.fromCodePoint(0xF0425); size: 18; color: pm.containsMouse ? "#ff6b6b" : bar.dim
+            MIcon { anchors.centerIn: parent; weight: 500; name: "power_settings_new"; glyph: String.fromCodePoint(0xF0425); size: 18; color: pm.containsMouse ? "#ff6b6b" : bar.dim
                 Behavior on color { ColorAnimation { duration: 150 } } }
             MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {

@@ -471,5 +471,11 @@ grep -q 'dockCfg.style === "pills" ? "squircle"' "$root/quickshell/rice-desktop/
 grep -q 'shape: ln.iShape$' "$root/quickshell/rice-desktop/LauncherM3.qml" \
   && ok "the frequent apps do not force a shape of their own" || bad "the frequent apps still force a cookie"
 
+# ---- V6.84: a scheme you picked (grey) is not repainted by the cover of a song
+grep -q 'wantTint && colorMode === "auto"' "$root/quickshell/rice-desktop/Vibe.qml" \
+  && ok "the cover's colors belong to Auto only" || bad "a song overrides the picked scheme"
+grep -q 'setAutoSource' "$root/quickshell/rice-settings/ThemePage.qml" \
+  && ok "Auto offers the wallpaper or the cover" || bad "Auto has no source to choose"
+
 bash -n "$root/install.sh" && ok "install.sh parses" || bad "install.sh syntax"
 echo "# $n checks passed"

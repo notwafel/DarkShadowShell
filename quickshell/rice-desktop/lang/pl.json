@@ -579,5 +579,8 @@
  "Layered packages update with sudo rpm-ostree upgrade; a restart puts them on": "Dodane pakiety aktualizujesz przez sudo rpm-ostree upgrade; po restarcie będą włączone",
  "Keep the part between the handles": "Zostaw część między uchwytami",
  "Recording saved": "Nagranie zapisane",
- "GIF": "GIF"
+ "GIF": "GIF",
+ "What Auto follows": "Co śledzi Auto",
+ "Your wallpaper (as it always did), or the cover of the song that plays": "Twoja tapeta (tak jak zawsze) albo okładka granego utworu",
+ "Now playing": "Teraz gra"
 }

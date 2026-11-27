@@ -264,6 +264,14 @@ FloatingWindow {
     property var st: ({})
     property string status: ""
     property string colorMode: "auto"
+    // V6.84: "Auto" follows the wallpaper; the cover of what plays is a choice next to it (ThemePage)
+    property bool coverColors: true
+    FileView {
+        path: win.home + "/.config/rice/vibe.json"
+        watchChanges: true; printErrors: false
+        onFileChanged: reload()
+        onLoaded: { try { const j = JSON.parse(text()); win.coverColors = j.cover !== false } catch (e) { } }
+    }
     property alias stateTimer: stateTimer
     property var dst: ({ widgets: {}, clock: {}, dock: {}, lock: {} })
     property string osName: "Linux"
@@ -594,6 +602,13 @@ FloatingWindow {
     function toggleModule(name, on) {
         setSt(name, on)
         run(["toggle", name, on ? "on" : "off"])
+    }
+
+    function setAutoSource(cover) {
+        coverColors = cover
+        Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-vibe\" set cover \"$1\"", "_", cover ? "on" : "off"])
+        status = cover ? "Auto: the cover of the song that plays" : "Auto: your wallpaper"
+        stateTimer.restart()
     }
 
     function setColorMode(m) {

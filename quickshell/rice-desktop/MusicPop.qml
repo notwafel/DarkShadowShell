@@ -1,6 +1,7 @@
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import QtQuick.Effects
 
 // The music card the bar's Music module opens (inside BarPop.qml): the cover in a turning halo of your shape,
 // the song, its lyrics running with it (rice-lyrics, LRCLIB; fetched only while the card is open; V6.11: one big
@@ -87,16 +88,24 @@ Item {
     Rectangle {
         id: words
         x: 0; y: cov.y + cov.height + 12; width: mp.width; height: 112
-        radius: Look.sq ? 0 : (22); color: mp.chip; clip: true
+        // V6.88: the block was a solid panel next to the glass card; it shows the card through it now
+        radius: Look.sq ? 0 : (22); color: Qt.rgba(mp.chip.r, mp.chip.g, mp.chip.b, 0.42); clip: true
         opacity: mp.st(2)
         transform: Translate { y: (1 - mp.st(2)) * 22 }
         // V6.11: only the line being sung, big; its words rise in and fill as they are sung
-        LyricLine {
-            anchors.fill: parent; anchors.leftMargin: 14; anchors.rightMargin: 14; anchors.topMargin: 8; anchors.bottomMargin: 8
-            visible: mp.hasSong && mp.lines.length > 0
-            size: 24; minSize: 15; maxRows: 2
-            sung: mp.acc; dim: Qt.rgba(mp.fg.r, mp.fg.g, mp.fg.b, 0.34)
-            live: mp.on && !Look.lite
+        Item {
+            anchors.fill: parent; anchors.margins: 8
+            // V6.88: a soft glow in the song's color, so the words sit on the card instead of in a box
+            layer.enabled: mp.on && mp.lines.length > 0
+            layer.effect: MultiEffect { shadowEnabled: true; shadowBlur: 0.85; shadowColor: Qt.rgba(mp.acc.r, mp.acc.g, mp.acc.b, 0.5)
+                shadowVerticalOffset: 0; shadowHorizontalOffset: 0 }
+            LyricLine {
+                anchors.fill: parent; anchors.leftMargin: 6; anchors.rightMargin: 6
+                visible: mp.hasSong && mp.lines.length > 0
+                size: 24; minSize: 15; maxRows: 2
+                sung: mp.acc; dim: Qt.rgba(mp.fg.r, mp.fg.g, mp.fg.b, 0.34)
+                live: mp.on && !Look.lite
+            }
         }
         Flickable {
             anchors.fill: parent; anchors.margins: 12

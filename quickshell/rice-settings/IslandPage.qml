@@ -83,7 +83,7 @@ Item {
             Rectangle {
                 id: card
                 property real t: stage.big ? 1 : 0
-                Behavior on t { NumberAnimation { duration: stage.big ? 620 : 280; easing.type: stage.big ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: 0.9 } }
+                Behavior on t { NumberAnimation { duration: stage.big ? 620 : 280; easing.type: stage.big ? Easing.OutBack : Easing.InOutCubic; easing.overshoot: 0.12 } }
                 readonly property real cw: stage.mode === "notif" ? 300 : 340
                 readonly property real ch: stage.mode === "notif" ? 70 : (stage.mode === "media" ? 130 : 150)
                 property real cwA: cw

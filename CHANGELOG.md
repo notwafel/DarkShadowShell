@@ -1,5 +1,8 @@
 # Changelog
 
+## V6.96: SUPER + SHIFT + F really makes the window fullscreen
+- **The key asked with the old dispatcher, and with mode 1.** A Hyprland with the Lua config (0.55 and newer) refuses the old dispatcher names, and mode 1 means maximize: the window only filled its tile, so it looked as if nothing happened. The key now calls the Lua fullscreen (toggle, full screen) directly
+
 ## V6.95: the cards fold back, the player shows the words, and the login screen is clean
 - **A card closes the way it opens, backwards.** Closing was a quick InOutCubic over 280 ms while opening was an OutBack over 620: the panel vanished instead of folding back. The way out now takes as long as the way in and plays the same curve reversed. Applies to the island, the bar's cards, the Wi-Fi / Bluetooth / sound / power menus and the control center
 - **The tab strip and the "You are up to date" box are glass, not slabs.** They sat on the solid card color: two dark bands on the card. Both keep the card's color with its transparency

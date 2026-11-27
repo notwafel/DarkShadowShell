@@ -403,8 +403,10 @@ HOME="$tmp/km/home" python3 "$root/bin/rice-keymap" list 2>/dev/null | grep -q '
   && ok "fullscreen is a keymap action" || bad "fullscreen is missing from rice-keymap"
 grep -q '"fullscreen": "Mod+Shift+F"' "$root/bin/rice-niri" \
   && ok "niri moves its fullscreen key to the one you pick" || bad "niri's fullscreen key is fixed"
-grep -q 'fullscreen' "$root/lua/rice-keymap.lua" \
-  && ok "Hyprland binds fullscreen from rice-keymap" || bad "Hyprland has no fullscreen action"
+grep -q 'hl\.dsp\.window\.fullscreen()' "$root/lua/rice-keymap.lua" \
+  && ! grep -q 'hyprctl dispatch fullscreen' "$root/lua/rice-keymap.lua" \
+  && ok "Hyprland binds fullscreen with the Lua call, not the old dispatcher" \
+  || bad "Hyprland's fullscreen key still goes through hyprctl dispatch fullscreen"
 
 # ---- the other supported distros: Update Center checks and updates what that distro has
 mkdir -p "$tmp/dis"

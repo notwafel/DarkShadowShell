@@ -151,7 +151,9 @@ Item {
         page.startedAt = Math.floor(Date.now() / 1000)
         page.starting = true
         page.steps = []
-        Quickshell.execDetached([page.bin, "update"])
+        // V6.99: the page already knows whether packages wait, so the updater need not check again (it could
+        // take minutes) before it opens the terminal or starts in the background
+        Quickshell.execDetached([page.bin, "update", page.pkgTotal > 0 ? "--terminal" : "--gui"])
         startGuard.restart()
     }
     Timer { id: startGuard; interval: 15000; onTriggered: page.starting = false }

@@ -804,7 +804,9 @@ Item {
                         MouseArea { id: ubm; anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                             onClicked: {
                                 if (isl.up.update || isl.pkgTotal > 0) { isl.infoOpen = false
-                                    Quickshell.execDetached([Quickshell.env("HOME") + "/.local/bin/rice-update", "update"]) }
+                                    // V6.99: a terminal, at once: the old background update waited for the package
+                                    // check (up to minutes) and then opened nothing, so the click looked dead
+                                    Quickshell.execDetached([Quickshell.env("HOME") + "/.local/bin/rice-update", "update", "--terminal"]) }
                                 else isl.checkUpdates()
                             } }
                     }

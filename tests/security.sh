@@ -441,6 +441,34 @@ assert json.load(open(m.LIVE)).get("state") == "failed", "the healed state was n
 other.terminate(); other.wait()
 PYC
 
+# ---- rice-update update --terminal/--gui: Update now starts at once, without the slow package check first
+mkdir -p "$tmp/upd5/home"
+HOME="$tmp/upd5/home" python3 - "$root/bin/rice-update" <<'PYC' && ok "Update now skips the slow package check and opens a terminal" \
+  || bad "Update now waited for the package check, or ignored the terminal hint"
+import importlib.machinery, importlib.util, os, sys, time
+loader = importlib.machinery.SourceFileLoader("ru5", sys.argv[1])
+spec = importlib.util.spec_from_loader("ru5", loader)
+m = importlib.util.module_from_spec(spec)
+loader.exec_module(m)
+os.makedirs(m.CACHE, exist_ok=True)
+m.packages_pending = lambda: (_ for _ in ()).throw(AssertionError("the package check ran"))
+calls = []
+m.terminal_update = lambda: (calls.append("terminal"), True)[1]
+assert m.update_all(["--terminal"]) == 0
+assert calls == ["terminal"], calls
+m.gui = lambda a: (calls.append(a), 3)[1]
+assert m.update_all(["--gui", "--no-packages"]) == 3
+assert calls[-1] == ["--no-packages"], calls
+m.terminal_update = lambda: False
+m.update_all(["--terminal"])
+assert m.live().get("state") == "failed", "a terminal that could not open was not reported as failed"
+PYC
+
+grep -q '"update", "--terminal"' "$root/quickshell/rice-desktop/DynIsland.qml" \
+  && grep -q 'page.pkgTotal > 0 ? "--terminal" : "--gui"' "$root/quickshell/rice-settings/UpdatePage.qml" \
+  && ok "both Update now buttons tell the updater which place they are" \
+  || bad "an Update now button still waits for the package check"
+
 # ---- rice-update watch: a shell restart does not check GitHub again
 mkdir -p "$tmp/upd3/home/.cache/rice"
 HOME="$tmp/upd3/home" python3 - "$root/bin/rice-update" <<'PYC' && ok "the last update check survives a shell restart" \

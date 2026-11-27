@@ -326,23 +326,33 @@ def terminal_update():
     t = os.environ.get("TERMINAL") or "kitty"
     if not shutil.which(t):
         t = next((x for x in ("kitty", "foot", "alacritty", "wezterm", "konsole", "gnome-terminal") if shutil.which(x)), t)
-    cmd = [t, "-e", HOME + "/.local/bin/rice-update"]
-    if os.access(HOME + "/.local/bin/rice-term", os.X_OK):        # your terminal (Settings > Look & Feel)
-        cmd = [HOME + "/.local/bin/rice-term", "-e", HOME + "/.local/bin/rice-update"]
-    try:
-        p = subprocess.Popen(cmd, start_new_session=True, env=env,
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # V6.99: your terminal first, then the one found, so a configured terminal that cannot start (a missing
+    # display, an unknown flag) still gets a window instead of looking like a dead Update now
+    tries = []
+    if os.access(HOME + "/.local/bin/rice-term", os.X_OK):
+        tries.append([HOME + "/.local/bin/rice-term", "-e", HOME + "/.local/bin/rice-update"])
+    if [t, "-e", HOME + "/.local/bin/rice-update"] not in tries:
+        tries.append([t, "-e", HOME + "/.local/bin/rice-update"])
+    for cmd in tries:
+        try:
+            p = subprocess.Popen(cmd, start_new_session=True, env=env,
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError:
+            continue
+        time.sleep(0.25)
+        # a window that is gone at once failed (no display, a bad flag); one that exited 0 handed its window on
+        if getattr(p, "poll", lambda: None)() not in (None, 0):
+            continue
         try:
             open(CACHE + "/update-terminal.pid", "w").write(str(p.pid))
         except OSError:
             pass
         return True
+    try:
+        os.unlink(mark)                # nothing will report running: do not leave a false "terminal" for 90 s
     except OSError:
-        try:
-            os.unlink(mark)            # nothing will report running: do not leave a false "terminal" for 90 s
-        except OSError:
-            pass
-        return False
+        pass
+    return False
 
 
 def installer_changes(r):
@@ -492,8 +502,15 @@ def packages_pending():
 
 
 def update_all(args):
-    """one action for both places that show updates: a terminal when packages wait, else the quiet GUI update"""
-    if packages_pending() > 0:
+    """one action for both places that show updates: a terminal when packages wait, else the quiet GUI update.
+    V6.99: the places that already know say which (--terminal / --gui), so a click no longer waits for the package
+    check first: it can take minutes (checkupdates, flatpak, snap, AUR), and the button looked dead all that time."""
+    args = list(args)
+    want = "--terminal" if "--terminal" in args else ("--gui" if "--gui" in args else "")
+    args = [a for a in args if a not in ("--terminal", "--gui")]
+    if want == "--gui":
+        return gui(args)
+    if want == "--terminal" or packages_pending() > 0:
         if not terminal_update():
             # V6.97: no terminal opened: say it failed instead of showing an update in a terminal that is not there
             t0 = int(time.time())

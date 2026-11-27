@@ -489,5 +489,48 @@ grep -q 'HOME/.config/rice/wallpaper' "$root/install.sh" && grep -q 'head -n1 "$
 grep -q '\[ "$dir/$name" = "$cur" \] && continue' "$root/install.sh" \
   && ok "an update never deletes the wallpaper on the screen" || bad "a retired wallpaper can be deleted while it is shown"
 
+# ---- V6.84: a live wallpaper keeps playing when the color scheme changes
+mkdir -p "$tmp/lw/home/.cache/rice" "$tmp/lw/home/.config/quickshell/hyprquickpaper" "$tmp/lw/home/.local/bin" "$tmp/lw/home/.config/rice"
+mkdir -p "$tmp/lw/videos"; : >"$tmp/lw/videos/sea.mp4"
+printf '%s/videos/sea.mp4\n' "$tmp/lw" >"$tmp/lw/home/.cache/rice/live-wallpaper"
+printf '%s/videos/sea.mp4\n' "$tmp/lw" >"$tmp/lw/home/.cache/hyprquickpaper-current"
+touch "$tmp/lw/still.jpg"
+printf '#!/usr/bin/env bash\n[ "$1" = still ] && echo "%s"\n' "$tmp/lw/still.jpg" >"$tmp/lw/home/.local/bin/rice-walls"
+cat >"$tmp/lw/home/.config/quickshell/hyprquickpaper/commands.sh" <<'EOS'
+#!/usr/bin/env bash
+printf '%s|%s|%s|%s\n' "$RICE_LIVE" "$RICE_COLORS_ONLY" "$RICE_CURRENT" "$1" >"$HOME/colors-ran"
+EOS
+chmod +x "$tmp/lw/home/.local/bin/rice-walls" "$tmp/lw/home/.config/quickshell/hyprquickpaper/commands.sh"
+HOME="$tmp/lw/home" PATH="$tmp/lw/home/.local/bin:$PATH" python3 "$root/bin/rice-colors" mode grey >/dev/null 2>&1
+[ -f "$tmp/lw/home/.cache/rice/live-wallpaper" ] && ok "a color change keeps the live wallpaper playing" \
+  || bad "a color change stopped the live wallpaper"
+grep -q "^1|1|$tmp/lw/videos/sea.mp4|$tmp/lw/still.jpg$" "$tmp/lw/home/colors-ran" 2>/dev/null \
+  && ok "the colors come from the frame, and the wallpaper is left alone" \
+  || bad "the color change did not keep the live wallpaper: $(cat "$tmp/lw/home/colors-ran" 2>/dev/null)"
+[ "$(cat "$tmp/lw/home/.cache/hyprquickpaper-current")" = "$tmp/lw/videos/sea.mp4" ] \
+  && ok "the video stays the current wallpaper" || bad "the still frame replaced the video"
+
+# ---- a picture changes as it always did
+mkdir -p "$tmp/pic/home/.cache" "$tmp/pic/home/.config/quickshell/hyprquickpaper" "$tmp/pic/home/.config/rice"
+printf '%s/pic.jpg\n' "$tmp/pic" >"$tmp/pic/home/.cache/hyprquickpaper-current"
+touch "$tmp/pic/pic.jpg"
+cp "$tmp/lw/home/.config/quickshell/hyprquickpaper/commands.sh" "$tmp/pic/home/.config/quickshell/hyprquickpaper/commands.sh"
+chmod +x "$tmp/pic/home/.config/quickshell/hyprquickpaper/commands.sh"
+HOME="$tmp/pic/home" python3 "$root/bin/rice-colors" mode grey >/dev/null 2>&1
+grep -q "^|||$tmp/pic/pic.jpg$" "$tmp/pic/home/colors-ran" 2>/dev/null \
+  && ok "a picture is applied the plain way" || bad "the picture path changed: $(cat "$tmp/pic/home/colors-ran" 2>/dev/null)"
+
+# ---- rice-walls gives the still frame the colors are made from
+python3 - "$root/bin/rice-walls" "$tmp/still-check.jpg" <<'PYW' && ok "rice-walls gives the still frame of a live wallpaper" || bad "rice-walls has no still frame"
+import importlib.machinery, importlib.util, os, sys
+ldr = importlib.machinery.SourceFileLoader("rw", sys.argv[1])
+spec = importlib.util.spec_from_loader("rw", ldr); m = importlib.util.module_from_spec(spec)
+import types; m.__dict__["__name__"] = "rw"; spec.loader.exec_module(m)
+m.LIVE_DIR = sys.argv[2] + "-live"; os.makedirs(m.LIVE_DIR, exist_ok=True)
+open(sys.argv[2], "w").write("x")
+open(m.LIVE_DIR + "/" + m.key("/videos/sea.mp4") + ".jpg", "w").write("x")
+assert m.cmd_still("/videos/sea.mp4") == 0
+PYW
+
 bash -n "$root/install.sh" && ok "install.sh parses" || bad "install.sh syntax"
 echo "# $n checks passed"

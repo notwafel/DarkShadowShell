@@ -1,5 +1,10 @@
 # Changelog
 
+## V6.88: the shapes stay, the island does not jump, and the words sit on the card
+- **The cover is a rounded square in the bar's music card only.** The island's player and the Control Center's (where your notifications are) got the shape back: cropped into a cookie the cover lost its edges only in that one small card, and the rest never needed changing. The Control Center's song text is back to 15/12 as well
+- **Clicking the island no longer makes it jump.** The click also started the "a drop landed" squeeze (9% flatter, with a bouncy return) while the card grew out of the pill, so the island seemed to jump up and snap back before the real animation. The squeeze stays for notifications and the volume/workspace flashes
+- **The lyrics block is see-through and the words glow.** It was a solid panel next to the glass card; it now lets the card through (42% of the chip color) and the line being sung gets a soft glow in the song's color
+
 ## V6.87: the updater stops calling its own hand-off a failure
 - **A second click no longer breaks the update.** While the terminal that the Update Center opened was still waiting for your `y`, another click reported "no terminal could be opened" and the page turned it into a 1-second failure ("The update did not finish"). That guard is the same update: the page now keeps saying it continues in the terminal
 - **"Another update is already running" says where it is.** The lock is real (one installer at a time), and the process holding it is usually the terminal that Settings opened, waiting for your answer: finish it there or close that terminal, then run again

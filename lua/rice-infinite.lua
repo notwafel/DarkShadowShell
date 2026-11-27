@@ -159,6 +159,26 @@ local function place(w, s, resize)
     run(hl.dsp.window.move({ x = math.floor(RI.ox + s.x * RI.z + 0.5), y = math.floor(RI.oy + s.y * RI.z + 0.5), window = sel(w) }))
 end
 
+-- a place that would land outside its screen is brought to the middle of it. A window given its place while the
+-- canvas was panned has canvas numbers that mean nothing once the view is back at 100 %; without this it was
+-- put outside the screen and looked gone after turning Infinite Desktop off.
+local function visible_place(w, s)
+    local m = w.monitor
+    if type(m) ~= "table" or not m.width then m = hl.get_active_monitor() end
+    if type(m) ~= "table" or not m.width then return s end
+    local sc = tonumber(m.scale) or 1
+    if sc <= 0 then sc = 1 end
+    local W, H = (tonumber(m.width) or 1920) / sc, (tonumber(m.height) or 1080) / sc
+    local l, t = tonumber(m.x) or 0, tonumber(m.y) or 0
+    local sw, sh = (tonumber(s.w) or 400) * RI.z, (tonumber(s.h) or 300) * RI.z
+    local x, y = RI.ox + s.x * RI.z, RI.oy + s.y * RI.z
+    if x + sw <= l + 24 or x >= l + W - 24 or y + sh <= t + 24 or y >= t + H - 24 then
+        s.x, s.y = (l + W / 2 - sw / 2 - RI.ox) / RI.z, (t + H / 2 - sh / 2 - RI.oy) / RI.z
+        s.tx, s.ty = nil, nil
+    end
+    return s
+end
+
 local function here()
     return RI.on and (shared() or active_ws() == RI.ws)
 end
@@ -752,7 +772,7 @@ local function bring_back()
     end
     for _, w in ipairs(list) do
         local s = RI.world[w.address]
-        if s then place(w, s, true) end
+        if s then place(w, visible_place(w, s), true) end
     end
     return true
 end
@@ -797,7 +817,7 @@ function RI.set(on)
             RI.z, RI.ox, RI.oy = 1.0, 0, 0
             each_window(function(w)
                 local s = RI.world[w.address]
-                if s and (shared() or (w.workspace and w.workspace.id == RI.ws)) then place(w, s, true) end
+                if s and (shared() or (w.workspace and w.workspace.id == RI.ws)) then place(w, visible_place(w, s), true) end
                 if RI.tiled[w.address] then run(hl.dsp.window.float({ action = "unset", window = sel(w) })) end
             end)
         end

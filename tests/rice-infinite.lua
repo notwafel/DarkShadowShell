@@ -107,6 +107,19 @@ check(floatarr[#floatarr] == "unset", "off tiles it again")
 check(focuses[#focuses].window == "address:0xc", "the new window was focused")
 check(not RiceInfinite.on, "it is off again")
 
+-- a window that got its canvas place while the view was panned: turning it off brings the window back on screen
+active_ws = 1
+RiceInfinite.cfg.screens = 1
+RiceInfinite.set(true)
+RiceInfinite.pan(5000, 0)
+local stray = win("0xe", 1, M1, 3000, 200, 400, 300)
+W[#W + 1] = stray
+RiceInfinite.opened(stray)
+RiceInfinite.set(false)
+check(stray.at.x >= M1.x and stray.at.x + stray.size.x <= M1.x + 1920
+      and stray.at.y >= M1.y and stray.at.y + stray.size.y <= M1.y + 1080,
+    "off brings a window placed on a panned canvas back on screen")
+
 -- 0.56+: the pointer itself, no input group (and the warp at the edge of the screen)
 local function tick() for _, f in ipairs(timers) do f() end end
 local function ticks() for _ = 1, 16 do tick() end end     -- 16 ms of the timer (16 ticks while held, one when idle)

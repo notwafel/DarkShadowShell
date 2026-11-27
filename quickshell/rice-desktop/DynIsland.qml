@@ -615,7 +615,10 @@ Item {
                 id: tabs
                 anchors.horizontalCenter: parent.horizontalCenter; y: isl.down ? 14 : 14
                 width: tabRow.width + 8; height: 38
-                Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (height / 2); color: fInfo.pp ? fInfo.pp.card : "#222" }
+                // V6.95: the strip used to be the solid card color, a dark band on the glass; it is the same color
+                // with the card showing through it
+                Rectangle { anchors.fill: parent; radius: Look.sq ? 0 : (height / 2)
+                    color: fInfo.pp ? Qt.rgba(fInfo.pp.card.r, fInfo.pp.card.g, fInfo.pp.card.b, 0.38) : "#222" }
                 Rectangle {
                     id: tabPill
                     readonly property var cur: isl.infoTab === "system" ? tSys : (isl.infoTab === "about" ? tAbout : tToday)
@@ -745,7 +748,8 @@ Item {
                 // updates
                 Rectangle {
                     x: 24; y: 124; width: parent.width - 48; height: 104; radius: Look.sq ? 0 : (24)
-                    color: isl.up.update || isl.pkgTotal > 0 ? (fInfo.pp ? fInfo.pp.container : "#333") : (fInfo.pp ? fInfo.pp.card : "#222")
+                    color: isl.up.update || isl.pkgTotal > 0 ? (fInfo.pp ? fInfo.pp.container : "#333")
+                        : (fInfo.pp ? Qt.rgba(fInfo.pp.card.r, fInfo.pp.card.g, fInfo.pp.card.b, 0.45) : "#222")
                     Behavior on color { ColorAnimation { duration: 260 } }
                     Item { id: upIc; x: 18; anchors.verticalCenter: parent.verticalCenter; width: 48; height: 48
                         Blob { id: upBlob; anchors.fill: parent; kind: isl.up.update || isl.pkgTotal > 0 ? Look.shape : "circle"; color: fInfo.pp ? (isl.up.update || isl.pkgTotal > 0 ? fInfo.pp.primary : fInfo.pp.cardHi) : "#444"

@@ -18,6 +18,9 @@ Text {
     }
     text: DashFont.symbols ? name : glyph
     font.family: DashFont.symbols ? "Material Symbols Rounded" : DashFont.nerd
+    // the symbol font carries weight 500 as the "Medium" face too: this picks it on systems whose font stack does
+    // not pass the variable axis through (older Qt or a static copy of the font)
+    font.styleName: DashFont.symbols && weight === 500 ? "Medium" : ""
     font.pixelSize: DashFont.symbols ? size * 1.12 : size * 0.92
     color: "#F6F5F4"
     verticalAlignment: Text.AlignVCenter

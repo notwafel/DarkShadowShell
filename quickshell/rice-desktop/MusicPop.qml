@@ -43,8 +43,8 @@ Item {
         opacity: mp.st(0)
         scale: 0.55 + 0.45 * mp.st(0)
         rotation: -24 * (1 - mp.st(0))
-        // the cover: a rounded square with the picture cropped to fill it, not the picked shape. Cropped into a
-        // flower or a cookie the album art looked wrong; a plain rounded square always fits.
+        // V6.88: the one cover that is a rounded square cropped to fill (the shape ate the edges of the picture).
+        // Every other player keeps the shape you picked
         Rectangle {
             anchors.fill: parent; radius: Look.sq ? 0 : 20; clip: true; color: mp.chip
             Image { id: artI; anchors.fill: parent; source: Player.art || ""; fillMode: Image.PreserveAspectCrop; asynchronous: true }

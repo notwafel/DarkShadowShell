@@ -214,6 +214,80 @@ PYB
 grep -q 'autoHide && busy && !editing && !locked && !Infinite.here' "$root/quickshell/rice-desktop/shell.qml" \
   && ok "the Infinite Desktop's floating windows leave the widgets out of auto-hide" || bad "auto-hide still hides widgets on the canvas"
 
+# ---- rice-busy: niri is asked over one kept socket, not with a process for every window event
+python3 - "$root/bin/rice-busy" <<'PYB' && ok "niri is asked on one kept socket, and a tiled window counts" \
+  || bad "niri still needs a process per question"
+import importlib.machinery, importlib.util, json, os, socket, sys, tempfile, threading
+loader = importlib.machinery.SourceFileLoader("rb3", sys.argv[1])
+spec = importlib.util.spec_from_loader("rb3", loader)
+m = importlib.util.module_from_spec(spec)
+loader.exec_module(m)
+d = tempfile.mkdtemp(dir="/tmp")
+path = os.path.join(d, "n.sock")
+srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+srv.bind(path)
+srv.listen(1)
+ok = {"Workspaces": [{"id": 1, "is_active": True, "is_focused": True, "output": "DP-1"}],
+      "Windows": [{"id": 3, "workspace_id": 1, "is_floating": False}]}
+conns = []
+def serve():
+    c, _ = srv.accept()
+    conns.append(1)
+    f = c.makefile("rwb")
+    for line in f:
+        name = json.loads(line).get("Request", "")
+        f.write((json.dumps({"Ok": {name: ok.get(name, [])}}) + "\n").encode())
+        f.flush()
+t = threading.Thread(target=serve, daemon=True)
+t.start()
+os.environ["NIRI_SOCKET"] = path
+assert m.niri_j("workspaces") == ok["Workspaces"], "the socket answer was not read"
+assert m.niri_busy("DP-1") is True, "a tiled window on the active workspace did not count"
+assert len(conns) == 1, "niri was connected to more than once"
+srv.close()
+os.unlink(path)
+os.rmdir(d)
+PYB
+
+
+# ---- rice-fonts: every font comes from a pinned commit/tag, and every file it downloads has its SHA-256
+python3 - "$root/bin/rice-fonts" "$root/install/checksums.txt" <<'PYF' && ok "every font URL is pinned, and every downloaded file is hashed" \
+  || bad "a font comes from a moving branch, or a downloaded file has no hash"
+import re, sys
+src = open(sys.argv[1]).read()
+sums = set()
+for line in open(sys.argv[2]):
+    if line.strip() and not line.startswith("#"):
+        parts = line.split(None, 1)
+        if len(parts) == 2:
+            sums.add(parts[1].strip())
+commits = re.findall(r'^[A-Z_]+_COMMIT="([^"]+)"', src, re.M)
+tags = re.findall(r'^[A-Z_]+_TAG="([^"]+)"', src, re.M)
+assert commits, "no pinned commit"
+assert all(re.fullmatch(r"[0-9a-f]{40}", c) for c in commits), commits
+assert tags, "no pinned release tag"
+assert all(re.fullmatch(r"v\d+\.\d+\.\d+", t) for t in tags), tags
+for u in re.findall(r'https://[^\s"\\]+', src):
+    assert not re.search(r"/(master|main|HEAD)(/|$)", u), "a moving branch: " + u
+names = set()
+for line in src.splitlines():
+    if "for n in (" in line or "z.read" in line:          # members of the Inter zip: the zip itself is hashed
+        continue
+    for q in re.findall(r'"([^"]*)"', line):
+        q = q.rsplit("|", 1)[-1]                          # a "family|url|file" entry: the file is last
+        if re.fullmatch(r"[A-Za-z0-9._-]+\.(?:ttf|otf|zip|tar\.xz)", q):
+            names.add(q)
+for pkg in re.findall(r'"JetBrainsMono [^|"]*\|([A-Za-z0-9._-]+)\|', src):
+    names.add(pkg + ".tar.xz")                            # fetched as "$pkg.tar.xz"
+names.add(re.search(r"Inter-[\d.]+\.zip", src).group(0))
+for sub in ("JP", "KR", "SC", "TC"):
+    for w in ("Regular", "Medium", "Bold"):
+        names.add("NotoSans%s-%s.otf" % (sub, w))
+missing = sorted(n for n in names if n not in sums)
+assert not missing, "downloaded but not in checksums.txt: %s" % missing
+print("pinned:", len(names), "files")
+PYF
+
 # ---- rice-mirrors: reflector's list, and the old mirrorlist stays unless one was written
 mkdir -p "$tmp/mr/bin" "$tmp/mr/etc"
 printf 'Server = https://old/$repo/os/$arch\n' >"$tmp/mr/etc/mirrorlist"
@@ -382,6 +456,49 @@ m.nsave({"on": True, "ws": 1, "floated": [7]})
 assert json.load(open(m.NSTATE))["floated"] == [7]
 assert not os.path.exists(m.NSTATE + ".new"), "a temporary state file was left behind"
 PYC
+
+# ---- rice-canvasd: a pid that now belongs to another program is not stopped
+mkdir -p "$tmp/canvas2/run"
+HOME="$tmp/canvas2/home" XDG_RUNTIME_DIR="$tmp/canvas2/run" python3 - "$root/bin/rice-canvasd" <<'PYC' \
+  && ok "a reused pid is not taken for rice-canvasd" || bad "running_pid trusts any live pid"
+import importlib.machinery, importlib.util, os, subprocess, sys
+if not os.path.isdir("/proc/self"):
+    raise SystemExit(0)                     # macOS and BSD: no /proc to read a command line from
+loader = importlib.machinery.SourceFileLoader("rc3", sys.argv[1])
+spec = importlib.util.spec_from_loader("rc3", loader)
+m = importlib.util.module_from_spec(spec)
+loader.exec_module(m)
+other = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)", "other-daemon"])
+mine = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)", "rice-canvasd"])
+try:
+    open(m.PID, "w").write(str(other.pid))
+    assert m.running_pid() == 0, "another program's pid was taken for the daemon"
+    open(m.PID, "w").write(str(mine.pid))
+    assert m.running_pid() == mine.pid, "the daemon's own pid was refused"
+finally:
+    other.terminate(); mine.terminate(); other.wait(); mine.wait()
+PYC
+
+
+# ---- the two version checks (install.sh and rice-update) agree on the same strings
+python3 - "$root/install.sh" "$root/bin/rice-update" <<'PYV' && ok "install.sh and rice-update read versions the same way" \
+  || bad "the two version checks disagree"
+import importlib.machinery, importlib.util, re, subprocess, sys
+src = open(sys.argv[1]).read()
+fn = re.search(r"^ver_newer\(\) \{.*?^\}", src, re.M | re.S).group(0)
+loader = importlib.machinery.SourceFileLoader("ruv", sys.argv[2])
+spec = importlib.util.spec_from_loader("ruv", loader)
+m = importlib.util.module_from_spec(spec)
+loader.exec_module(m)
+vectors = [("2.02", "2.1", False), ("2.1", "2.10", False), ("2.01", "2.02", False),
+           ("3.0", "2.99", True), ("7.09", "7.10", False), ("v7.15", "7.15", False)]
+for a, b, newer in vectors:
+    sh = subprocess.run(["bash", "-c", fn + '\nver_newer "%s" "%s"' % (a, b)]).returncode == 0
+    py = m.key(a) > m.key(b)
+    assert sh is newer, ("install.sh", a, b, sh)
+    assert py is newer, ("rice-update", a, b, py)
+    assert sh == py, ("they disagree", a, b)
+PYV
 
 # ---- rice-update update: AUR alone does not move the shell update to a terminal
 mkdir -p "$tmp/upd/home/.local/bin"
@@ -793,6 +910,42 @@ m.run = fake
 d = m.data_hypr()
 assert [w["cls"] for w in d["wins"]] == ["kitty"], d["wins"]
 PYT
+
+# ---- install/lib/edits.sh: your own QML edit survives an update, the new version lands next to it
+mkdir -p "$tmp/edits/home" "$tmp/edits/src"
+cat >"$tmp/edits/run.sh" <<'EOS'
+set -eu
+HOME="$1"; REPO="$2"; SRC="$3"; BK="$1/bk"; DRY_RUN=0
+mkdir -p "$BK" "$HOME/.config/rice" "$HOME/.config/quickshell" "$SRC"
+warn() { :; }
+. "$REPO/install/lib/edits.sh"
+printf 'old A\n' >"$HOME/.config/quickshell/A.qml"
+printf 'same B\n' >"$HOME/.config/quickshell/B.qml"
+printf 'old shell\n' >"$HOME/.config/quickshell/shell.qml"
+for f in A.qml B.qml shell.qml; do
+  printf '%s  %s\n' "$(sha256sum <"$HOME/.config/quickshell/$f" | cut -c1-64)" ".config/quickshell/$f" >>"$SUMS"
+done
+printf 'my A\n' >"$HOME/.config/quickshell/A.qml"          # edited after the installer wrote it
+printf 'my shell\n' >"$HOME/.config/quickshell/shell.qml"
+printf 'new A\n' >"$SRC/A.qml"
+printf 'new B\n' >"$SRC/B.qml"
+printf 'new shell\n' >"$SRC/shell.qml"
+printf 'new C\n' >"$SRC/C.qml"
+copy_tree "$SRC" "$HOME/.config/quickshell"
+EOS
+if bash "$tmp/edits/run.sh" "$tmp/edits/home" "$root" "$tmp/edits/src" 2>/dev/null &&
+   [ "$(cat "$tmp/edits/home/.config/quickshell/A.qml")" = "my A" ] &&
+   [ "$(cat "$tmp/edits/home/.config/quickshell/A.qml.rice-update")" = "new A" ] &&
+   [ "$(cat "$tmp/edits/home/.config/quickshell/B.qml")" = "new B" ] &&
+   [ ! -e "$tmp/edits/home/.config/quickshell/B.qml.rice-update" ] &&
+   [ "$(cat "$tmp/edits/home/.config/quickshell/C.qml")" = "new C" ] &&
+   [ "$(cat "$tmp/edits/home/.config/quickshell/shell.qml")" = "my shell" ] &&
+   grep -q '.config/quickshell/A.qml' "$tmp/edits/home/.cache/rice/kept-edits" &&
+   grep -q '.config/quickshell/shell.qml' "$tmp/edits/home/.cache/rice/kept-edits"; then
+  ok "your QML edit survives an update as FILE.rice-update; an unchanged file is replaced"
+else
+  bad "copy_tree overwrote a user's QML edit"
+fi
 
 bash -n "$root/install.sh" && ok "install.sh parses" || bad "install.sh syntax"
 echo "# $n checks passed"

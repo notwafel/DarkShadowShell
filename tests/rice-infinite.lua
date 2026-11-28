@@ -25,8 +25,9 @@ local W = { win("0xa", 1, M1, 100, 100), win("0xb", 11, M2, 100, 100) }
 local active_ws, cursor = 1, { x = 100, y = 100 }
 local function at(t, fn) for _, w in ipairs(W) do if "address:" .. w.address == t.window then fn(w) end end end
 
+local handlers = {}
 hl = {
-    on = function() end, bind = function() end, unbind = function() end, exec_cmd = function() end,
+    on = function(name, fn) handlers[name] = fn end, bind = function() end, unbind = function() end, exec_cmd = function() end,
     animation = function(t) anims[#anims + 1] = t end,
     get_windows = function() return W end,
     get_active_workspace = function() return { id = active_ws } end,
@@ -234,3 +235,52 @@ else
 end
 check((function() local f = io.open(os.getenv("XDG_RUNTIME_DIR") .. "/rice-infinite.poll"); if f then f:close() return true end return false end)() == POLL,
     "the marker for Settings follows the Hyprland")
+
+-- ---- real Hyprland hands a monitor as an object (userdata), not a Lua table. The table-only checks in shown() and
+-- visible_place() were skipped on a real monitor (a `type(m) == "table"` test is false): every screen took every
+-- workspace, and turning off never clamped a window. These use userdata monitors so it cannot regress. ----
+local function umon(name, x, y, aws)
+    local d = { name = name, x = x, y = y, width = 1920, height = 1080, scale = 1, transform = 0,
+        reserved = { left = 0, top = 0, right = 0, bottom = 0 } }
+    d.active_workspace = aws and { id = aws } or nil
+    local u = io.tmpfile()
+    debug.setmetatable(u, { __index = function(_, k) return d[k] end })
+    return u, d
+end
+local function fire(name, arg) local h = handlers[name]; if h then h(arg) end end
+
+local U1, D1 = umon("DP-1", 0, 0, 1)
+local U2, D2 = umon("HDMI-A-1", 1920, 0, 11)
+M1, M2 = U1, U2
+check(type(U1) == "userdata", "the fake monitor is a userdata object, as Hyprland gives it")
+
+-- every screen: only the workspace each screen shows moves, even with object monitors
+active_ws = 1
+local ua = win("0x21", 1, U1, 100, 100)
+local ub = win("0x22", 11, U2, 2000, 100)
+local uc = win("0x23", 3, U1, -3000, 100)     -- a workspace no screen shows
+W = { ua, ub, uc }
+RiceInfinite.cfg.screens = 0
+RiceInfinite.set(true)
+local b0 = #moves
+RiceInfinite.pan(100, 0)
+local na, nb, nc = 0, 0, 0
+for i = b0 + 1, #moves do
+    if moves[i].window == "address:0x21" then na = na + 1 end
+    if moves[i].window == "address:0x22" then nb = nb + 1 end
+    if moves[i].window == "address:0x23" then nc = nc + 1 end
+end
+check(na > 0 and nb > 0, "object monitors: the shown workspace of every screen moves")
+check(nc == 0, "object monitors: a window on a workspace no screen shows stays")
+
+-- off clamps a window whose canvas place is far outside the screen (object monitor)
+D1.active_workspace = { id = 1 }
+active_ws = 1
+local z1 = win("0x31", 1, U1, 100, 100, 400, 300)
+W = { z1 }
+RiceInfinite.cfg.screens = 1
+RiceInfinite.set(true)
+RiceInfinite.world["0x31"] = { x = 5000, y = 200, w = 400, h = 300 }   -- as on a far-panned canvas
+RiceInfinite.set(false)
+check(z1.at.x >= 0 and z1.at.x + z1.size.x <= 1920 and z1.at.y >= 0 and z1.at.y + z1.size.y <= 1080,
+    "object monitor: off clamps a window whose canvas place is far outside the screen")

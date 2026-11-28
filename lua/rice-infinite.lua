@@ -112,11 +112,16 @@ local function each_window(fn)
     if ok and type(list) == "table" then for _, w in ipairs(list) do fn(w) end end
 end
 
--- every screen: only the workspace each screen shows (V5.02: the windows of every other workspace were taken too)
+-- every screen: only the workspace each screen shows (V5.02: the windows of every other workspace were taken too).
+-- Hyprland 0.56+ hands a monitor as an object (userdata), not a Lua table, so read it only through its fields: a
+-- `type(m) == "table"` test is false for a real monitor and made this take every workspace (only the tests, whose
+-- monitors are tables, saw it filter).
 local function shown(w, wsid)
     local m = w.monitor
-    local aw = type(m) == "table" and (m.active_workspace or m.activeWorkspace) or nil
-    local id = type(aw) == "table" and aw.id or aw
+    if not m then return true end
+    local aw = m.active_workspace or m.activeWorkspace
+    if not aw then return true end
+    local id = aw.id
     if id == nil then return true end
     return tonumber(id) == tonumber(wsid)
 end
@@ -166,8 +171,8 @@ end
 -- rectangle is kept inside the monitor now, not just its top-left corner.
 local function visible_place(w, s)
     local m = w.monitor
-    if type(m) ~= "table" or not m.width then m = hl.get_active_monitor() end
-    if type(m) ~= "table" or not m.width then return s end
+    if not (m and m.width) then m = hl.get_active_monitor() end
+    if not (m and m.width) then return s end
     local sc = tonumber(m.scale) or 1
     if sc <= 0 then sc = 1 end
     local W, H = (tonumber(m.width) or 1920) / sc, (tonumber(m.height) or 1080) / sc
@@ -331,7 +336,7 @@ local BAND = 24
 local function warp_target(p, dx, dy)
     if not CAN_WARP then return nil end
     local ok, m = pcall(hl.get_monitor_at, p.x, p.y)
-    if not ok or type(m) ~= "table" then return nil end
+    if not ok or not (m and m.width) then return nil end
     local sc = tonumber(m.scale) or 1
     if sc <= 0 then sc = 1 end
     local l, t = tonumber(m.x) or 0, tonumber(m.y) or 0

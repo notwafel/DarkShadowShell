@@ -368,9 +368,9 @@ local poll = { last = nil, held = false, ax = 0, ay = 0 }
 
 -- The canvas moves on every tick while SUPER + ALT are held, so the windows sit wherever the pointer is at the
 -- monitor's own refresh: no step every 16 ms (which read as a stutter on a fast screen), and no counting of ticks
--- that drift when the compositor coalesces the timer. The idle tick only watches the keys. TICK_FAST is 8 ms so a
--- 120 Hz screen still gets an update every frame; a still pointer costs nothing (a zero move is not sent).
-local TICK_IDLE, TICK_FAST = 16, 8
+-- that drift when the compositor coalesces the timer. The idle tick only watches the keys. TICK_FAST is 4 ms so even
+-- a 165 or 240 Hz screen gets a fresh move on every frame (a still pointer costs nothing: a zero move is not sent).
+local TICK_IDLE, TICK_FAST = 16, 4
 local TIMER = nil
 
 local function tick_rate(ms)

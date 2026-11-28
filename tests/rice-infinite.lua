@@ -164,7 +164,7 @@ if POLL then
     local ox = RiceInfinite.ox
     hold(500)                                     -- the hold starts: no move yet
     check(RiceInfinite.ox == ox, "holding the keys alone moves nothing")
-    check(timer.ms == 8, "while the keys are held the pointer is followed every 8 ms")
+    check(timer.ms == 4, "while the keys are held the pointer is followed every 4 ms")
     move(540)
     check(math.abs(RiceInfinite.ox - ox - 40) < 0.001, "the pointer moves the canvas with it")
     check(anims[#anims] and anims[#anims].leaf == "windowsMove" and anims[#anims].enabled == false,

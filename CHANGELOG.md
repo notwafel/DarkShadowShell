@@ -6,8 +6,8 @@
 - **The Music module is calm like the rest of the bar.** It was the only module that grew with an OutBack bounce and shrank on press; it uses the OutCubic width and the shared hover tint now
 - **A long app title no longer reaches the island.** It is cut at 40 characters and the module at 220 px (the rest is elided), so it stays clear of the middle
 - **Infinite Desktop is every screen by default.** A fresh install floats windows across all monitors (screens = 0), not only the workspace it was turned on
-- **SUPER + ALT drag is smooth.** Hyprland's window move animation chased each 16 ms target and lagged behind it, so the windows jumped in steps; it is turned off for the drag and put back when the mouse is let go
-- **A floating window stays on screen when Infinite Desktop is turned off.** A window such as Settings that stuck out a little came back half off the screen and looked gone; the whole rectangle is kept inside the usable area now
+- **SUPER + ALT drag is smooth and fast.** The canvas used to step every 16 ms (and Hyprland's move animation lagged behind it), so the windows jumped; it now follows the pointer every 8 ms while the drag runs, with the move animation off for the drag, so motion is continuous rather than stepped
+- **A floating window stays on screen when Infinite Desktop is turned off.** A window such as Settings or Mullvad that stuck out a little came back half off the screen and looked gone; the whole rectangle is kept inside the usable area now, including a floating app Infinite never put on the canvas
 - No other change
 
 ## V7.15: the island opens on a hover again, one pill for the date, one updater

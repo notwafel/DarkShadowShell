@@ -679,11 +679,16 @@ Item {
         readonly property real dropW: 46
         readonly property real dropH: 46
         readonly property real openE: { const p = Math.max(0, Math.min(1, (tc - 0.08) / 0.64)); return p * p * (3 - 2 * p) }
+        // V7.19: the droplet is not faded in any more -- the panel is *drawn* out of it. The card is opaque from the
+        // first frame and its shape grows out of the bar (a zero-size slit at the bar's edge, through the 46 px dot,
+        // into the panel), so there is one motion instead of a random fade of a dot plus the shape. `seed` is the
+        // part that does the drawing; it reaches 1 before the dot has finished widening, so the panel never jumps
+        readonly property real seed: { const p = Math.max(0, Math.min(1, tc / 0.16)); return p * p * (3 - 2 * p) }
         // V7.12: the panel is flush against the pill for most of the motion, so the two are one silhouette with no
         // strand to see; only in the last third does it pull away, and that is when the strand appears
         readonly property real gapA: { const p = Math.max(0, Math.min(1, (tc - 0.66) / 0.34)); return 12 * p * p * (3 - 2 * p) }
-        width: dropW + (cwA - dropW) * openE
-        height: dropH + (chA - dropH) * openE
+        width: seed * (dropW + (cwA - dropW) * openE)
+        height: seed * (dropH + (chA - dropH) * openE)
         // centred on the island, but always on the screen
         readonly property real want: isl.partMid < 0 || width <= isl.width ? (isl.width - width) / 2
             : Math.max(isl.width - width, Math.min(0, isl.partMid - isl.x - width / 2))
@@ -692,10 +697,9 @@ Item {
         radius: Look.sq ? 0 : (Math.min(height / 2, dropH / 2 + (30 - dropH / 2) * openE))
         color: isl.fill
         visible: opacity > 0.01
-        // V7.18: it fades in from the very first frame, like DropCard (the Wi-Fi and other menus). The old
-        // tc < 0.02 jumps (opacity 0 -> 0.12 and a 0 -> 46 px width) made the dot appear out of nothing in one
-        // frame and only then animate; now it comes out of the motion
-        opacity: Math.min(1, tc * 6)
+        // opaque once it is opening: no fade of the dot, the growing shape is the whole animation (cardShown still
+        // reads 0 when closed, so the bar's input region stays tight)
+        opacity: tc > 0.001 ? 1 : 0
         clip: true
         HoverHandler { id: hovC }
         // the glass edge and one sweep of light: a plain dark rectangle reads as a panel, not as glass

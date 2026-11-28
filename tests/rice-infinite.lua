@@ -382,3 +382,17 @@ RiceInfinite.reveal("0x72")
 check(math.abs(corner.at.x + corner.size.x / 2 - 960) <= 2 and math.abs(corner.at.y + corner.size.y / 2 - 540) <= 2,
     "Alt + Tab to a window out of sight both ways glides diagonally to its middle")
 RiceInfinite.set(false)
+
+-- a window only a little above the screen (or taller than it) still comes in sideways: the canvas is a row, so a
+-- small vertical stick-out must not drag the whole view (and a floating app on the left) up or down
+D1.active_workspace = { id = 1 }
+active_ws = 1
+local edge = win("0x73", 1, U1, 2600, -100, 400, 300)
+W = { edge }
+RiceInfinite.cfg.screens = 0
+RiceInfinite.layouts = {}
+RiceInfinite.set(true)
+RiceInfinite.reveal("0x73")
+check(edge.at.y == -100, "Alt + Tab keeps the height when the window only sticks out a little above")
+check(math.abs(edge.at.x + edge.size.x / 2 - 960) <= 2, "Alt + Tab still brings that window in sideways")
+RiceInfinite.set(false)

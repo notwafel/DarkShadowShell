@@ -595,10 +595,13 @@ function RI.reveal(address)
             local dx, dy = mx - (x + sw / 2), my - (y + sh / 2)
             if l then
                 local seen_x = x >= l and x + sw <= rr
-                local seen_y = y >= t and y + sh <= bb
-                if seen_x and seen_y then return end
+                -- the canvas is a row of windows: a window that is merely a little above or below the screen (below
+                -- the bar, taller than the screen, one zoomed window) still only needs a sideways glide. Vertical
+                -- movement is kept for a window entirely out of sight that way, or it would never come in at all.
+                local out_y = y + sh < t or y > bb
+                if seen_x and not out_y then return end
                 if seen_x then dx = 0 end
-                if seen_y then dy = 0 end
+                if not out_y then dy = 0 end
             end
             RI.pan(math.floor(dx + 0.5), math.floor(dy + 0.5))
             return

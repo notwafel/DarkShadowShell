@@ -171,11 +171,19 @@ local function visible_place(w, s)
     local sc = tonumber(m.scale) or 1
     if sc <= 0 then sc = 1 end
     local W, H = (tonumber(m.width) or 1920) / sc, (tonumber(m.height) or 1080) / sc
-    local l, t = tonumber(m.x) or 0, tonumber(m.y) or 0
+    local r = m.reserved or {}
+    local l, t = (tonumber(m.x) or 0) + (tonumber(r.left) or 0), (tonumber(m.y) or 0) + (tonumber(r.top) or 0)
+    local rr, bb = (tonumber(m.x) or 0) + W - (tonumber(r.right) or 0), (tonumber(m.y) or 0) + H - (tonumber(r.bottom) or 0)
     local sw, sh = (tonumber(s.w) or 400) * RI.z, (tonumber(s.h) or 300) * RI.z
     local x, y = RI.ox + s.x * RI.z, RI.oy + s.y * RI.z
-    if x + sw <= l + 24 or x >= l + W - 24 or y + sh <= t + 24 or y >= t + H - 24 then
-        s.x, s.y = (l + W / 2 - sw / 2 - RI.ox) / RI.z, (t + H / 2 - sh / 2 - RI.oy) / RI.z
+    local pad = 24
+    local nx, ny = x, y
+    if sw > rr - l - 2 * pad then nx = l + (rr - l - sw) / 2
+    else nx = math.max(l + pad, math.min(rr - pad - sw, x)) end
+    if sh > bb - t - 2 * pad then ny = t + (bb - t - sh) / 2
+    else ny = math.max(t + pad, math.min(bb - pad - sh, y)) end
+    if math.abs(nx - x) > 0.5 or math.abs(ny - y) > 0.5 then
+        s.x, s.y = (nx - RI.ox) / RI.z, (ny - RI.oy) / RI.z
         s.tx, s.ty = nil, nil
     end
     return s
@@ -209,6 +217,13 @@ function RI.zoom(dir)
     RI.zoom_to(dir > 0 and RI.z * f or RI.z / f)
 end
 
+-- while the canvas is dragged with the mouse, Hyprland's own windowMove animation would chase each 16 ms target and
+-- lag behind it (the windows moved in visible steps). It is turned off for the drag and put back afterwards
+local liveMove = false
+local function live_anim(on)
+    pcall(hl.animation, { leaf = "windowsMove", enabled = not on, speed = 3, bezier = "quick" })
+end
+
 -- live: many small moves in a row (SUPER + ALT + mouse); the place is written down once at the end (RI.save)
 function RI.pan(dx, dy, live)
     if not here() then return end
@@ -220,6 +235,7 @@ function RI.pan(dx, dy, live)
 end
 
 function RI.save()
+    if liveMove then liveMove = false; live_anim(false) end
     save()
 end
 
@@ -248,7 +264,12 @@ end
 -- SUPER + ALT + mouse (the timer below, or rice-canvasd before 0.56): the canvas, or with Infinite Desktop off the
 -- floating windows here
 function RI.slide(dx, dy)
-    if here() then RI.pan(dx, dy, true) else nudge(floats_here(), dx, dy) end
+    if here() then
+        if not liveMove then liveMove = true; live_anim(true) end
+        RI.pan(dx, dy, true)
+    else
+        nudge(floats_here(), dx, dy)
+    end
 end
 
 -- ---------- the mouse without the input group (Hyprland 0.56+) ----------
@@ -658,6 +679,7 @@ end
 
 -- after Settings changed something
 function RI.reload()
+    if liveMove then liveMove = false; live_anim(false) end
     if RI.on then for _, key in ipairs(KEYS) do pcall(hl.unbind, key) end end
     local was = shared()
     pcall(RI.load_cfg)
@@ -813,6 +835,7 @@ function RI.set(on)
         -- before 0.56 SUPER + ALT + mouse reads the mouse itself and cannot yet: say what the one step is
         if not CAN_POLL then run(hl.dsp.exec_cmd(HOME .. "/.local/bin/rice-canvasd --tell")) end
     else
+        if liveMove then liveMove = false; live_anim(false) end
         if RI.ws ~= nil then
             pcall(remember)
             -- back to 100 % where everything started

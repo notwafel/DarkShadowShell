@@ -3,7 +3,7 @@
 -- hl.is_key_down: rice-canvasd) and once as 0.56+ (RI_TEST_POLL=1: the pointer itself, and the warp at the edge).
 local path = arg[1]
 local POLL = os.getenv("RI_TEST_POLL") == "1"
-local moves, focuses, floatarr, events = {}, {}, {}, {}
+local moves, focuses, floatarr, events, anims = {}, {}, {}, {}, {}
 local keys, timers, warps = {}, {}, {}
 local timer
 local n = 0
@@ -27,6 +27,7 @@ local function at(t, fn) for _, w in ipairs(W) do if "address:" .. w.address == 
 
 hl = {
     on = function() end, bind = function() end, unbind = function() end, exec_cmd = function() end,
+    animation = function(t) anims[#anims + 1] = t end,
     get_windows = function() return W end,
     get_active_workspace = function() return { id = active_ws } end,
     get_active_window = function() return W[1] end,
@@ -153,6 +154,8 @@ if POLL then
     check(timer.ms == 1, "while the keys are held the pointer is followed every millisecond")
     move(540)
     check(math.abs(RiceInfinite.ox - ox - 40) < 0.001, "the pointer moves the canvas with it")
+    check(anims[#anims] and anims[#anims].leaf == "windowsMove" and anims[#anims].enabled == false,
+        "the window move animation is off while the canvas is dragged")
     local live = io.open(os.getenv("XDG_RUNTIME_DIR") .. "/rice-infinite.live")
     local t = live and live:read("a") or ""
     if live then live:close() end
@@ -186,6 +189,8 @@ if POLL then
 
     -- letting go writes the place down and tells the shell
     let_go()
+    check(anims[#anims] and anims[#anims].leaf == "windowsMove" and anims[#anims].enabled == true,
+        "the window move animation is back after the drag")
     local st = io.open(os.getenv("HOME") .. "/.config/rice/infinite.state")
     local stt = st and st:read("a") or ""
     if st then st:close() end

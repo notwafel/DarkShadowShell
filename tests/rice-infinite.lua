@@ -146,6 +146,21 @@ check(lost.at.x >= M1.x and lost.at.x + lost.size.x <= M1.x + 1920
       and lost.at.y >= M1.y and lost.at.y + lost.size.y <= M1.y + 1080,
     "off rescues a floating window it never placed on the canvas")
 
+-- an odd window in the list (no place or size yet) must not abort the passing out of every other window
+active_ws = 1
+M1.active_workspace = { id = 1 }
+local managed = win("0x1a", 1, M1, 100, 100, 400, 300)
+local otherws = win("0x1b", 2, M1, -5000, -5000, 400, 300)   -- another workspace, off screen, never on the canvas
+local odd = { address = "0x1c", workspace = { id = 1 }, monitor = M1 }   -- no at / size
+W = { managed, otherws, odd }
+RiceInfinite.cfg.screens = 0
+RiceInfinite.set(true)
+RiceInfinite.set(false)
+check(managed.at.x >= M1.x and managed.at.x + managed.size.x <= M1.x + 1920,
+    "off still places a managed window when an odd one (no place) is in the list")
+check(otherws.at.x >= M1.x and otherws.at.x + otherws.size.x <= M1.x + 1920,
+    "off pulls a floating window from another workspace back on screen")
+
 -- 0.56+: the pointer itself, no input group (and the warp at the edge of the screen)
 local function tick() for _, f in ipairs(timers) do f() end end
 local function ticks() for _ = 1, 16 do tick() end end     -- 16 ms of the timer (16 ticks while held, one when idle)

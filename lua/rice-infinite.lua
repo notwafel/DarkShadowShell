@@ -833,18 +833,21 @@ function RI.set(on)
             -- back to 100 % where everything started
             RI.z, RI.ox, RI.oy = 1.0, 0, 0
             each_window(function(w)
-                if overlay(w) then return end
-                local s = RI.world[w.address]
-                if s and (shared() or (w.workspace and w.workspace.id == RI.ws)) then
-                    pcall(place, w, visible_place(w, s), true)
-                else
-                    -- a window Infinite never put on the canvas (a floating app that opened on another screen or
-                    -- workspace): leave it where it is, but clamp it to its screen, so it cannot end up off screen
-                    -- and look gone once the canvas is back at 100 % (Settings and Mullvad were the usual ones)
-                    local cur = { x = w.at.x, y = w.at.y, w = w.size.x, h = w.size.y }
-                    pcall(place, w, visible_place(w, cur), true)
-                end
-                if RI.tiled[w.address] then run(hl.dsp.window.float({ action = "unset", window = sel(w) })) end
+                -- one odd window (no place or size yet, a hidden one) must not stop the rest from coming back
+                pcall(function()
+                    if overlay(w) then return end
+                    if not (w.at and w.size and w.at.x and w.at.y and w.size.x and w.size.y) then return end
+                    local s = RI.world[w.address]
+                    if s and (shared() or (w.workspace and w.workspace.id == RI.ws)) then
+                        place(w, visible_place(w, s), true)
+                    else
+                        -- a window Infinite never put on the canvas (a floating app that opened while it was on, or
+                        -- on another screen or workspace): leave it where it is, but clamp it to its screen, so it
+                        -- cannot stay off screen and look gone once the canvas is back at 100 % (Mullvad was the one)
+                        place(w, visible_place(w, { x = w.at.x, y = w.at.y, w = w.size.x, h = w.size.y }), true)
+                    end
+                    if RI.tiled[w.address] then run(hl.dsp.window.float({ action = "unset", window = sel(w) })) end
+                end)
             end)
         end
         RI.on = false

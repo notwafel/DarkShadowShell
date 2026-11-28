@@ -179,6 +179,39 @@ local function screen_box(m)
     return l, t, rr, bb
 end
 
+-- the usable area of every screen on the view now, as one box (screen pixels). A window that sticks past its own
+-- screen is still in sight on the one beside it, so this -- not the window's own screen -- is what "in sight" means
+-- (a window just past the left edge of the main monitor is visible on the monitor to its left). Hyprland 0.56+
+-- lists the screens (hl.get_monitors); before that, the screens the canvas windows are on plus the active one.
+local function desk_box()
+    local l, t, rr, bb
+    local function add(m)
+        local ml, mt, mrr, mbb = screen_box(m)
+        if not ml then return end
+        if not l or ml < l then l = ml end
+        if not t or mt < t then t = mt end
+        if not rr or mrr > rr then rr = mrr end
+        if not bb or mbb > bb then bb = mbb end
+    end
+    if type(hl.get_monitors) == "function" then
+        local ok, list = pcall(hl.get_monitors)
+        if ok and type(list) == "table" and #list > 0 then
+            for _, m in ipairs(list) do add(m) end
+            return l, t, rr, bb
+        end
+    end
+    local seen = {}
+    for _, w in ipairs(wins()) do
+        local m = w.monitor
+        if m and m.width then
+            local k = tostring(m.name or "") .. "@" .. tostring(m.x) .. "," .. tostring(m.y)
+            if not seen[k] then seen[k] = true; add(m) end
+        end
+    end
+    add(hl.get_active_monitor())
+    return l, t, rr, bb
+end
+
 -- a place that would land outside its screen is brought back on it. A window given its place while the canvas was
 -- panned has canvas numbers that mean nothing once the view is back at 100 %; without this it was put outside the
 -- screen and looked gone after turning Infinite Desktop off. V7.16: a place that only stuck out a little (the usual
@@ -576,45 +609,41 @@ function RI.go(dir)
     focus(best)
 end
 
--- ALT + TAB / the Task view picked a window that the canvas left far off screen: glide the canvas so it sits in
--- the middle of its own screen, like SUPER + CTRL + arrows. Only the axis that is actually out of sight moves: a
--- window off to the left at the same height comes in sideways, without dragging the whole canvas up or down (and
--- a floating app to the left, such as Mullvad, stays where it was). A window in sight keeps the view still, and a
--- window outside the canvas (another workspace in single-screen mode) is left alone.
+-- ALT + TAB / the Task view picked a window that the canvas left out of sight: glide the canvas so it comes in,
+-- like SUPER + CTRL + arrows. The whole row of screens is the view (desk_box): a window that only sits past its own
+-- screen is still visible on the one beside it and is left where it is -- a window on the main monitor whose left
+-- edge is past that monitor's left edge but still on the monitor to the left does not jump. Only the axis that is
+-- really out of sight moves, so a window off to the left at the same height comes in sideways without dragging the
+-- whole canvas up or down (a floating app such as Mullvad keeps its height). It stops at the edge it was hiding
+-- behind (left edge on the leftmost screen's left edge, and the reverse); a window wider than the view is centred,
+-- and a window outside the canvas (another workspace in single-screen mode) is left alone.
 function RI.reveal(address)
     if not (RI.on and here()) then return end
     local want = tostring(address or "")
     for _, w in ipairs(wins()) do
         if w.address == want then
+            local l, t, rr, bb = desk_box()
+            if not l then return end
             local s = canvas(w)
-            local mx, my = middle()
-            local l, t, rr, bb = screen_box(w.monitor or hl.get_active_monitor())
-            if l then mx, my = (l + rr) / 2, (t + bb) / 2 end
             local x, y = RI.ox + s.x * RI.z, RI.oy + s.y * RI.z
             local sw, sh = s.w * RI.z, s.h * RI.z
-            local dx, dy = mx - (x + sw / 2), my - (y + sh / 2)
-            if l then
-                local seen_x = x >= l and x + sw <= rr
-                -- the canvas is a row of windows: a window that is merely a little above or below the screen (below
-                -- the bar, taller than the screen, one zoomed window) still only needs a sideways glide. Vertical
-                -- movement is kept for a window entirely out of sight that way, or it would never come in at all.
-                local out_y = y + sh < t or y > bb
-                if seen_x and not out_y then return end
-                if not seen_x then
-                    -- it stops at the edge it was hiding behind: a window off the left ends with its left edge on
-                    -- the monitor's left edge, one off the right with its right edge on the right edge. Centring
-                    -- left a gap on the far side, which with two monitors stopped short of the edge. A window wider
-                    -- than the monitor cannot be inside it, so it is centred instead.
-                    if sw > rr - l then
-                        dx = l + (rr - l - sw) / 2 - x
-                    elseif x < l then
-                        dx = l - x
-                    else
-                        dx = rr - (x + sw)
-                    end
+            local seen_x = x >= l and x + sw <= rr
+            -- the canvas is a row of windows: a window merely a little above or below the view (below the bar, taller
+            -- than it, one zoomed window) still only needs a sideways glide. Vertical movement is kept for a window
+            -- entirely out of sight that way, or it would never come in at all.
+            local out_y = y + sh < t or y > bb
+            if seen_x and not out_y then return end
+            local dx, dy = 0, 0
+            if not seen_x then
+                if sw > rr - l then
+                    dx = l + (rr - l - sw) / 2 - x
+                elseif x < l then
+                    dx = l - x
+                else
+                    dx = rr - (x + sw)
                 end
-                if not out_y then dy = 0 end
             end
+            if out_y then dy = (t + bb) / 2 - (y + sh / 2) end
             RI.pan(math.floor(dx + 0.5), math.floor(dy + 0.5))
             return
         end

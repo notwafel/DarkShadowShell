@@ -409,3 +409,30 @@ RiceInfinite.set(true)
 RiceInfinite.reveal("0x74")
 check(math.abs(left.at.x) <= 2 and left.at.y == 150, "Alt + Tab from the left keeps its left edge on the monitor's left edge")
 RiceInfinite.set(false)
+
+-- two screens: the whole row is the view. A window on the main (right) screen whose left edge is past that screen's
+-- left edge but still on the screen to its left is visible and must not move (before, its own screen alone was the
+-- test and it jumped to the far edge). A window really off the left comes in to the leftmost screen's left edge.
+hl.get_monitors = function() return { U1, U2 } end
+D1.active_workspace = { id = 1 }
+D2.active_workspace = { id = 11 }
+active_ws = 1
+RiceInfinite.cfg.screens = 0
+
+local straddle = win("0x81", 11, U2, 1700, 200, 400, 300)   -- 1700..2100: past U2's left edge (1920), on U1
+W = { straddle }
+RiceInfinite.layouts = {}
+RiceInfinite.set(true)
+local before2 = #moves
+RiceInfinite.reveal("0x81")
+check(#moves == before2, "Alt + Tab leaves a window alone when it is still on the screen beside its own")
+RiceInfinite.set(false)
+
+local hidden = win("0x82", 11, U2, -600, 200, 400, 300)
+W = { hidden }
+RiceInfinite.layouts = {}
+RiceInfinite.set(true)
+RiceInfinite.reveal("0x82")
+check(math.abs(hidden.at.x) <= 2, "Alt + Tab from off the far left reaches the leftmost screen's left edge")
+RiceInfinite.set(false)
+hl.get_monitors = nil

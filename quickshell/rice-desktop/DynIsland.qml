@@ -350,12 +350,18 @@ Item {
                 // V7.15: the day, the date and the time in one pill in your key color, the same size and the same ink,
                 // so the island reads as one thing. Before, the day was tiny capitals in the key color, the date plain
                 // bold text and only the time sat in a pill: three treatments side by side
+                // V7.15: a theme background (the island's own surface, see-through) instead of the key color, a small
+                // calendar before the day like the weather row's cloud, and one ink for all of it
                 Rectangle { visible: isl.showDate; anchors.verticalCenter: parent.verticalCenter
                     width: dtRow.implicitWidth + 18; height: isl.bh - 14; radius: Look.sq ? 0 : (height / 2)
-                    color: isl.pal ? isl.pal.primary : "#8f8"
+                    color: isl.pal ? Qt.rgba(isl.pal.surface.r, isl.pal.surface.g, isl.pal.surface.b, 0.55)
+                                   : Qt.rgba(0.08, 0.08, 0.08, 0.55)
+                    border.width: 1
+                    border.color: isl.pal ? Qt.rgba(isl.pal.line.r, isl.pal.line.g, isl.pal.line.b, 0.75) : Qt.rgba(1, 1, 1, 0.08)
                     Row {
                         id: dtRow; anchors.centerIn: parent; spacing: 6
-                        readonly property color ink: isl.pal ? isl.pal.inkPrimary : "black"
+                        readonly property color ink: isl.pal ? isl.pal.fg : "white"
+                        MIcon { anchors.verticalCenter: parent.verticalCenter; size: 13; name: "calendar_today"; glyph: String.fromCodePoint(0xF00ED); color: dtRow.ink }
                         Text { anchors.verticalCenter: parent.verticalCenter
                             text: isl.bar ? Qt.locale().dayName(isl.bar.now.getDay(), Locale.ShortFormat) : ""
                             color: dtRow.ink; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.DemiBold }
@@ -965,7 +971,13 @@ Item {
             Item {
                 id: mediaBody
                 anchors.fill: parent
-                visible: !isl.mediaLyr
+                // V7.15: the words and the player cross-fade into each other (a small slide too) instead of being
+                // swapped in one frame, so pressing the chip does not make the card jump
+                visible: opacity > 0.01
+                enabled: !isl.mediaLyr
+                opacity: isl.mediaLyr ? 0 : 1
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                transform: Translate { x: isl.mediaLyr ? -18 : 0; Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } } }
                 ShapeImage {
                     x: 16; y: 16; width: 78; height: 78
                     kind: Look.shape; source: Player.art
@@ -1011,7 +1023,11 @@ Item {
             Item {
                 id: mediaWords
                 anchors.fill: parent
-                visible: isl.mediaLyr
+                visible: opacity > 0.01
+                enabled: isl.mediaLyr
+                opacity: isl.mediaLyr ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                transform: Translate { x: isl.mediaLyr ? 0 : 18; Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } } }
                 ShapeImage {
                     x: 16; y: 14; width: 56; height: 56
                     kind: Look.shape; source: Player.art

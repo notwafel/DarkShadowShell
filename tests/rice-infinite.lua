@@ -365,7 +365,7 @@ RiceInfinite.cfg.screens = 0
 RiceInfinite.layouts = {}
 RiceInfinite.set(true)
 RiceInfinite.reveal("0x71")
-check(math.abs(far.at.x) <= 2, "Alt + Tab from the right brings its left edge to the monitor's left edge")
+check(math.abs(far.at.x + far.size.x - 1920) <= 2, "Alt + Tab from the right puts its right edge on the monitor's right edge")
 check(far.at.y == 200, "Alt + Tab sideways leaves the height of everything alone")
 local before = #moves
 RiceInfinite.reveal("0x71")
@@ -379,7 +379,7 @@ RiceInfinite.set(false)
 RiceInfinite.layouts = {}
 RiceInfinite.set(true)
 RiceInfinite.reveal("0x72")
-check(math.abs(corner.at.x) <= 2 and math.abs(corner.at.y + corner.size.y / 2 - 540) <= 2,
+check(math.abs(corner.at.x + corner.size.x - 1920) <= 2 and math.abs(corner.at.y + corner.size.y / 2 - 540) <= 2,
     "Alt + Tab to a window out of sight both ways glides diagonally to the edge")
 RiceInfinite.set(false)
 
@@ -394,7 +394,7 @@ RiceInfinite.layouts = {}
 RiceInfinite.set(true)
 RiceInfinite.reveal("0x73")
 check(edge.at.y == -100, "Alt + Tab keeps the height when the window only sticks out a little above")
-check(math.abs(edge.at.x) <= 2, "Alt + Tab still brings that window in sideways, up to the edge")
+check(math.abs(edge.at.x + edge.size.x - 1920) <= 2, "Alt + Tab still brings that window in sideways, up to the edge")
 RiceInfinite.set(false)
 
 -- a window off the left of the monitor comes in with its left edge on the monitor's left edge (and the same on the
@@ -407,5 +407,5 @@ RiceInfinite.cfg.screens = 0
 RiceInfinite.layouts = {}
 RiceInfinite.set(true)
 RiceInfinite.reveal("0x74")
-check(math.abs(left.at.x + left.size.x - 1920) <= 2 and left.at.y == 150, "Alt + Tab from the left puts its right edge on the monitor's right edge")
+check(math.abs(left.at.x) <= 2 and left.at.y == 150, "Alt + Tab from the left keeps its left edge on the monitor's left edge")
 RiceInfinite.set(false)

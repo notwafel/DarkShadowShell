@@ -356,8 +356,8 @@ Item {
                 // through, and the pill is a touch larger so the row has room to breathe
                 Rectangle { visible: isl.showDate; anchors.verticalCenter: parent.verticalCenter
                     width: dtRow.implicitWidth + 22; height: isl.bh - 10; radius: Look.sq ? 0 : (height / 2)
-                    color: isl.pal ? Qt.rgba(isl.pal.surface.r, isl.pal.surface.g, isl.pal.surface.b, 0.34)
-                                   : Qt.rgba(0.08, 0.08, 0.08, 0.34)
+                    color: isl.pal ? Qt.rgba(isl.pal.surface.r, isl.pal.surface.g, isl.pal.surface.b, 0.30)
+                                   : Qt.rgba(0.08, 0.08, 0.08, 0.30)
                     border.width: 0
                     Row {
                         id: dtRow; anchors.centerIn: parent; spacing: 6

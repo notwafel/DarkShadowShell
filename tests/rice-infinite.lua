@@ -133,6 +133,19 @@ check(edge.at.x >= M1.x + 24 and edge.at.x + edge.size.x <= M1.x + 1920
       and edge.at.y >= M1.y + 24 and edge.at.y + edge.size.y <= M1.y + 1080,
     "off clamps a floating window that only stuck out of the screen")
 
+-- a floating app Infinite never put on the canvas (opened on a workspace no screen shows, so no world entry) is
+-- still pulled back on screen when it is turned off: otherwise it stayed at its canvas numbers and looked gone
+active_ws = 1
+M1.active_workspace = { id = 1 }
+local lost = win("0xfe", 2, M1, 5000, 5000, 400, 300)
+W = { lost }
+RiceInfinite.cfg.screens = 0
+RiceInfinite.set(true)
+RiceInfinite.set(false)
+check(lost.at.x >= M1.x and lost.at.x + lost.size.x <= M1.x + 1920
+      and lost.at.y >= M1.y and lost.at.y + lost.size.y <= M1.y + 1080,
+    "off rescues a floating window it never placed on the canvas")
+
 -- 0.56+: the pointer itself, no input group (and the warp at the edge of the screen)
 local function tick() for _, f in ipairs(timers) do f() end end
 local function ticks() for _ = 1, 16 do tick() end end     -- 16 ms of the timer (16 ticks while held, one when idle)

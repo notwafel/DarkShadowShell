@@ -733,7 +733,16 @@ local function daemon()
     run(hl.dsp.exec_cmd(HOME .. "/.local/bin/rice-infinite daemon" .. (CAN_POLL and " push" or "")))
 end
 
+-- the island in the bar shows it as a short message from Infinite Desktop (a line DynIsland.qml watches); only if
+-- that file cannot be written fall back to a system notification, so turning it on is never silent
+local MSG = HOME .. "/.cache/rice/island-msg"
 local function notify(text)
+    local f = io.open(MSG, "w")
+    if f then
+        f:write(string.format("%d %s\n", os.time(), text))
+        f:close()
+        return
+    end
     run(hl.dsp.exec_cmd("command -v notify-send >/dev/null && notify-send -t 1600 -a 'Infinite Desktop' 'Infinite Desktop' '" .. text .. "'"))
 end
 
@@ -941,7 +950,7 @@ function RI.set(on)
         RI.last = a and a.address or nil
         bind_keys()
         daemon()
-        notify("On: hold " .. RI.keys.mod_hold .. " and move the mouse, " .. RI.keys.mod_zoom .. " + wheel to zoom")
+        notify("Infinite Desktop on")
         -- before 0.56 SUPER + ALT + mouse reads the mouse itself and cannot yet: say what the one step is
         if not CAN_POLL then run(hl.dsp.exec_cmd(HOME .. "/.local/bin/rice-canvasd --tell")) end
     else
@@ -992,7 +1001,7 @@ function RI.set(on)
         RI.on = false
         unbind_keys()
         pcall(live_off)
-        notify("Off: windows are back")
+        notify("Infinite Desktop off")
     end
     save()
 end

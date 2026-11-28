@@ -41,7 +41,8 @@ Item {
     // ---------- what it shows ----------
     // the island in the bar: the time, or for a moment the volume, the microphone or the workspace, or the recording
     // the card beside the bar: a notification, the info card (today, system) or the player
-    property string flash: ""                  // volume | mic | ws (for a moment)
+    property string flash: ""                  // volume | mic | ws | msg (for a moment)
+    property string flashText: ""              // the words of a "msg" (Infinite Desktop on / off, a script's line)
     property bool hoverOpen: false
     property bool hoverToday: false            // the info card, opened by pointing at the island (nothing playing)
     property bool pinned: false                // the player, opened from the info card
@@ -55,6 +56,7 @@ Item {
         : (infoOpen || hoverToday ? "info" : ((pinned || hoverOpen) && Player.has && !ghost ? "media" : ""))
     readonly property bool big: cardWant !== ""
     function show(what, ms) { if (flash !== what) bump.restart(); flash = what; flashT.interval = ms; flashT.restart() }
+    function showMsg(text, ms) { flashText = String(text); show("msg", ms) }
     // something new in the island: it gives a small squeeze, like a drop landing
     property real squeeze: 0
     SequentialAnimation {
@@ -119,6 +121,14 @@ Item {
             const p = String(line).trim().split(/\s+/)
             if (p.length < 2) return
             isl.openInfo(p[1] === "system" || p[1] === "about" ? p[1] : "today", p[2] !== "open")
+        }
+    }
+    // a short message from a script (rice-infinite: "Infinite Desktop on"): one line, the time stamp first
+    Trigger {
+        name: "island-msg"; every: 3000; fresh: true
+        onFired: function(line) {
+            const t = String(line).replace(/^\S+\s+/, "").trim()
+            if (t !== "") isl.showMsg(t, 2400)
         }
     }
     // it stays while the wave runs out; pointing at it holds the wave
@@ -236,6 +246,7 @@ Item {
         switch (mode) {
         case "volume": case "mic": return 300
         case "ws": return Math.max(190, wsRow.implicitWidth + 40)
+        case "msg": return Math.max(150, msgRow.implicitWidth + 40)
         case "rec": return recRow.implicitWidth + 30
         case "charge": return 340
         }
@@ -578,6 +589,19 @@ Item {
                     active: isl.bar !== null && isl.bar !== undefined
                     sourceComponent: WsStrip { host: isl.bar; h: 24; interactive: false }
                 }
+            }
+        }
+
+        // ---------- a short message (Infinite Desktop on / off) ----------
+        Face {
+            name: "msg"; width: isl.tw; height: isl.bh
+            Row {
+                id: msgRow
+                anchors.centerIn: parent
+                spacing: 8
+                MIcon { anchors.verticalCenter: parent.verticalCenter; size: 16; name: "all_inclusive"; glyph: ""; color: isl.pal ? isl.pal.primary : "white" }
+                Text { anchors.verticalCenter: parent.verticalCenter; text: isl.flashText
+                    color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
             }
         }
 

@@ -436,3 +436,23 @@ RiceInfinite.reveal("0x82")
 check(math.abs(hidden.at.x) <= 2, "Alt + Tab from off the far left reaches the leftmost screen's left edge")
 RiceInfinite.set(false)
 hl.get_monitors = nil
+
+-- turning it on / off says so as a short line the island in the bar shows (DynIsland.qml watches island-msg), not a
+-- long system notification
+local H = os.getenv("HOME") or ""
+os.execute("mkdir -p '" .. H .. "/.cache/rice'")
+D1.active_workspace = { id = 1 }
+active_ws = 1
+W = {}
+RiceInfinite.cfg.screens = 0
+RiceInfinite.layouts = {}
+RiceInfinite.set(true)
+local function msgfile()
+    local f = io.open(H .. "/.cache/rice/island-msg", "r")
+    local t = f and f:read("*a") or ""
+    if f then f:close() end
+    return t
+end
+check(msgfile():find("Infinite Desktop on", 1, true) ~= nil, "turning it on writes a short island message")
+RiceInfinite.set(false)
+check(msgfile():find("Infinite Desktop off", 1, true) ~= nil, "turning it off writes a short island message")

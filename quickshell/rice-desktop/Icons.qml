@@ -44,7 +44,8 @@ Singleton {
         [/software|discover|pamac|flathub|bazaar|store/, 0xF04DC], [/camera|cheese|snapshot/, 0xF0100], [/maps/, 0xF034D],
         [/evince|okular|papers|zathura|pdf/, 0xF0226], [/freetube|youtube/, 0xF05C3], [/twitch/, 0xF0543], [/reddit/, 0xF044D],
         [/bitwarden|keepass|password|seahorse|secrets/, 0xF0306], [/blueman|bluetooth/, 0xF00AF],
-        [/qbittorrent|transmission|deluge|fragments|torrent/, 0xF01DA], [/file-roller|^ark$|archive/, 0xF03D6], [/dropbox/, 0xF01E3]
+        [/qbittorrent|transmission|deluge|fragments|torrent/, 0xF01DA], [/file-roller|^ark$|archive/, 0xF03D6], [/dropbox/, 0xF01E3],
+        [/web-browser|^browser$|^web$|^globe$|^internet$/, 0xF0AC]
     ]
     function glyphOf(keys) {
         for (let k = 0; k < keys.length; k++) {

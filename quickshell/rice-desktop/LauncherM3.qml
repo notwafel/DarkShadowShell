@@ -337,9 +337,12 @@ Item {
                         size: 40
                         name: row.modelData.kind === "app" ? (row.modelData.entry ? (row.modelData.entry.icon || "") : "")
                               : (row.modelData.kind === "web" ? "web-browser" : (row.modelData.dir ? "folder" : ln.fileIcon(row.modelData)))
-                        keys: row.modelData.kind === "app" ? [row.modelData.id, row.modelData.name] : []
-                        look: row.modelData.kind === "app" ? ln.iLook : "original"
-                        shape: row.modelData.kind === "app" ? ln.iShape : ""
+                        keys: row.modelData.kind === "app" ? [row.modelData.id, row.modelData.name]
+                              : (row.modelData.kind === "web" ? ["web-browser"] : [])
+                        // the web result gets the same icon look as the apps (Edit mode > Icons): it used to be
+                        // drawn "original", so a custom look such as Grey never reached the little globe
+                        look: (row.modelData.kind === "app" || row.modelData.kind === "web") ? ln.iLook : "original"
+                        shape: (row.modelData.kind === "app" || row.modelData.kind === "web") ? ln.iShape : ""
                         colors: m3.pal
                         hover: row.sel
                     }

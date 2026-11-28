@@ -829,7 +829,10 @@ local function bring_back()
     end
     for _, w in ipairs(list) do
         local s = RI.world[w.address]
-        if s then place(w, visible_place(w, s), true) end
+        -- the exact canvas place, even past the edge of the screen: those windows are the rest of the canvas, you
+        -- pan to them. Clamping each to the nearest edge here piled them up on it (Settings over Mullvad) instead of
+        -- putting them back where they were (turning off lays them out on the screen; turning on restores the canvas)
+        if s then place(w, s, true) end
     end
     return true
 end

@@ -330,3 +330,26 @@ end
 check(onscreen, "off lays windows that were spread off the screen back on it")
 check(ov == 0, "off does not pile those windows on each other")
 check(mull.at.x == 1500 and mull.at.y == 720, "off leaves a floating app that was in place where it was")
+
+-- turning on again puts every window back on the canvas exactly where it was, even past the right edge. Clamping
+-- each one to the nearest edge there piled Settings over Mullvad (they all slid right on top of each other)
+D1.active_workspace = { id = 1 }
+active_ws = 1
+local c1 = win("0x61", 1, U1, 100, 100, 500, 400)
+local c2 = win("0x62", 1, U1, 700, 300, 600, 450)
+local c3 = win("0x63", 1, U1, 1450, 760, 380, 280, true)
+W = { c1, c2, c3 }
+RiceInfinite.cfg.screens = 0
+RiceInfinite.layouts = {}
+RiceInfinite.set(true)
+RiceInfinite.pan(2000, 0)
+local want = {}
+for _, w in ipairs(W) do want[w.address] = { x = w.at.x, y = w.at.y, w = w.size.x, h = w.size.y } end
+RiceInfinite.set(false)
+RiceInfinite.set(true)
+for _, w in ipairs(W) do
+    local s = want[w.address]
+    check(w.at.x == s.x and w.at.y == s.y and w.size.x == s.w and w.size.y == s.h,
+        "on again puts " .. w.address .. " back on the canvas where it was")
+end
+RiceInfinite.set(false)

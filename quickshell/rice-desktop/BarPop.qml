@@ -84,7 +84,6 @@ Item {
     Shape {
         id: strand
         x: shape.x
-        y: shape.y - height
         width: Math.max(1, shape.width)
         // from the card's near edge to the bar's edge (8 px outside this item)
         height: Math.max(0, bp.down ? shape.y + 8 : (bp.height + 8) - (shape.y + shape.height))

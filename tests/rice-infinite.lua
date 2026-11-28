@@ -305,3 +305,28 @@ for i = b1 + 1, #moves do if moves[i].window == "address:0x42" then n2 = n2 + 1 
 check(n2 > 0, "switching workspace: its window joins the canvas and moves")
 check(floatarr[#floatarr] == "set", "switching workspace floats it so the canvas can move it")
 RiceInfinite.set(false)
+
+-- six windows spread wider than a screen on the canvas come back side by side, not piled in one corner (they used
+-- to all clamp to bottom-right and cover a floating app like Mullvad)
+D1.active_workspace = { id = 1 }
+active_ws = 1
+local many = {}
+for i = 1, 6 do many[i] = win("0x5" .. i, 1, U1, 100 + (i - 1) * 500, 150, 400, 300) end
+local mull = win("0x5e", 1, U1, 1500, 720, 380, 300, true)   -- floating app already in place
+many[#many + 1] = mull
+W = many
+RiceInfinite.cfg.screens = 0
+RiceInfinite.layouts = {}     -- a clean turn-on (no remembered canvas from an earlier test)
+RiceInfinite.set(true)
+RiceInfinite.set(false)
+local rects, onscreen, ov = {}, true, 0
+for _, w in ipairs(W) do
+    if w.at.x < 0 or w.at.y < 0 or w.at.x + w.size.x > 1920 or w.at.y + w.size.y > 1080 then onscreen = false end
+    for _, r in ipairs(rects) do
+        if w.at.x < r.x + r.w and r.x < w.at.x + w.size.x and w.at.y < r.y + r.h and r.y < w.at.y + w.size.y then ov = ov + 1 end
+    end
+    rects[#rects + 1] = { x = w.at.x, y = w.at.y, w = w.size.x, h = w.size.y }
+end
+check(onscreen, "off lays windows that were spread off the screen back on it")
+check(ov == 0, "off does not pile those windows on each other")
+check(mull.at.x == 1500 and mull.at.y == 720, "off leaves a floating app that was in place where it was")

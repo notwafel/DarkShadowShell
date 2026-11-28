@@ -164,21 +164,34 @@ local function place(w, s, resize)
     run(hl.dsp.window.move({ x = math.floor(RI.ox + s.x * RI.z + 0.5), y = math.floor(RI.oy + s.y * RI.z + 0.5), window = sel(w) }))
 end
 
+-- the usable part of a monitor in screen pixels (logical, without the bar): a monitor is an object, not a table
+-- (Hyprland 0.56+), so read it only through its fields
+local function screen_box(m)
+    if not (m and m.width) then return nil end
+    local sc = tonumber(m.scale) or 1
+    if sc <= 0 then sc = 1 end
+    local W, H = (tonumber(m.width) or 1920) / sc, (tonumber(m.height) or 1080) / sc
+    local r = m.reserved or {}
+    local l = (tonumber(m.x) or 0) + (tonumber(r.left) or 0)
+    local t = (tonumber(m.y) or 0) + (tonumber(r.top) or 0)
+    local rr = (tonumber(m.x) or 0) + W - (tonumber(r.right) or 0)
+    local bb = (tonumber(m.y) or 0) + H - (tonumber(r.bottom) or 0)
+    return l, t, rr, bb
+end
+
 -- a place that would land outside its screen is brought back on it. A window given its place while the canvas was
 -- panned has canvas numbers that mean nothing once the view is back at 100 %; without this it was put outside the
 -- screen and looked gone after turning Infinite Desktop off. V7.16: a place that only stuck out a little (the usual
 -- case for a floating window such as Settings) was left half off the screen and looked gone too, so the whole
 -- rectangle is kept inside the monitor now, not just its top-left corner.
-local function visible_place(w, s)
+-- `used` (turning off): when several windows were left off the screen they all clamped to the same corner and piled
+-- up on each other, covering a floating app like Mullvad. With `used` each one takes the next free spot to the left
+-- (then a row down), so they come back side by side, right to left, and none hides another.
+local function visible_place(w, s, used)
     local m = w.monitor
     if not (m and m.width) then m = hl.get_active_monitor() end
-    if not (m and m.width) then return s end
-    local sc = tonumber(m.scale) or 1
-    if sc <= 0 then sc = 1 end
-    local W, H = (tonumber(m.width) or 1920) / sc, (tonumber(m.height) or 1080) / sc
-    local r = m.reserved or {}
-    local l, t = (tonumber(m.x) or 0) + (tonumber(r.left) or 0), (tonumber(m.y) or 0) + (tonumber(r.top) or 0)
-    local rr, bb = (tonumber(m.x) or 0) + W - (tonumber(r.right) or 0), (tonumber(m.y) or 0) + H - (tonumber(r.bottom) or 0)
+    local l, t, rr, bb = screen_box(m)
+    if not l then return s end
     local sw, sh = (tonumber(s.w) or 400) * RI.z, (tonumber(s.h) or 300) * RI.z
     local x, y = RI.ox + s.x * RI.z, RI.oy + s.y * RI.z
     local pad = 24
@@ -187,6 +200,29 @@ local function visible_place(w, s)
     else nx = math.max(l + pad, math.min(rr - pad - sw, x)) end
     if sh > bb - t - 2 * pad then ny = t + (bb - t - sh) / 2
     else ny = math.max(t + pad, math.min(bb - pad - sh, y)) end
+    if used then
+        local key = string.format("%d,%d", tonumber(m.x) or 0, tonumber(m.y) or 0)
+        local arr = used[key]
+        if not arr then arr = {}; used[key] = arr end
+        local gap = 8
+        local function hits(ax, ay)
+            for _, r in ipairs(arr) do
+                if ax < r[1] + r[3] + gap and r[1] < ax + sw + gap and ay < r[2] + r[4] + gap and r[2] < ay + sh + gap then return true end
+            end
+            return false
+        end
+        local tries = 0
+        while hits(nx, ny) and tries < 400 do
+            tries = tries + 1
+            nx = nx - (sw + gap)
+            if nx < l + pad then
+                nx = rr - pad - sw
+                ny = ny + (sh + gap)
+                if ny > bb - pad - sh then ny = t + pad end
+            end
+        end
+        arr[#arr + 1] = { nx, ny, sw, sh }
+    end
     if math.abs(nx - x) > 0.5 or math.abs(ny - y) > 0.5 then
         s.x, s.y = (nx - RI.ox) / RI.z, (ny - RI.oy) / RI.z
         s.tx, s.ty = nil, nil
@@ -837,23 +873,44 @@ function RI.set(on)
             pcall(remember)
             -- back to 100 % where everything started
             RI.z, RI.ox, RI.oy = 1.0, 0, 0
+            -- gather the windows first: a window that is already on its screen keeps its spot, and the ones the
+            -- canvas left outside it are packed around it (visible_place's `used`) instead of all landing on the
+            -- same corner, where they piled up and covered a floating app like Mullvad
+            local jobs = {}
             each_window(function(w)
-                -- one odd window (no place or size yet, a hidden one) must not stop the rest from coming back
                 pcall(function()
                     if overlay(w) then return end
                     if not (w.at and w.size and w.at.x and w.at.y and w.size.x and w.size.y) then return end
                     local s = RI.world[w.address]
                     if s and (shared() or (w.workspace and w.workspace.id == RI.ws)) then
-                        place(w, visible_place(w, s), true)
+                        jobs[#jobs + 1] = { w = w, s = s }
                     else
                         -- a window Infinite never put on the canvas (a floating app that opened while it was on, or
-                        -- on another screen or workspace): leave it where it is, but clamp it to its screen, so it
-                        -- cannot stay off screen and look gone once the canvas is back at 100 % (Mullvad was the one)
-                        place(w, visible_place(w, { x = w.at.x, y = w.at.y, w = w.size.x, h = w.size.y }), true)
+                        -- on another screen or workspace): leave it where it is, but keep it on its screen
+                        jobs[#jobs + 1] = { w = w, s = { x = w.at.x, y = w.at.y, w = w.size.x, h = w.size.y } }
                     end
-                    if RI.tiled[w.address] then run(hl.dsp.window.float({ action = "unset", window = sel(w) })) end
                 end)
             end)
+            local function off_screen(j)
+                local l, t, rr, bb = screen_box(j.w.monitor)
+                if not l then return false end
+                local sw, sh = (tonumber(j.s.w) or 400) * RI.z, (tonumber(j.s.h) or 300) * RI.z
+                local x, y = RI.ox + j.s.x * RI.z, RI.oy + j.s.y * RI.z
+                return x < l + 24 or y < t + 24 or x + sw > rr - 24 or y + sh > bb - 24
+            end
+            table.sort(jobs, function(a, b)
+                local ao, bo = off_screen(a), off_screen(b)
+                if ao ~= bo then return bo end     -- the ones already in place go first, so the others make room
+                return false
+            end)
+            local used = {}
+            for _, j in ipairs(jobs) do
+                -- one odd window must not stop the rest from coming back
+                pcall(function()
+                    place(j.w, visible_place(j.w, j.s, used), true)
+                    if RI.tiled[j.w.address] then run(hl.dsp.window.float({ action = "unset", window = sel(j.w) })) end
+                end)
+            end
         end
         RI.on = false
         unbind_keys()

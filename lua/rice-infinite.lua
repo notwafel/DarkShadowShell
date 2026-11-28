@@ -600,7 +600,19 @@ function RI.reveal(address)
                 -- movement is kept for a window entirely out of sight that way, or it would never come in at all.
                 local out_y = y + sh < t or y > bb
                 if seen_x and not out_y then return end
-                if seen_x then dx = 0 end
+                if not seen_x then
+                    -- it comes in all the way across: a window hiding off the left ends with its right edge on the
+                    -- monitor's right edge, and one off the right with its left edge on the left edge (the reverse
+                    -- way round). Centring left a gap on the far side, which with two monitors stopped short of the
+                    -- edge. A window wider than the monitor cannot reach both, so it is centred instead.
+                    if sw > rr - l then
+                        dx = l + (rr - l - sw) / 2 - x
+                    elseif x < l then
+                        dx = rr - (x + sw)
+                    else
+                        dx = l - x
+                    end
+                end
                 if not out_y then dy = 0 end
             end
             RI.pan(math.floor(dx + 0.5), math.floor(dy + 0.5))

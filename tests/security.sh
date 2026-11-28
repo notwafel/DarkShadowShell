@@ -231,8 +231,9 @@ cat >"$tmp/mr/bin/sudo" <<'EOS'
 exec "$@"
 EOS
 chmod +x "$tmp/mr/bin/reflector" "$tmp/mr/bin/sudo"
+# a list is cached for a week now: these tests ask for a fresh one every time
 run_mirrors() { HOME="$tmp/mr/home" PATH="$tmp/mr/bin:$PATH" RICE_MIRRORS_DIR="$tmp/mr/etc" \
-  RICE_MIRRORS_CONF="$tmp/mr/etc/pacman.conf" REFLECTOR_ARGS="$tmp/mr/args" MAKE_LIST="$1" \
+  RICE_MIRRORS_CONF="$tmp/mr/etc/pacman.conf" REFLECTOR_ARGS="$tmp/mr/args" MAKE_LIST="$1" RICE_MIRRORS_AGE=0 \
   bash "$root/bin/rice-mirrors" >/dev/null 2>&1; }
 run_mirrors 1 && grep -q 'https://new/' "$tmp/mr/etc/mirrorlist" && ok "reflector's list replaces the mirrorlist" \
   || bad "a good reflector list was not put in"
@@ -243,13 +244,22 @@ printf 'Server = https://old/$repo/os/$arch\n' >"$tmp/mr/etc/mirrorlist"
 run_mirrors 0 && bad "a failed reflector reported success" || ok "a failed reflector says so"
 grep -q 'https://old/' "$tmp/mr/etc/mirrorlist" && ok "a failed reflector leaves the working mirrorlist" \
   || bad "a failed reflector wiped the mirrorlist"
+# V7.15: a list from this week is kept (reflector takes minutes), --force picks new ones
+printf 'Server = https://new/$repo/os/$arch\n' >"$tmp/mr/etc/mirrorlist"
+run_mirrors 1 && grep -q 'https://new/' "$tmp/mr/etc/mirrorlist" && ok "a fresh mirrorlist is kept instead of running reflector again" \
+  || bad "a fresh mirrorlist was thrown away"
+rm -f "$tmp/mr/args"
+run_mirrors_force() { HOME="$tmp/mr/home" PATH="$tmp/mr/bin:$PATH" RICE_MIRRORS_DIR="$tmp/mr/etc" \
+  RICE_MIRRORS_CONF="$tmp/mr/etc/pacman.conf" REFLECTOR_ARGS="$tmp/mr/args" MAKE_LIST=1 \
+  bash "$root/bin/rice-mirrors" --force >/dev/null 2>&1; }
+run_mirrors_force && [ -f "$tmp/mr/args" ] && ok "--force asks reflector for a new list" || bad "--force did not run reflector"
 # Artix: its own repos keep their mirrorlist, Arch's list (mirrorlist-arch) gets reflector's
 mkdir -p "$tmp/mr3/etc"
 printf 'Server = https://artix.example/$repo/os/$arch\n' >"$tmp/mr3/etc/mirrorlist"
 printf 'Server = https://arch-old.example/$repo/os/$arch\n' >"$tmp/mr3/etc/mirrorlist-arch"
 printf '[system]\nInclude = %s/mirrorlist\n[extra]\nInclude = %s/mirrorlist-arch\n' "$tmp/mr3/etc" "$tmp/mr3/etc" >"$tmp/mr3/etc/pacman.conf"
 HOME="$tmp/mr/home" PATH="$tmp/mr/bin:$PATH" RICE_MIRRORS_DIR="$tmp/mr3/etc" RICE_MIRRORS_CONF="$tmp/mr3/etc/pacman.conf" \
-  REFLECTOR_ARGS="$tmp/mr/args3" MAKE_LIST=1 bash "$root/bin/rice-mirrors" >/dev/null 2>&1 \
+  REFLECTOR_ARGS="$tmp/mr/args3" MAKE_LIST=1 RICE_MIRRORS_AGE=0 bash "$root/bin/rice-mirrors" >/dev/null 2>&1 \
   && grep -q 'https://new/' "$tmp/mr3/etc/mirrorlist-arch" && grep -q 'artix.example' "$tmp/mr3/etc/mirrorlist" \
   && ok "Artix: Arch's list is replaced, Artix's own mirrors are kept" \
   || bad "Artix: the Artix mirrorlist was replaced with Arch mirrors"
@@ -269,7 +279,7 @@ exec "$@"
 EOS
 chmod +x "$tmp/mr2/bin/pacman" "$tmp/mr2/bin/sudo"
 HOME="$tmp/mr2/home" PATH="$tmp/mr2/bin:$PATH" BIN_HERE="$tmp/mr2/bin" PACMAN_ARGS="$tmp/mr2/args" \
-  RICE_MIRRORS_DIR="$tmp/mr2/etc" RICE_MIRRORS_CONF="$tmp/mr2/etc/pacman.conf" \
+  RICE_MIRRORS_DIR="$tmp/mr2/etc" RICE_MIRRORS_CONF="$tmp/mr2/etc/pacman.conf" RICE_MIRRORS_AGE=0 \
   bash "$root/bin/rice-mirrors" >/dev/null 2>&1 \
   && bad "a missing reflector still reported success" || ok "a missing reflector is an error"
 grep -q 'reflector' "$tmp/mr2/args" && grep -q 'install\|-S' "$tmp/mr2/args" \
@@ -511,9 +521,10 @@ assert calls[-1] == ["--no-upgrade"], calls
 PYC
 
 grep -q '"update", "--terminal"' "$root/quickshell/rice-desktop/DynIsland.qml" \
-  && grep -q 'page.pkgTotal > 0 ? "--terminal" : "--gui"' "$root/quickshell/rice-settings/UpdatePage.qml" \
-  && ok "both Update now buttons tell the updater which place they are" \
-  || bad "an Update now button still waits for the package check"
+  && grep -q '"update", "--terminal"' "$root/quickshell/rice-settings/UpdatePage.qml" \
+  && ! grep -q '"--gui"' "$root/quickshell/rice-settings/UpdatePage.qml" \
+  && ok "both Update now buttons open the island's terminal at once" \
+  || bad "an Update now button still takes a different path"
 
 # ---- rice-update watch: a shell restart does not check GitHub again
 mkdir -p "$tmp/upd3/home/.cache/rice"

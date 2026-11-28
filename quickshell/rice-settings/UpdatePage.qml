@@ -19,6 +19,8 @@ Item {
     property bool checking: false
     property bool starting: false
     property int now: Math.floor(Date.now() / 1000)
+    property bool pidAlive: false
+    property string healed: ""      // the state V7.01 already asked the healing rice-update live about
 
     readonly property bool running: lv.state === "running" || lv.state === "terminal" || starting
     readonly property bool finished: !running && (lv.state === "done" || lv.state === "failed")
@@ -118,42 +120,72 @@ Item {
     }
     Component.onCompleted: page.loadPackages(false)
 
-    Process {
-        id: liveP
-        command: ["bash", "-c", "\"$HOME/.local/bin/rice-update\" live 2>/dev/null || cat \"$HOME/.cache/rice/update-live.json\" 2>/dev/null; printf '\\n\\x1e\\n'; tail -n 400 \"$HOME/.cache/rice/update-live.log\" 2>/dev/null"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const cut = text.indexOf("\x1e")
-                let o = {}
-                try { o = JSON.parse(text.substring(0, cut).trim() || "{}") } catch (e) {}
-                const was = page.lv.state
-                page.lv = o
-                if (page.starting && (o.state === "running" || (o.started && o.started >= page.startedAt))) page.starting = false
-                page.steps = page.parse(cut >= 0 ? text.substring(cut + 1) : "")
-                if (was === "running" && o.state !== "running") { stateP.running = true; page.loadPackages(true)
-                    page.ctl.status = o.state === "done" ? I18n.t("Updated") : I18n.t("The update did not finish") }
-            }
-        }
+    // the state and the log are files: read them where they are. V7.01: every 450 ms this page used to start bash,
+    // python (rice-update live) and tail only to read two files (~2.2 processes a second for the whole update)
+    function applyLive(t) {
+        let o = {}
+        try { o = JSON.parse(t || "{}") } catch (e) {}
+        const was = page.lv.state
+        page.lv = o
+        if (page.starting && (o.state === "running" || (o.started && o.started >= page.startedAt))) page.starting = false
+        if (was === "running" && o.state !== "running") { stateP.running = true; page.loadPackages(true)
+            page.ctl.status = o.state === "done" ? I18n.t("Updated") : I18n.t("The update did not finish") }
     }
+    FileView {
+        id: liveF
+        path: Quickshell.env("HOME") + "/.cache/rice/update-live.json"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: page.applyLive(text())
+        onLoadFailed: page.applyLive("")
+    }
+    FileView {
+        id: logF
+        path: Quickshell.env("HOME") + "/.cache/rice/update-live.log"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: { const t = text(); page.steps = page.parse(t.split("\n").slice(-400).join("\n")) }
+        onLoadFailed: page.steps = []
+    }
+    FileView {
+        id: pidF
+        path: page.lv.state === "running" && page.lv.pid ? "/proc/" + page.lv.pid + "/stat" : ""
+        printErrors: false
+        onLoaded: page.pidAlive = true
+        onLoadFailed: page.pidAlive = false
+    }
+    // rice-update live clears a "running" state whose process is gone (killed update, reboot). It is asked for only
+    // then, once, instead of on every poll: the update screen now reads the files itself
+    Process { id: healP; command: [page.bin, "live"]; running: false }
     property int startedAt: 0
     Timer {
-        interval: page.running ? 450 : 4000
+        interval: 1000
         repeat: true
         running: page.visible
-        onTriggered: { page.now = Math.floor(Date.now() / 1000); if (!liveP.running) liveP.running = true }
+        onTriggered: {
+            page.now = Math.floor(Date.now() / 1000)
+            pidF.reload()
+            const key = page.lv.state + ":" + (page.lv.started || 0)
+            if (page.healed !== key) {
+                if (page.lv.state === "running" && page.now - page.lv.started > 10 && !page.pidAlive) { page.healed = key; healP.running = true }
+                else if (page.lv.state === "terminal" && page.now - page.lv.started > 120) { page.healed = key; healP.running = true }
+            }
+        }
     }
     // the button press: the update starts, and after a reload Settings comes back to this page by itself
     // the same call from here and from the About tab: rice-update decides terminal (packages wait) or background
     function update() {
         if (page.running) return
-        page.inTerminal = page.pkgTotal > 0
+        page.inTerminal = true
         page.startedAt = Math.floor(Date.now() / 1000)
         page.starting = true
         page.steps = []
-        // V6.99: the page already knows whether packages wait, so the updater need not check again (it could
-        // take minutes) before it opens the terminal or starts in the background
-        Quickshell.execDetached([page.bin, "update", page.pkgTotal > 0 ? "--terminal" : "--gui"])
+        // V7.15: the island's updater exactly: always a terminal, which shows every step as it happens and asks for
+        // the password there. The page used to take the background path when no packages waited, so the same click
+        // did one thing from the island and another from here
+        Quickshell.execDetached([page.bin, "update", "--terminal"])
         startGuard.restart()
     }
     Timer { id: startGuard; interval: 15000; onTriggered: page.starting = false }

@@ -351,13 +351,14 @@ Item {
                 // so the island reads as one thing. Before, the day was tiny capitals in the key color, the date plain
                 // bold text and only the time sat in a pill: three treatments side by side
                 // V7.15: a theme background (the island's own surface, see-through) instead of the key color, a small
-                // calendar before the day like the weather row's cloud, and one ink for all of it
+                // calendar before the day like the weather row's cloud, and one ink for all of it. V7.16: no
+                // outline (it was drawn over the island and read as a second edge), more of the island shows
+                // through, and the pill is a touch larger so the row has room to breathe
                 Rectangle { visible: isl.showDate; anchors.verticalCenter: parent.verticalCenter
-                    width: dtRow.implicitWidth + 18; height: isl.bh - 14; radius: Look.sq ? 0 : (height / 2)
-                    color: isl.pal ? Qt.rgba(isl.pal.surface.r, isl.pal.surface.g, isl.pal.surface.b, 0.55)
-                                   : Qt.rgba(0.08, 0.08, 0.08, 0.55)
-                    border.width: 1
-                    border.color: isl.pal ? Qt.rgba(isl.pal.line.r, isl.pal.line.g, isl.pal.line.b, 0.75) : Qt.rgba(1, 1, 1, 0.08)
+                    width: dtRow.implicitWidth + 22; height: isl.bh - 10; radius: Look.sq ? 0 : (height / 2)
+                    color: isl.pal ? Qt.rgba(isl.pal.surface.r, isl.pal.surface.g, isl.pal.surface.b, 0.34)
+                                   : Qt.rgba(0.08, 0.08, 0.08, 0.34)
+                    border.width: 0
                     Row {
                         id: dtRow; anchors.centerIn: parent; spacing: 6
                         readonly property color ink: isl.pal ? isl.pal.fg : "white"

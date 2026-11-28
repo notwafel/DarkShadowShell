@@ -95,12 +95,35 @@ def busy(mon_name):
     return False
 
 
+_niri_sock = [None]
+
+
 def niri_j(what):
-    try:
-        r = subprocess.run(["niri", "msg", "-j", what], capture_output=True, text=True, timeout=3)
-        return json.loads(r.stdout)
-    except Exception:
-        return None
+    """V7.01: asked over niri's socket, kept open. The event stream used to start two niri processes for every
+    window event (a drag or a focus change queued them), plus a 50 ms sleep that made the answer lag."""
+    for attempt in (0, 1):
+        try:
+            if _niri_sock[0] is None:
+                s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                s.settimeout(3)
+                s.connect(os.environ["NIRI_SOCKET"])
+                _niri_sock[0] = (s, s.makefile("rb"))
+            s, f = _niri_sock[0]
+            s.sendall((json.dumps({"Request": what.capitalize()}) + "\n").encode())
+            line = f.readline()
+            if not line:
+                raise OSError("closed")
+            r = json.loads(line)
+            if isinstance(r, dict) and isinstance(r.get("Ok"), dict):
+                return r["Ok"].get(what.capitalize())
+            raise OSError("no Ok")
+        except Exception:
+            try:
+                _niri_sock[0][0].close()
+            except Exception:
+                pass
+            _niri_sock[0] = None
+    return None
 
 
 def niri_busy(mon_name):
@@ -135,7 +158,6 @@ def niri_main(mon):
             p = subprocess.Popen(["niri", "msg", "-j", "event-stream"], stdout=subprocess.PIPE, text=True)
             for line in p.stdout:
                 if line.startswith(('{"Workspace', '{"Window')) and not line.startswith(('{"WindowFocusTimestamp', '{"WindowLayouts')):
-                    time.sleep(0.05)
                     say()
             p.wait()
         except Exception:

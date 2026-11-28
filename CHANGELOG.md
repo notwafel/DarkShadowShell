@@ -1,9 +1,15 @@
 # Changelog
 
-## V7.15: no pulse on the island, the lyrics chip moves, the cards end inside the bar
+## V7.15: the island opens on a hover again, one pill for the date, one updater
+- **Pointing at the island opens it again.** With nothing playing the pointer did nothing and a click opened Today; the island now opens Today on a hover by itself, and a click on the open card keeps it (it turns into a pinned one). While a song plays, hovering still opens the player
+- **The island's date is one piece.** The day was small capitals in your key color, the date plain bold text and only the time sat in a pill: three treatments side by side. All three share one pill now, the same size and the same ink
+- **The Music card the bar's Music module opens moves like the island.** It used to bounce (an OutBack overshoot); it opens and closes with the island's 520 ms InOutCubic motion and fades into the module's pill at the end. Its cover is the desktop "Music card" widget's rounded square, the same picture component
+- **A click on another module closes the Music card**, and so does a click anywhere else on the bar or the desktop, like the Wi-Fi and sound panels
 - **The island's equalizer is gone.** Four little bars bounced in the middle pill whenever music played, and again in the player card's corner. Both are removed (with the component), so nothing moves in the island but the cover and the time
 - **The words / player chip** was floating at 40 px on the card's right edge, over the cover's row and the wave. It sits in the card's top row now, beside the back arrow, the same size as it: a chip where a chip belongs
 - **The four bar menus now end inside the bar.** The card lands on the module's pill and fades over the last frames, like the island does; before, the last pill sat under the bar and popped
+- **One updater.** Settings > Update Center runs the same `rice-update update --terminal` as the island's About tab. It used to take the background path when no packages waited, so the same click did one thing from the island and another from here
+- **reflector runs once a week, not before every update.** The mirrorlist is kept for 7 days; `rice-mirrors --force` asks for a new one, and `RICE_MIRRORS_AGE` (seconds) changes the week. Sorting 20 mirrors by speed takes minutes, and rice-care asked for it before every update
 - No other change
 
 ## V7.14: the Wi-Fi, Bluetooth, sound and power cards move like the island

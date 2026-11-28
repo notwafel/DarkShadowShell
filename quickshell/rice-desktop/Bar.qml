@@ -1022,7 +1022,6 @@ PanelWindow {
             wx: bar.wx
             st: bar.st
             sink: bar.sink
-            barH: bar.barH
             y: down ? bar.barH + 8 : -height - 8
             z: 41
             // one card at a time: the island's card folds away when one of these opens, and the other way round

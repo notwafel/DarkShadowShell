@@ -86,7 +86,7 @@ PanelWindow {
         t: pw.et
         openW: 220
         openH: col.height + 16
-        fromW: 38; pillH: 26
+        fromW: 38
         ax: pw.cx; ay: pw.cy
         side: pw.side; atRight: pw.atRight; down: !pw.atBottom
         barSpace: pw.barSpace; sideSpace: pw.sideSpace

@@ -24,9 +24,8 @@ Item {
     function toggle(k, x) { if (open && kind === k) { open = false; return } kind = k; ax = x; open = true; if (k === "calendar") { todoProc.running = true; upProc.running = true; now = new Date() } }
     function close() { open = false }
 
-    // the module it grows out of: its width on the bar and the bar's height (the card starts as that pill)
+    // the module it grows out of: the neck's width at the bar
     property real fromW: 60
-    property real barH: 38
     // t: 0 closed .. 1 open. Like the Dynamic island: the module's pill stretches out of the bar into the card (it
     // stays joined with the bar for the first two thirds), the corners round off, and the content comes in once
     // there is room for it
@@ -67,20 +66,19 @@ Item {
         return o
     }
 
-    // V7.15: the same timeline as DropCard (the Wi-Fi, Bluetooth, sound and power menus, and the island): the pill
+    // V7.15: the same timeline as DropCard (the Wi-Fi, Bluetooth, sound and power menus, and the island): the shape
     // grows joined with the bar, and only at two thirds does it pull 8 px away while the strand thins to nothing.
-    // It used to start as a pill above the bar and drop in, which is why the Music card did not move like the rest
+    // V7.17: it starts as the island's droplet, a round dot on the bar's edge, so it comes off the bar instead of
+    // growing out of the module's pill inside it
     readonly property real tc: Math.max(0, t)
     readonly property real openE: { const p = Math.max(0, Math.min(1, (tc - 0.08) / 0.64)); return p * p * (3 - 2 * p) }
     readonly property real dp: { const p = Math.max(0, Math.min(1, (tc - 0.66) / 0.34)); return p * p * (3 - 2 * p) }
-    // the same 26 px pill the DropCard menus start from (the island's own is a little shorter)
-    readonly property real pillH: Math.min(26, Math.max(22, barH - 10))
-    // the bar's near edge is 8 px above this item (it is placed barH + 8 under the bar, or -height - 8 above a
-    // bottom one). The pill is the module's pill inside the bar: centered on it, so it starts at the bar's far edge
-    readonly property real hang: down ? -8 : height + 8
-    readonly property real pillTop: (down ? -8 - barH : height + 8) + (barH - pillH) / 2
-    readonly property real baseY: pillTop + (hang - pillTop) * Math.min(1, openE * 3)
-    readonly property real sy: baseY * (1 - dp)
+    // the island's droplet: 46 px, a round dot
+    readonly property real dropD: 46
+    // the bar's near edge is 8 px outside this item (it is placed barH + 8 under the bar, or -height - 8 above a
+    // bottom one). The dot touches that edge and the card is flush with it, then the last third pulls 8 px away
+    readonly property real attachY: down ? -8 : height + 8
+    readonly property real sy: attachY * (1 - dp)
 
     // ---------- the strand: one shape with the bar until the card lets go ----------
     Shape {
@@ -88,12 +86,14 @@ Item {
         x: shape.x
         y: shape.y - height
         width: Math.max(1, shape.width)
-        height: Math.max(0, bp.down ? shape.y + 8 : 0)
+        // from the card's near edge to the bar's edge (8 px outside this item)
+        height: Math.max(0, bp.down ? shape.y + 8 : (bp.height + 8) - (shape.y + shape.height))
+        y: bp.down ? shape.y - height : shape.y + shape.height
         readonly property real tw0: Math.min(width * 0.62, bp.fromW * 0.9)
         readonly property real letgo: Math.max(0, Math.min(1, (bp.tc - 0.55) / 0.45))
         readonly property real tw: tw0 * Math.pow(1 - letgo, 2.2)
         readonly property real cx: Math.max(4, Math.min(width - 4, bp.ax - bp.x - shape.x))
-        readonly property bool joined: bp.down && bp.tc > 0.02 && height > 0.05 && tw >= 0.15
+        readonly property bool joined: bp.tc > 0.02 && bp.t * 6 > 0.02 && height > 0.05 && tw >= 0.15
         visible: joined
         preferredRendererType: Shape.CurveRenderer
         ShapePath {
@@ -104,11 +104,13 @@ Item {
                 const W = strand.width, H = strand.height, tw = strand.tw
                 if (H < 0.05 || tw < 0.15 || W < 1) return ""
                 const cx = strand.cx, tb = Math.min(W, tw * 1.45)
-                const midUp = H * 0.52, midDn = H * 0.58
-                return "M" + (cx - tw / 2) + " 0" +
-                  " C" + (cx - tw * 0.42) + " " + midUp + " " + (cx - tb * 0.5) + " " + midDn + " " + (cx - tb / 2) + " " + H +
-                  " L" + (cx + tb / 2) + " " + H +
-                  " C" + (cx + tb * 0.5) + " " + midDn + " " + (cx + tw * 0.42) + " " + midUp + " " + (cx + tw / 2) + " 0 Z"
+                // py is the bar's edge, cy the card's; the path runs either way for a bar at the top or the bottom
+                const py = bp.down ? 0 : H, cy = bp.down ? H : 0
+                const midUp = py + (cy - py) * 0.52, midDn = cy - (cy - py) * 0.42
+                return "M" + (cx - tw / 2) + " " + py +
+                  " C" + (cx - tw * 0.42) + " " + midUp + " " + (cx - tb * 0.5) + " " + midDn + " " + (cx - tb / 2) + " " + cy +
+                  " L" + (cx + tb / 2) + " " + cy +
+                  " C" + (cx + tb * 0.5) + " " + midDn + " " + (cx + tw * 0.42) + " " + midUp + " " + (cx + tw / 2) + " " + py + " Z"
             } }
         }
     }
@@ -116,15 +118,15 @@ Item {
     Item {
         id: shape
         readonly property real cx: bp.ax - bp.x
-        width: bp.fromW + (bp.width - bp.fromW) * bp.openE
-        height: bp.pillH + (bp.height - bp.pillH) * bp.openE
+        width: bp.dropD + (bp.width - bp.dropD) * bp.openE
+        height: bp.dropD + (bp.height - bp.dropD) * bp.openE
         x: cx + (bp.width / 2 - cx) * bp.openE - width / 2
         y: bp.sy
-        // it lands on the module's pill inside the bar and fades there over the last frames
+        // it lands as the droplet on the bar's edge and fades there over the last frames
         opacity: Math.min(1, bp.t * 6)
         clip: true
         Shadow { anchors.fill: bg; radius: Look.sq ? 0 : (bg.radius); on: Look.shadows && Look.shadowPanels; size: Look.shadowSize * 0.8; strength: Look.shadowStrength * bp.openE }
-        Rectangle { id: bg; anchors.fill: parent; radius: Look.sq ? 0 : (Math.min(height / 2, bp.pillH / 2 + (24 - bp.pillH / 2) * bp.openE)); color: bp.pal ? bp.pal.surface : "#141414" }
+        Rectangle { id: bg; anchors.fill: parent; radius: Look.sq ? 0 : (Math.min(height / 2, bp.dropD / 2 + (24 - bp.dropD / 2) * bp.openE)); color: bp.pal ? bp.pal.surface : "#141414" }
         // the glass line: only once the card is clearly away, so it is never drawn across the strand (the island
         // and DropCard do the same; a border on the shape itself made the Music card the odd one out)
         Rectangle {

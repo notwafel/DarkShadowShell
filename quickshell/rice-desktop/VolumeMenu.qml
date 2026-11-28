@@ -152,7 +152,7 @@ PanelWindow {
         t: vm.et
         openW: 380
         openH: Math.min(col.implicitHeight + 28, vm.height - (vm.side ? 24 : vm.barSpace + 20))
-        fromW: 38; pillH: 26
+        fromW: 38
         ax: vm.cx; ay: vm.cy
         side: vm.side; atRight: vm.atRight; down: !vm.atBottom
         barSpace: vm.barSpace; sideSpace: vm.sideSpace

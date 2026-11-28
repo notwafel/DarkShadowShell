@@ -193,7 +193,7 @@ PanelWindow {
         t: wm.et
         openW: wm.cardW
         openH: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14
-        fromW: 38; pillH: 26
+        fromW: 38
         ax: wm.cx; ay: wm.cy
         side: wm.side; atRight: wm.atRight; down: !wm.atBottom
         barSpace: wm.barSpace; sideSpace: wm.sideSpace

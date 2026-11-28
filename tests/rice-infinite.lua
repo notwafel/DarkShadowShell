@@ -284,3 +284,24 @@ RiceInfinite.world["0x31"] = { x = 5000, y = 200, w = 400, h = 300 }   -- as on 
 RiceInfinite.set(false)
 check(z1.at.x >= 0 and z1.at.x + z1.size.x <= 1920 and z1.at.y >= 0 and z1.at.y + z1.size.y <= 1080,
     "object monitor: off clamps a window whose canvas place is far outside the screen")
+
+-- switching to another workspace while it is on: that workspace's windows join the canvas and the mouse moves them
+D1.active_workspace = { id = 1 }
+active_ws = 1
+local p1 = win("0x41", 1, U1, 100, 100, 400, 300)
+W = { p1 }
+RiceInfinite.cfg.screens = 0
+RiceInfinite.set(true)
+active_ws = 5
+D1.active_workspace = { id = 5 }
+local p2 = win("0x42", 5, U1, 300, 300, 400, 300)
+p2.floating = false
+W[#W + 1] = p2
+fire("workspace.active", { id = 5 })
+local b1 = #moves
+RiceInfinite.pan(100, 0)
+local n2 = 0
+for i = b1 + 1, #moves do if moves[i].window == "address:0x42" then n2 = n2 + 1 end end
+check(n2 > 0, "switching workspace: its window joins the canvas and moves")
+check(floatarr[#floatarr] == "set", "switching workspace floats it so the canvas can move it")
+RiceInfinite.set(false)

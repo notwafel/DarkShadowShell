@@ -934,3 +934,23 @@ pcall(hl.on, "window.active", function(w)
         RI.last = w.address
     end
 end)
+
+-- a workspace came into sight while it is on (every screen): the windows that were already there join the canvas
+-- too, so the mouse moves them like the ones that were on screen when it was turned on. Without this they stayed
+-- tiled on the workspace you switched to, and holding SUPER + ALT there did nothing (only the workspace where it
+-- was turned on moved). The windows of a workspace you left stay put on it (wins() drops the ones no screen shows).
+pcall(hl.on, "workspace.active", function()
+    if not (RI.on and shared()) then return end
+    local touched = false
+    for _, w in ipairs(wins()) do
+        if RI.world[w.address] == nil then
+            canvas(w)
+            if not w.floating then
+                RI.tiled[w.address] = true
+                run(hl.dsp.window.float({ action = "set", window = sel(w) }))
+            end
+            touched = true
+        end
+    end
+    if touched then save() end
+end)

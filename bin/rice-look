@@ -1091,7 +1091,11 @@ def main(a):
     elif cmd == "try":
         sh = current_shell(c)
         shp = shutil.which(sh) or "bash"
-        if sh == "fish":
+        # V7.22: with "when a terminal opens" on, the shell's own rc already prints fastfetch. Asking for it again
+        # printed it twice on, once off: now exactly once either way.
+        if c["on_open"]:
+            spawn([BIN + "/rice-term", "-e", shp])
+        elif sh == "fish":
             spawn([BIN + "/rice-term", "-e", shp, "-C", "fastfetch"])
         else:
             spawn([BIN + "/rice-term", "-e", "sh", "-c", 'fastfetch; exec "$0"', shp])

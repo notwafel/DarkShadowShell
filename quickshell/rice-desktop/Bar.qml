@@ -435,12 +435,16 @@ PanelWindow {
             readonly property bool shown: title !== ""
             // Settings > DarkShadow bar > App icon by the title: left, right (default) or off
             readonly property string side: bar.bc.title_icon === "left" || bar.bc.title_icon === "off" ? bar.bc.title_icon : "right"
+            // V7.16: a long title stayed as wide as a fifth of the bar and reached the island in the middle; it is
+            // cut at 40 characters and the module at 220 px, so it never gets close (the rest is elided)
+            readonly property string shortTitle: title.length > 40 ? title.slice(0, 39) + "\u2026" : title
+            readonly property real maxW: Math.min(220, Math.max(120, bar.width * 0.16))
             height: bar.barH
-            width: Math.min(tTxt.implicitWidth, Math.max(120, bar.width * 0.2)) + (ic.visible ? 24 : 0)
+            width: Math.min(tTxt.implicitWidth, maxW) + (ic.visible ? 24 : 0)
             Text { id: tTxt; anchors.verticalCenter: parent.verticalCenter
                 x: ic.visible && tt.side === "left" ? 24 : 0
-                width: Math.min(implicitWidth, Math.max(120, bar.width * 0.2)); elide: Text.ElideRight
-                text: tt.title; color: bar.dim; font.family: Fonts.main; font.pixelSize: 12 }
+                width: Math.min(implicitWidth, tt.maxW); elide: Text.ElideRight
+                text: tt.shortTitle; color: bar.dim; font.family: Fonts.main; font.pixelSize: 12 }
             Image { id: ic; visible: tt.appIcon !== "" && tt.side !== "off" && status === Image.Ready
                 anchors.verticalCenter: parent.verticalCenter
                 x: tt.side === "left" ? 0 : tTxt.width + 8; width: 16; height: 16

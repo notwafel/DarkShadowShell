@@ -1,5 +1,10 @@
 # Changelog
 
+## V7.12: the join no longer has a seam, and the let-go fades out instead of cutting
+- **Why it looked stuck on:** the panel's glass hairline kept drawing a 1px line across the join while the droplet was still one shape with the pill. The hairline now stays hidden while the panel is flush with the pill or still joined, and fades in only once the panel is clearly away
+- **Smooth ending (and the reverse):** the panel is flush with the pill for the first two thirds, so the two are a single silhouette while it grows; in the last third it pulls away and the strand between them thins with a tail, so the final frames are already sub-pixel. Closing runs the same shape backwards
+- Nothing else changes
+
 ## V7.11: the droplet stays joined to the island, then lets go
 - **The bridge you asked for:** the droplet leaves the pill as one liquid shape with it, widens into the panel while still joined, and only then the bridge pinches off in the last ~14% of the motion, so the panel detaches and settles on its own
 - The bridge is a single `ShapePath` (one filled path, same fill as the card), so the droplet, the bridge and the panel are one colour and one layer. `QtQuick.Shapes` is already used by the bar and the screen frame

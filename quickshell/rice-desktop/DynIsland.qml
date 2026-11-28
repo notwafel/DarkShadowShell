@@ -564,41 +564,48 @@ Item {
     }
 
     // ---------- the card: the player or a notification, just beside the bar ----------
-    // V7.11 the liquid bridge: a Shape (one filled path) keeps the panel one shape with the island while it opens,
-    // then pinches to nothing so it detaches. Being a single ShapePath it is one layer, so there is no place where
-    // a second translucent layer could darken it (that was the colour difference). One ShapePath, no Canvas.
+    // V7.12 the liquid bridge. While the panel is still this close it touches the pill, so the two are one shape with
+    // no seam at all. When it lets go, a strand stretches between them and thins to nothing with a long tail, so the
+    // last frames are the thin ones and nothing pops (V7.11 took the strand from 148 px to zero in four frames, which
+    // read as a cut). Opening and closing are the same shape backwards, so both stay smooth. The card's glass
+    // hairline is hidden while this is joined, otherwise it would draw a line straight across the neck.
     Shape {
         id: dropNeck
         x: card.x
         y: isl.down ? isl.bh : card.y + card.height
         width: Math.max(1, card.width)
         height: Math.max(0, card.gapA)
-        visible: card.tc > 0.02 && card.gapA > 0.5 && card.opacity > 0.02 && isl.fill.a > 0.02
+        // the strand is this wide at the pill, but never wider than the pill's own flat bottom (otherwise it pokes
+        // out of the round corners)
+        readonly property real tw0: Math.min(width * 0.62, isl.width * 0.78)
+        // the let-go starts with 45% of the motion left, and the width dies with a tail: 1 - p is the thinning, and
+        // pow puts the last frames at a fraction of a pixel, so the strand fades out instead of being cut off
+        readonly property real letgo: Math.max(0, Math.min(1, (card.tc - 0.55) / 0.45))
+        readonly property real tw: tw0 * Math.pow(1 - letgo, 2.2)
+        // the pill's middle, in the shape's own coordinates (the card can be off-centre when clamped to the screen)
+        readonly property real cx: Math.max(4, Math.min(width - 4, isl.width / 2 - card.x))
+        // joined while the strand is still visible at all; a sub-pixel strand counts as gone, and by then the panel
+        // already sits away from the pill, so that change cannot be seen
+        readonly property bool joined: card.tc > 0.02 && card.gapA > 0.05 && tw >= 0.75
+        visible: joined && card.opacity > 0.02 && isl.fill.a > 0.02
         preferredRendererType: Shape.CurveRenderer
         ShapePath {
             fillColor: isl.fill
             strokeColor: "transparent"
             fillRule: ShapePath.WindingFill
             PathSvg { path: {
-                const W = dropNeck.width, H = dropNeck.height
-                if (H < 0.5 || W < 1) return ""
-                // the pill's middle, in the shape's own coordinates (the card can sit off-centre when it is
-                // clamped to the screen, so this is not always W / 2)
-                const cx = Math.max(4, Math.min(W - 4, isl.width / 2 - card.x))
-                // the top of the bridge is 0.62 of the panel wide, but never wider than the pill's own flat bottom
-                // (otherwise it would poke out of the pill's round corners), and it pinches to nothing in the last
-                // 14% (that is the let-go: the panel is free and settles the last few pixels on its own)
-                const nt = Math.min(W * 0.62, isl.width * 0.78)
-                    * (1 - Math.max(0, Math.min(1, (card.tc - 0.86) / 0.14)))
-                if (nt < 0.5) return ""
-                // the bottom edge is the card's whole top edge, so the two shapes meet with no step
+                const W = dropNeck.width, H = dropNeck.height, tw = dropNeck.tw
+                if (H < 0.05 || tw < 0.75 || W < 1) return ""
+                const cx = dropNeck.cx
+                // the bottom edge is the panel's whole top edge, so the strand comes out of the panel with no step
+                // and, as it thins, melts back into that edge instead of stopping on it
                 const py = isl.down ? 0 : H
                 const cy = isl.down ? H : 0
                 const mid = H / 2
-                return "M" + (cx - nt / 2) + " " + py +
-                  " C" + (cx - nt * 0.3) + " " + mid + " 0 " + mid + " 0 " + cy +
+                return "M" + (cx - tw / 2) + " " + py +
+                  " C" + (cx - tw * 0.3) + " " + mid + " 0 " + mid + " 0 " + cy +
                   " L" + W + " " + cy +
-                  " C" + W + " " + mid + " " + (cx + nt * 0.3) + " " + mid + " " + (cx + nt / 2) + " " + py + " Z"
+                  " C" + W + " " + mid + " " + (cx + tw * 0.3) + " " + mid + " " + (cx + tw / 2) + " " + py + " Z"
             } }
         }
     }
@@ -627,7 +634,9 @@ Item {
         readonly property real dropH: 46
         readonly property real openE: { const p = Math.max(0, Math.min(1, (tc - 0.08) / 0.64)); return p * p * (3 - 2 * p) }
         readonly property real shown: tc < 0.02 ? 0 : 1
-        readonly property real gapA: { const p = Math.max(0, Math.min(1, tc / 0.4)); return 12 * p * p * (3 - 2 * p) }
+        // V7.12: the panel is flush against the pill for most of the motion, so the two are one silhouette with no
+        // strand to see; only in the last third does it pull away, and that is when the strand appears
+        readonly property real gapA: { const p = Math.max(0, Math.min(1, (tc - 0.66) / 0.34)); return 12 * p * p * (3 - 2 * p) }
         width: shown * (dropW + (cwA - dropW) * openE)
         height: shown * (dropH + (chA - dropH) * openE)
         // centred on the island, but always on the screen
@@ -646,7 +655,11 @@ Item {
             anchors.fill: parent; radius: parent.radius
             color: "transparent"; border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.16)
-            visible: !Look.sq && card.opacity > 0.5 && card.tc > 0.9   // V7.11: no hairline across the bridge
+            // V7.12: no hairline while the panel is one shape with the island (it drew a line straight across the
+            // join and that is what made the panel look stuck on). It fades in only once the panel is clearly away
+            visible: !Look.sq && card.opacity > 0.5 && opacity > 0.01
+            opacity: card.gapA > 8 && !dropNeck.joined ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
         }
         Rectangle {
             id: sheen

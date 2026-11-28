@@ -114,7 +114,7 @@ Item {
                     width: parent.width
                     spacing: 8
                     Btn { text: I18n.t("Surprise me"); sym: "shuffle"; icon: ""; primary: true; onClicked: page.randomWall() }
-                    Btn { text: I18n.t("Theme"); sym: "palette"; icon: ""; onClicked: page.ctl.page = 8 }
+                    Btn { text: I18n.t("Theme"); sym: "palette"; icon: ""; onClicked: page.ctl.page = 34 }
                     Btn { text: I18n.t("Folder"); sym: "folder_open"; icon: ""; onClicked: if (page.w.dir) Quickshell.execDetached(["xdg-open", page.w.dir]) }
                 }
             }

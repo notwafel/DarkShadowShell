@@ -819,7 +819,7 @@ grep -q 'shape: ln.iShape$' "$root/quickshell/rice-desktop/LauncherM3.qml" \
 # ---- V6.84: a scheme you picked (grey) is not repainted by the cover of a song
 grep -q 'wantTint && colorMode === "auto"' "$root/quickshell/rice-desktop/Vibe.qml" \
   && ok "the cover's colors belong to Auto only" || bad "a song overrides the picked scheme"
-grep -q 'setAutoSource' "$root/quickshell/rice-settings/ThemePage.qml" \
+grep -q 'setAutoSource' "$root/quickshell/rice-settings/ColorSchemes.qml" \
   && ok "Auto offers the wallpaper or the cover" || bad "Auto has no source to choose"
 
 # ---- V6.84: an update stops the shell for the swap, so it never reloads half old and half new files

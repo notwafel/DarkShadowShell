@@ -278,12 +278,15 @@ Item {
         Flow {
             width: parent.width
             spacing: 8
-            Btn { text: I18n.t("Colors"); sym: "palette"; icon: ""; onClicked: page.ctl.page = 8 }
             Btn { text: I18n.t("Shapes"); sym: "category"; icon: ""; onClicked: page.ctl.page = 24 }
             Btn { text: I18n.t("Fonts"); sym: "text_fields"; icon: ""; onClicked: page.ctl.page = 19 }
             Btn { text: I18n.t("Motion"); sym: "animation"; icon: ""; onClicked: page.ctl.page = 20 }
             Btn { text: I18n.t("Bar"); sym: "toolbar"; icon: ""; onClicked: page.ctl.page = 2 }
             Btn { text: I18n.t("Windows"); sym: "select_window"; icon: ""; onClicked: page.ctl.page = 4 }
         }
+        // ---------- the color scheme: a theme, then the colors it paints with ----------
+        SectionTitle { text: I18n.t("The colors"); sub: I18n.t("Pick a theme above, then the palette it paints the desktop with. Auto follows your wallpaper; a fixed one stays the same.") }
+        ColorSchemes { width: parent.width; ctl: page.ctl }
+
     }
 }

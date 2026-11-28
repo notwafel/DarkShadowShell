@@ -264,7 +264,7 @@ FloatingWindow {
     property var st: ({})
     property string status: ""
     property string colorMode: "auto"
-    // V6.84: "Auto" follows the wallpaper; the cover of what plays is a choice next to it (ThemePage)
+    // V6.84: "Auto" follows the wallpaper; the cover of what plays is a choice next to it (ColorSchemes, in Themes)
     property bool coverColors: true
     FileView {
         path: win.home + "/.config/rice/vibe.json"
@@ -388,7 +388,7 @@ FloatingWindow {
         { name: "Recorder", icon: "\uf03d" },
         { name: "Dynamic island", icon: "\uf017" },
         { name: "Launcher", icon: "\uf002" },
-        { name: "Color theme", icon: "\udb80\udfd8" },
+        { name: "(removed)", icon: "" },   // 8: Color theme merged into Themes (34)
         { name: "Cursors", icon: "\uf245" },
         { name: "Notifications", icon: "\uf0f3" },
         { name: "Idle & Lockscreen", icon: "\uf023" },
@@ -401,7 +401,7 @@ FloatingWindow {
         { name: "Wallpaper", icon: "\uf03e" },
         { name: "Fonts", icon: "\uf031" },
         { name: "Motion", icon: "\uf1e6" },
-        { name: "Colors", icon: "\uf53f" },
+        { name: "(removed)", icon: "" },   // 21: a read-only color list, removed
         { name: "Components", icon: "\uf1de" },
         { name: "Keyboard", icon: "\uf11c" },
         { name: "Shapes", icon: "\uf5fd" },
@@ -435,7 +435,7 @@ FloatingWindow {
         { page: 0 },
         { sep: true },
         { group: "wall", name: "Wallpaper", icon: "\uf03e", sym: "wallpaper", pages: [18], caption: I18n.t("Wallpaper and the colors it gives") },
-        { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [39, 40, 42, 34, 8, 21, 19, 24, 22, 9, 14], caption: I18n.t("Presets, Explore, Vibe, themes, colors, fonts, shapes, components, cursors and the dock") },
+        { group: "look", name: "Appearance", icon: "\udb80\udfd8", sym: "palette", pages: [39, 40, 42, 34, 19, 24, 22, 9, 14], caption: I18n.t("Presets, Explore, Vibe, themes and their colors, fonts, shapes, components, cursors and the dock") },
         { group: "motion", name: "Motion", icon: "\uf1e6", sym: "animation", pages: [20], caption: I18n.t("How windows and Settings move") },
         { group: "desk", name: "Desktop", icon: "\uf108", sym: "desktop_windows", pages: niri ? [29, 12, 25, 36, 4, 11] : [29, 33, 12, 25, 36, 4, 11], caption: I18n.t("Look & feel, widgets, windows, window rules, %1 and the lock screen", wmLabel) },
         { group: "bar", name: "Bar & launcher", icon: "\uf0c9", sym: "toolbar", pages: [2, 45, 3, 6, 7], caption: I18n.t("The bar, its styles, the dynamic island and the launcher") },
@@ -1070,7 +1070,6 @@ FloatingWindow {
             PageSlot { nav: win; idx: 5; cur: win.page; page: Component { RecorderPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 6; cur: win.page; page: Component { IslandPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 7; cur: win.page; page: Component { RofiPage { anchors.fill: parent; ctl: win } } }
-            PageSlot { nav: win; idx: 8; cur: win.page; page: Component { ThemePage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 9; cur: win.page; page: Component { CursorsPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 10; cur: win.page; page: Component { NotificationsPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 11; cur: win.page; page: Component { IdlePage { anchors.fill: parent; ctl: win } } }
@@ -1082,7 +1081,6 @@ FloatingWindow {
             PageSlot { nav: win; idx: 18; cur: win.page; page: Component { WallpaperPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 19; cur: win.page; page: Component { FontsPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 20; cur: win.page; page: Component { MotionPage { anchors.fill: parent; ctl: win } } }
-            PageSlot { nav: win; idx: 21; cur: win.page; page: Component { ColorsPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 22; cur: win.page; page: Component { ComponentsPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 23; cur: win.page; page: Component { KeyboardPage { anchors.fill: parent; ctl: win } } }
             PageSlot { nav: win; idx: 24; cur: win.page; page: Component { ShapesPage { anchors.fill: parent; ctl: win } } }

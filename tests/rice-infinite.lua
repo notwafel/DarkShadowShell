@@ -353,3 +353,20 @@ for _, w in ipairs(W) do
         "on again puts " .. w.address .. " back on the canvas where it was")
 end
 RiceInfinite.set(false)
+
+-- ALT + TAB to a window the canvas left far off screen glides the canvas so it sits in the middle of its screen;
+-- a window already in sight keeps the view still
+D1.active_workspace = { id = 1 }
+active_ws = 1
+local far = win("0x71", 1, U1, 2600, 200, 400, 300)
+W = { far }
+RiceInfinite.cfg.screens = 0
+RiceInfinite.layouts = {}
+RiceInfinite.set(true)
+RiceInfinite.reveal("0x71")
+check(math.abs(far.at.x + far.size.x / 2 - 960) <= 2 and math.abs(far.at.y + far.size.y / 2 - 540) <= 2,
+    "Alt + Tab to a window off screen glides the canvas to its middle")
+local before = #moves
+RiceInfinite.reveal("0x71")
+check(#moves == before, "Alt + Tab to a window already in sight leaves the canvas still")
+RiceInfinite.set(false)

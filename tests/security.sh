@@ -911,6 +911,22 @@ d = m.data_hypr()
 assert [w["cls"] for w in d["wins"]] == ["kitty"], d["wins"]
 PYT
 
+# ---- rice-taskview: focusing a window also asks Infinite Desktop to glide the canvas to it
+python3 - "$root/bin/rice-taskview" <<'PYT' && ok "the switcher asks Infinite Desktop to glide to the window it picks" || bad "the switcher leaves the canvas where it was"
+import importlib.machinery, importlib.util, sys
+ldr = importlib.machinery.SourceFileLoader("rtv2", sys.argv[1])
+spec = importlib.util.spec_from_loader("rtv2", ldr); m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+class R: returncode = 0; stdout = "ok"
+calls = []
+m.niri = lambda: False
+m.shutil.which = lambda name: "/usr/bin/hyprctl"
+m.run = lambda cmd, timeout=4: (calls.append(cmd), "")[1]
+m.subprocess.run = lambda *a, **k: R()
+assert m.main(["rice-taskview", "focus", "0x1"]) == 0
+assert any(c[:2] == ["hyprctl", "eval"] and 'RiceInfinite.reveal("0x1")' in c[2] for c in calls), calls
+PYT
+
 # ---- install/lib/edits.sh: your own QML edit survives an update, the new version lands next to it
 mkdir -p "$tmp/edits/home" "$tmp/edits/src"
 cat >"$tmp/edits/run.sh" <<'EOS'

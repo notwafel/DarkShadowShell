@@ -576,6 +576,27 @@ function RI.go(dir)
     focus(best)
 end
 
+-- ALT + TAB / the Task view picked a window that the canvas left far off screen: glide the canvas so it sits in
+-- the middle of its own screen, like SUPER + CTRL + arrows. A window already in sight keeps the view still, and a
+-- window outside the canvas (another workspace in single-screen mode) is left alone.
+function RI.reveal(address)
+    if not (RI.on and here()) then return end
+    local want = tostring(address or "")
+    for _, w in ipairs(wins()) do
+        if w.address == want then
+            local s = canvas(w)
+            local mx, my = middle()
+            local l, t, rr, bb = screen_box(w.monitor or hl.get_active_monitor())
+            if l then mx, my = (l + rr) / 2, (t + bb) / 2 end
+            local x, y = RI.ox + s.x * RI.z, RI.oy + s.y * RI.z
+            local sw, sh = s.w * RI.z, s.h * RI.z
+            if l and x >= l and y >= t and x + sw <= rr and y + sh <= bb then return end
+            RI.pan(math.floor(mx - (x + sw / 2) + 0.5), math.floor(my - (y + sh / 2) + 0.5))
+            return
+        end
+    end
+end
+
 -- a window that opened on the canvas: float it, give it its own room next to the last one, glide there
 function RI.opened(w)
     if not RI.on then return end

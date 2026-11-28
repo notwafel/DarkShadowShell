@@ -1,5 +1,11 @@
 # Changelog
 
+## V7.15: no pulse on the island, the lyrics chip moves, the cards end inside the bar
+- **The island's equalizer is gone.** Four little bars bounced in the middle pill whenever music played, and again in the player card's corner. Both are removed (with the component), so nothing moves in the island but the cover and the time
+- **The words / player chip** was floating at 40 px on the card's right edge, over the cover's row and the wave. It sits in the card's top row now, beside the back arrow, the same size as it: a chip where a chip belongs
+- **The four bar menus now end inside the bar.** The card lands on the module's pill and fades over the last frames, like the island does; before, the last pill sat under the bar and popped
+- No other change
+
 ## V7.14: the Wi-Fi, Bluetooth, sound and power cards move like the island
 - **The other cards now do what the island does.** Wi-Fi, Bluetooth, sound and power used to just scale up 6% and slide 10 px out of the bar. Now the module's pill on the bar stretches into the card, flush with the bar, and only in the last third does the card pull away while the strand between them thins to nothing; closing is the same shape backwards
 - The card's glass line stays off while it is joined, so no line is drawn across the strand (the island's own fix)

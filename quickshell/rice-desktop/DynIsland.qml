@@ -368,7 +368,6 @@ Item {
                     Text { anchors.verticalCenter: parent.verticalCenter; text: isl.wTemp.replace(/[CF]$/, ""); color: isl.pal ? isl.pal.dim : "#aaa"
                         font.family: Fonts.main; font.pixelSize: 13; font.weight: Font.Medium }
                 }
-                Eq { visible: Player.playing; anchors.verticalCenter: parent.verticalCenter; h: 14; go: isl.pillMode === "idle" }
             }
         }
 
@@ -966,8 +965,6 @@ Item {
                         font.family: Fonts.main; font.pixelSize: 17; font.weight: Font.DemiBold }
                     Text { width: parent.width; elide: Text.ElideRight; text: Player.artist; color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.main; font.pixelSize: 13 }
                 }
-                // a wave that moves while it plays
-                Eq { x: parent.width - 58; y: 62; h: 22; bars: 5; go: isl.big && Player.playing && isl.cardMode === "media" && !isl.mediaLyr }
                 Text { x: 16; y: 110; width: 38; text: Player.clock(Player.pos); color: isl.pal ? isl.pal.dim : "#aaa"; font.family: Fonts.numbers; font.pixelSize: 11 }
                 WavyLine {
                     x: 56; y: 105; width: parent.width - 112; height: 22
@@ -1076,8 +1073,10 @@ Item {
                     onClicked: { isl.mediaLyr = false; isl.pinned = false; isl.infoOpen = true; if (!isl.hovering) pinT.restart() } }
             }
             // the words, or the player again
+            // V7.15: in the card's top row beside the back arrow, where a chip belongs; it used to float at 40 px,
+            // over the player's wave and the cover, and read as a label stuck on the song
             Rectangle {
-                x: parent.width - 122; y: 40; width: 82; height: 24; radius: Look.sq ? 0 : (12)
+                x: parent.width - 122; y: 8; width: 82; height: 28; radius: Look.sq ? 0 : (14)
                 color: isl.mediaLyr ? (isl.pal ? Qt.rgba(isl.pal.primary.r, isl.pal.primary.g, isl.pal.primary.b, 0.22) : "#333")
                                     : (isl.pal ? Qt.rgba(isl.pal.fg.r, isl.pal.fg.g, isl.pal.fg.b, 0.07) : "#333")
                 Behavior on color { ColorAnimation { duration: 160 } }
@@ -1113,31 +1112,6 @@ Item {
             PauseAnimation { duration: fc.act ? 20 : 0 }
             NumberAnimation { target: fc; property: "opacity"; duration: fc.act ? 170 : 60; easing.type: Easing.Linear } } }
         Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.decel } }
-    }
-    // a small equalizer: round bars in your key color that bounce while music plays
-    component Eq: Row {
-        id: eq
-        property int bars: 4
-        property real h: 14
-        property bool go: true
-        spacing: 2.5
-        Repeater {
-            model: eq.bars
-            delegate: Rectangle {
-                id: bb
-                width: 3.5; radius: Look.sq ? 0 : (2); anchors.verticalCenter: parent.verticalCenter
-                color: isl.pal ? isl.pal.primary : "white"
-                property real lv: 0.4
-                height: Math.max(4, eq.h * lv)
-                SequentialAnimation on lv {
-                    running: eq.go && eq.visible && !Look.lite; loops: Animation.Infinite
-                    NumberAnimation { to: 1.0; duration: 260 + index * 70; easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 0.3 + (index % 2) * 0.15; duration: 300 + index * 50; easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 0.75; duration: 220 + index * 90; easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 0.35; duration: 280 + index * 40; easing.type: Easing.InOutSine }
-                }
-            }
-        }
     }
     component Tab: Item {
         id: tb

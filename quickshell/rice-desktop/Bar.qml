@@ -520,7 +520,7 @@ PanelWindow {
             MouseArea { id: vm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {
                     // left: the sound menu, right: mute
-                    if (m.button === Qt.LeftButton) { const p = mapToItem(null, width / 2, 0); bar.run("\"$HOME/.local/bin/rice-volume\" menu " + Math.round(p.x)); return }
+                    if (m.button === Qt.LeftButton) { barPop.close(); const p = mapToItem(null, width / 2, 0); bar.run("\"$HOME/.local/bin/rice-volume\" menu " + Math.round(p.x)); return }
                     if (bar.sink && bar.sink.audio) bar.sink.audio.muted = !bar.sink.audio.muted
                 }
                 onWheel: function(e) { Vol.nudge(bar.sink, Look.notches(e) * 0.04) } }
@@ -535,6 +535,7 @@ PanelWindow {
                 glyph: String.fromCodePoint(bar.svc.network ? 0xF05A9 : 0xF05AA) }
             MouseArea { id: nm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {
+                    barPop.close()
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-wifi\" " + Math.round(p.x))
                 } }
@@ -549,6 +550,7 @@ PanelWindow {
                 glyph: String.fromCodePoint(bar.svc.bluetooth ? 0xF00AF : 0xF00B2) }
             MouseArea { id: bm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {
+                    barPop.close()
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-bluetooth\" " + Math.round(p.x))
                 } }
@@ -773,6 +775,7 @@ PanelWindow {
                 Behavior on color { ColorAnimation { duration: 150 } } }
             MouseArea { id: pm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton | Qt.RightButton
                 onClicked: function(m) {
+                    barPop.close()
                     const p = mapToItem(null, width / 2, 0)
                     bar.run("\"$HOME/.local/bin/rice-power\" " + Math.round(p.x))
                 } }

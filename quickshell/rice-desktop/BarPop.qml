@@ -29,9 +29,11 @@ Item {
     // t: 0 closed .. 1 open. Like the Dynamic island: the module's pill stretches out of the bar into the card
     // (a soft overshoot), the corners round off, and the content comes in once there is room for it
     property real t: 0
-    onOpenChanged: { tAnim.stop(); tAnim.to = open ? 1 : 0; tAnim.duration = Look.lite ? 260 : 560
-        tAnim.easing.type = open ? Easing.OutBack : Easing.InBack; tAnim.start() }
-    NumberAnimation { id: tAnim; target: bp; property: "t"; easing.overshoot: 0.9 }
+    // V7.15: the Dynamic island's own motion (520 ms InOutCubic, both ways), so the Music card opens and closes like
+    // the island's cards and the bar's menus; OutBack/InBack bounced the whole card, which the island never does
+    onOpenChanged: { tAnim.stop(); tAnim.to = open ? 1 : 0; tAnim.duration = Look.lite ? 240 : 520
+        tAnim.easing.type = Easing.InOutCubic; tAnim.start() }
+    NumberAnimation { id: tAnim; target: bp; property: "t" }
     // a new card while one is open (another module): the content cross-fades
     onKindChanged: { swap.restart() }
     property real cf: 1
@@ -76,7 +78,9 @@ Item {
         // it starts on the bar, over the module, and drops into place
         readonly property real y0: bp.down ? -8 - bp.barH / 2 - bp.pillH / 2 : bp.height + 8 + bp.barH / 2 - bp.pillH / 2
         y: bp.down ? y0 * (1 - bp.k) : y0 + (bp.height - height - y0) * bp.k
-        opacity: Math.min(1, bp.t * 3)
+        // it lands on the module's pill inside the bar and fades there over the last frames (it used to fade over the
+        // whole last third, so the close went out while the card was still wide)
+        opacity: Math.min(1, bp.t * 6)
         clip: true
         Shadow { anchors.fill: bg; radius: Look.sq ? 0 : (bg.radius); on: Look.shadows && Look.shadowPanels; size: Look.shadowSize * 0.8; strength: Look.shadowStrength * bp.k1 }
         Rectangle { id: bg; anchors.fill: parent; radius: Look.sq ? 0 : (Math.min(height / 2, 24 + (1 - bp.k1) * 30)); color: bp.pal ? bp.pal.surface : "#141414"; border.width: 1; border.color: bp.pal ? bp.pal.line : Qt.rgba(1, 1, 1, 0.06) }

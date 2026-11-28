@@ -45,13 +45,9 @@ Item {
         scale: 0.55 + 0.45 * mp.st(0)
         rotation: -24 * (1 - mp.st(0))
         // V6.88: the one cover that is a rounded square cropped to fill (the shape ate the edges of the picture).
-        // Every other player keeps the shape you picked
-        Rectangle {
-            anchors.fill: parent; radius: Look.sq ? 0 : 20; clip: true; color: mp.chip
-            Image { id: artI; anchors.fill: parent; source: Player.art || ""; fillMode: Image.PreserveAspectCrop; asynchronous: true }
-            MIcon { anchors.centerIn: parent; size: 30; name: "music_note"; glyph: String.fromCodePoint(0xF075A); color: mp.dim
-                visible: artI.status !== Image.Ready }
-        }
+        // V7.15: the same cover as the desktop "Music card" widget (ShapeImage kind "square"), not a Rectangle:
+        // one Look, and the fallback note comes with it
+        ShapeImage { anchors.fill: parent; kind: "square"; source: Player.art; empty: mp.chip; fallbackColor: mp.dim }
     }
     Column {
         x: cov.x + cov.width + 16; y: 10

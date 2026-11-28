@@ -40,34 +40,6 @@ Item {
             onChosen: v => page.setKey(kp.key, v)
         }
     }
-    component Key: Rectangle {
-        property string keys: ""
-        property string what: ""
-        width: parent ? parent.width : 400
-        height: 52
-        color: kh.hovered ? M3.surfaceHigh : "transparent"
-        HoverHandler { id: kh }
-        T { x: 18; anchors.verticalCenter: parent.verticalCenter; width: parent.width - kc.width - 52; text: parent.what; font.pixelSize: 14; elide: Text.ElideRight }
-        Row {
-            id: kc
-            anchors.right: parent.right; anchors.rightMargin: 14; anchors.verticalCenter: parent.verticalCenter
-            spacing: 5
-            Repeater {
-                model: parent.parent.keys.split(" + ").reduce((a, k, i) => i ? a.concat(["+", k]) : [k], [])
-                Rectangle {
-                    readonly property bool plus: modelData === "+"
-                    width: plus ? pl.implicitWidth : Math.max(30, pl.implicitWidth + 18); height: 30
-                    radius: M3.sq ? 0 : (9 * M3.shapeK)
-                    color: plus ? "transparent" : M3.surfaceHighest
-                    border.width: plus ? 0 : 1; border.color: M3.outlineVariant
-                    anchors.verticalCenter: parent.verticalCenter
-                    T { id: pl; anchors.centerIn: parent; text: modelData; font.pixelSize: 12; font.weight: parent.plus ? Font.Normal : Font.DemiBold
-                        color: parent.plus ? M3.inkDim : M3.ink }
-                }
-            }
-        }
-    }
-
     PageScroll {
         anchors.fill: parent
 
@@ -126,84 +98,10 @@ Item {
             }
         }
 
-        // SUPER + ALT + mouse: Hyprland 0.56+ follows the pointer itself (no permission); on 0.55 / for the push at the
-        // edge rice-canvasd reads the mouse and the keyboard directly, which needs the input group
-        Rectangle {
-            id: cv
-            readonly property var dv: page.st.devices || null
-            readonly property bool poll: page.st.poll === true
-            readonly property bool denied: !cv.poll && !!dv && dv.denied > 0 && (dv.keyboards === 0 || dv.mice === 0)
-            readonly property bool ready: cv.poll || (page.st.daemon === true && !!dv && dv.keyboards > 0 && dv.mice > 0)
-            // the push at the edge still reads the mouse itself
-            readonly property bool edge: !cv.poll || page.st.input === true || page.st.group === true
-            visible: page.niri || page.st.hypr !== false
-            width: parent.width; height: Math.max(72, ic.implicitHeight + 28); radius: M3.sq ? 0 : (M3.rL)
-            color: ready ? M3.surfaceC : M3.alpha(M3.primary, 0.10)
-            border.width: ready ? 0 : 1; border.color: M3.alpha(M3.primary, 0.35)
-            Rectangle { x: 18; anchors.verticalCenter: parent.verticalCenter; width: 36; height: 36; radius: M3.sq ? 0 : (18)
-                color: cv.ready ? M3.secondaryContainer : M3.primaryContainer
-                Icon { anchors.centerIn: parent; name: cv.ready ? "mouse" : "info"; glyph: cv.ready ? "\uf8cc" : "\uf05a"; size: 18
-                    color: cv.ready ? M3.inkSecondaryC : M3.inkPrimaryC } }
-            Column {
-                id: ic
-                x: 66; anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 66 - (allowBtn.visible ? allowBtn.width + 32 : 20)
-                spacing: 3
-                T { font.pixelSize: 14; font.weight: Font.DemiBold; width: parent.width; elide: Text.ElideRight
-                    text: cv.ready ? page.nice(page.kv("mod_hold", "SUPER + ALT")) + " + " + I18n.t("mouse is ready")
-                        : (cv.denied ? (page.st.group ? I18n.t("Log out and back in once") : I18n.t("One step for SUPER + ALT + mouse"))
-                        : (page.st.daemon ? I18n.t("No keyboard or mouse found yet") : I18n.t("SUPER + ALT + mouse is not running"))) }
-                T { width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkDim
-                    text: cv.poll ? I18n.t("Hyprland follows the pointer itself: no input group and no extra program. At the edge of the screen the pointer is put back a little, so the canvas goes on.")
-                        : cv.ready ? (cv.dv.keyboards + " " + I18n.t("keyboard(s)") + " · " + cv.dv.mice + " " + I18n.t("mouse / mice"))
-                        : (cv.denied ? (page.st.group ? I18n.t("You are in the input group now; it counts after the next login.")
-                              : (page.st.nixos ? I18n.t("NixOS: add \"input\" to your user's extraGroups in configuration.nix, run sudo nixos-rebuild switch, then log in again. Allow shows the line.")
-                                  : I18n.t("Your user joins the input group (your password, once), then log in again. Programs you run can then read the keyboard and the mouse too.")))
-                        : (page.st.daemon ? I18n.t("Plug in a mouse, or check with: rice-infinite check") : I18n.t("It starts with Hyprland. Start it now:"))) }
-            }
-            Btn {
-                id: allowBtn
-                visible: !cv.ready && (cv.denied ? !page.st.group : !page.st.daemon)
-                anchors.right: parent.right; anchors.rightMargin: 16; anchors.verticalCenter: parent.verticalCenter
-                text: cv.denied ? I18n.t("Allow") : I18n.t("Start"); variant: "filled"
-                onClicked: {
-                    if (cv.denied) Quickshell.execDetached(["bash", "-c", "\"$HOME/.local/bin/rice-term\" -e bash -c '\"$HOME/.local/bin/rice-infinite\" allow; echo; read -n1 -r -p \"Press any key to close \"'"])
-                    else page.sh(["daemon"])
-                }
-            }
-        }
-
         T {
             visible: !page.niri && page.st.loaded === false
             width: parent.width; wrapMode: Text.WordWrap; color: M3.error
             text: I18n.t("Run the update once more (rice-update) so Hyprland loads it.")
-        }
-
-        // ---------- the keys: yours to change ----------
-        SectionTitle { text: I18n.t("Keys"); sub: I18n.t("Pick the keys you like. The ones with arrows and the wheel work while it is on, on the workspace where you turned it on.") }
-        KeyPick { label: I18n.t("On / off"); desc: page.nice(page.kv("key_toggle", "")); key: "key_toggle"
-            choices: page.niri ? ["SUPER + ALT + F", "SUPER + ALT + I", "SUPER + CTRL + I"] : ["SUPER + F", "SUPER + ALT + F", "SUPER + I"] }
-        KeyPick { label: I18n.t("Hold and move the mouse"); desc: I18n.t("The whole canvas moves with the mouse; with the arrows: one step"); key: "mod_hold"
-            choices: ["SUPER + ALT", "SUPER + SHIFT", "CTRL + ALT"] }
-        KeyPick { label: I18n.t("Next window") + " (+ " + I18n.t("Arrows") + ")"; desc: I18n.t("Go to the next window that way (the canvas glides to it)"); key: "mod_go"
-            choices: page.niri ? ["SUPER + ALT + SHIFT", "CTRL + ALT", "SUPER + CTRL"] : ["SUPER + CTRL", "SUPER + ALT + SHIFT", "CTRL + ALT"] }
-        KeyPick { visible: !page.niri; label: I18n.t("Zoom") + " (+ " + I18n.t("Mouse wheel") + ")"; desc: I18n.t("Zoom out (down) and in (up) around the pointer"); key: "mod_zoom"
-            choices: ["CTRL", "SUPER + CTRL", "ALT"] }
-        Rectangle {
-            width: parent.width; height: keys.implicitHeight; radius: M3.sq ? 0 : (M3.rL); color: M3.surfaceC; clip: true
-            Column {
-                id: keys
-                width: parent.width
-                Key { keys: page.nice(page.kv("key_toggle", "SUPER + F")); what: I18n.t("Infinite Desktop on / off") }
-                Key { keys: page.nice(page.kv("mod_hold", "SUPER + ALT")); what: I18n.t("Hold and move the mouse: the whole canvas moves with it") }
-                Key { keys: page.nice(page.kv("mod_hold", "SUPER + ALT")) + " + Arrows"; what: I18n.t("Move the canvas") }
-                Key { keys: page.nice(page.kv("mod_go", "SUPER + CTRL")) + " + Arrows"; what: I18n.t("Go to the next window that way (the canvas glides to it)") }
-                Key { visible: !page.niri; keys: page.nice(page.kv("mod_zoom", "CTRL")) + " + Mouse wheel"; what: I18n.t("Zoom out (down) and in (up) around the pointer") }
-                Key { visible: !page.niri; keys: "Super + Mouse wheel"; what: I18n.t("Move the canvas up and down") }
-                Key { visible: !page.niri; keys: "Super + Shift + Mouse wheel"; what: I18n.t("Move the canvas left and right") }
-                Key { visible: !page.niri && page.st.push === 1 && cv.edge; keys: "Super + Left mouse"; what: I18n.t("Drag a window to the edge of the screen and keep going: the others come to it") }
-                Key { visible: !page.niri; keys: page.nice(page.kv("mod_hold", "SUPER + ALT")) + " + 0"; what: I18n.t("Back to 100 %") }
-            }
         }
 
         // ---------- how it feels ----------
@@ -233,7 +131,7 @@ Item {
             reserved: 420
             Seg {
                 anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
-                options: [{ value: "1", label: I18n.t("This workspace") }, { value: "0", label: I18n.t("Every screen") }]
+                options: [{ value: "0", label: I18n.t("Every screen") }, { value: "1", label: I18n.t("This workspace") }]
                 current: page.st.screens === 1 ? "1" : "0"
                 onChosen: v => { page.sh(["set", "screens", v]); const n = Object.assign({}, page.st); n.screens = Number(v); page.st = n }
             }
@@ -259,13 +157,6 @@ Item {
             desc: I18n.t("Holding the keys and moving the mouse slides the bar and the dock away; they come back when you let go")
             checked: page.st.hidebar !== 0
             onToggled: function(v) { page.sh(["set", "hidebar", v ? "1" : "0"]); const n = Object.assign({}, page.st); n.hidebar = v ? 1 : 0; page.st = n }
-        }
-        ToggleRow {
-            visible: !page.niri && cv.edge
-            label: I18n.t("SUPER + drag a window to the edge pushes the others")
-            desc: I18n.t("Take a window to the edge of the screen and keep going: the other windows come towards it")
-            checked: page.st.push === 1
-            onToggled: function(v) { page.sh(["set", "push", v ? "1" : "0"]); const n = Object.assign({}, page.st); n.push = v ? 1 : 0; page.st = n }
         }
         SettingRow {
             visible: !page.niri
@@ -307,6 +198,18 @@ Item {
             T { id: note; x: 16; anchors.verticalCenter: parent.verticalCenter; width: parent.width - 32; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkDim
                 text: I18n.t("A new window gets its own room next to the one you were in, and the canvas glides to it, so there is always space. Zooming really makes the windows smaller (apps may keep a smallest size). Turning it off tiles the windows again, and the canvas is remembered: turn it on again (also after a restart) and every window is where you left it.") }
         }
+        // ---------- the keys: yours to change ----------
+        SectionTitle { text: I18n.t("Keys"); sub: I18n.t("Pick the keys you like. The ones with arrows and the wheel work while it is on, on the workspace where you turned it on.") }
+        KeyPick { label: I18n.t("On / off"); desc: page.nice(page.kv("key_toggle", "")); key: "key_toggle"
+            choices: page.niri ? ["SUPER + ALT + F", "SUPER + ALT + I", "SUPER + CTRL + I"] : ["SUPER + F", "SUPER + ALT + F", "SUPER + I"] }
+        KeyPick { label: I18n.t("Hold and move the mouse"); desc: I18n.t("The whole canvas moves with the mouse; with the arrows: one step"); key: "mod_hold"
+            choices: ["SUPER + ALT", "SUPER + SHIFT", "CTRL + ALT"] }
+        KeyPick { label: I18n.t("Next window") + " (+ " + I18n.t("Arrows") + ")"; desc: I18n.t("Go to the next window that way (the canvas glides to it)"); key: "mod_go"
+            choices: page.niri ? ["SUPER + ALT + SHIFT", "CTRL + ALT", "SUPER + CTRL"] : ["SUPER + CTRL", "SUPER + ALT + SHIFT", "CTRL + ALT"] }
+        KeyPick { visible: !page.niri; label: I18n.t("Zoom") + " (+ " + I18n.t("Mouse wheel") + ")"; desc: I18n.t("Zoom out (down) and in (up) around the pointer"); key: "mod_zoom"
+            choices: ["CTRL", "SUPER + CTRL", "ALT"] }
+        T { kind: "reading"; visible: !page.niri; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim
+            text: I18n.t("SUPER + Mouse wheel moves the canvas up and down, SUPER + SHIFT + Mouse wheel left and right, and + 0 goes back to 100 %.") }
         T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim; topPadding: 6
             text: I18n.t("Based on hyprland-infinite-desktop-v2 by Sarods2D (github.com/sarodscommits).") }
     }

@@ -29,10 +29,9 @@ Singleton {
     property bool live: false            // the last change came from a hold (short smoothing), not from a glide
     readonly property bool here: Wm.hypr && on && (screens === 0 || Wm.focusedId === ws)
     readonly property bool moving: here && held && moved
-    // the bar and the dock go while you move it, and come back a moment after you let go
-    property bool hideUi: false
-    onMovingChanged: if (moving) { backT.stop(); hideUi = hideBarOn } else backT.restart()
-    Timer { id: backT; interval: 260; onTriggered: cv.hideUi = false }
+    // the bar and the dock go while you move it, and come back when you let go.
+    // (V7.22: a plain binding, not an event with a 260 ms timer: a missed transition left the bar hidden)
+    readonly property bool hideUi: moving && hideBarOn
 
     function msg(line) {
         const p = String(line).trim().split(/\s+/)

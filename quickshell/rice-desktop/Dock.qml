@@ -18,7 +18,35 @@ Scope {
     property bool hovering: false
     readonly property bool on: dc.enabled === true
     readonly property bool autoHide: dc.hover !== false
-    readonly property bool reveal: on && !Infinite.hideUi && (!autoHide || pinned || hovering || apps.open || edit.open || editing)
+    // V7.21 Settings > Dock > Hide when an app covers it: with Infinite Desktop on, the dock stays out on the empty
+    // desktop and steps away once a window reaches its edge (the bar and dock get out of the way while you move the
+    // canvas anyway). With Infinite off the old hover-to-reveal is the only rule.
+    property bool hideOver: dc.hideOver !== false
+    readonly property bool coverable: on && hideOver && Infinite.on && Infinite.here && Wm.hypr
+    readonly property bool hideable: autoHide || coverable
+    property var winRects: []
+    readonly property bool covered: {
+        if (!coverable || winRects.length === 0) return false
+        const sc = Mon.screen
+        if (!sc) return false
+        const sx = sc.x || 0, sy = sc.y || 0, sw = sc.width, sh = sc.height
+        const th = thick + 14
+        let rx, ry, rw, rh
+        if (edge === "left") { rx = sx; ry = sy; rw = th; rh = sh }
+        else if (edge === "right") { rx = sx + sw - th; ry = sy; rw = th; rh = sh }
+        else { rx = sx; ry = sy + sh - th; rw = sw; rh = th }
+        for (let i = 0; i < winRects.length; i++) {
+            const w = winRects[i]
+            if (w.x < rx + rw && w.x + w.w > rx && w.y < ry + rh && w.y + w.h > ry) return true
+        }
+        return false
+    }
+    readonly property bool reveal: {
+        if (!on || Infinite.hideUi) return false
+        const open = pinned || hovering || apps.open || edit.open || editing
+        if (coverable) return !covered || open
+        return !autoHide || open
+    }
     // Settings > Dock > Keep room for it: while the dock stays out (no hover-to-reveal, or held open with its pin),
     // windows keep away from it, like they do from the bar (an open browser ends above it, not under it)
     readonly property bool reserve: on && dc.reserve !== false && (!autoHide || pinned)
@@ -65,6 +93,25 @@ Scope {
     // it only hides when the pointer is really off the dock (a stray "exited" while the dock grows or while an icon
     // is clicked made it hide and come back over and over)
     Timer { id: hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse && !dock.overPanelItems && !apps.overPanel) dock.hovering = false }
+    // the windows on this workspace, for "Hide when an app covers it" (Hyprland: hyprctl clients gives their place)
+    Process {
+        id: winP
+        command: ["hyprctl", "clients", "-j"]
+        stdout: StdioCollector { onStreamFinished: {
+            let l = []
+            try { l = JSON.parse(text) } catch (e) { l = [] }
+            const cur = Wm.focusedId, out = []
+            for (let i = 0; i < l.length; i++) {
+                const c = l[i]
+                if (!c || c.mapped === false || c.hidden === true) continue
+                if (c.workspace && c.workspace.id !== undefined && c.workspace.id !== cur) continue
+                const a = c.at || [0, 0], z = c.size || [0, 0]
+                out.push({ x: a[0], y: a[1], w: z[0], h: z[1] })
+            }
+            dock.winRects = out
+        } }
+    }
+    Timer { interval: 450; repeat: true; running: dock.coverable; onTriggered: if (!winP.running) winP.running = true }
     // V5.01: the pointer on the dock's own card, its apps and modules included. A module or an icon with its own
     // hover took the hover from dockMouse (it lies under the card): the dock hid under the pointer and came back,
     // over and over, when you went from an empty spot of the dock onto an icon
@@ -109,7 +156,7 @@ Scope {
     // V4.92: the modules (Edit mode > Dock > Modules): "music" is the song that plays, the others are DockMod.qml
     readonly property var mods: Array.isArray(dc.mods) ? dc.mods : ["music"]
     readonly property var otherMods: mods.filter(function(m) { return m !== "music" && m !== "apps" && m !== "pin" && m !== "launcher" })
-    readonly property bool showMedia: mods.indexOf("music") >= 0 && dc.media !== false && player !== null
+    readonly property bool showMedia: mods.indexOf("music") >= 0 && dc.media === true && player !== null
     // V4.94: the whole row in order; "apps" is where your apps are. Before V4.94 the list had only the modules
     // (after the apps), with the pin before and the all-apps button after them
     readonly property var layout: {
@@ -227,7 +274,7 @@ Scope {
     PanelWindow {
         screen: Mon.screen
         id: strip
-        visible: dock.on && dock.autoHide && !dock.reveal && dock.t < 0.05
+        visible: dock.on && dock.hideable && !dock.reveal && dock.t < 0.05
         color: "transparent"
         anchors { bottom: dock.edge === "bottom"; left: dock.edge === "left"; right: dock.edge === "right" }
         implicitWidth: dock.vert ? 3 : Math.max(200, panel.width)
@@ -410,7 +457,7 @@ Scope {
                         source: dock.player && dock.player.trackArtUrl ? dock.player.trackArtUrl : ""
                     }
                     Column {
-                        visible: dock.dc.nowText !== false && !dock.vert
+                        visible: dock.dc.nowText === true && !dock.vert
                         width: 130
                         T { width: parent.width; elide: Text.ElideRight; font.pixelSize: 12; font.bold: true; text: dock.player ? (dock.player.trackTitle || "") : "" }
                         T { width: parent.width; elide: Text.ElideRight; font.pixelSize: 10; color: pal.dim; text: dock.player ? (dock.player.trackArtist || "") : "" }

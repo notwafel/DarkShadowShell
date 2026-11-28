@@ -15,7 +15,8 @@ bad() { printf 'not ok %d - %s\n' "$n" "$1"; exit 1; }
 # stay: Settings > Dock, since V4.95)
 grep -q 'readonly property bool reserve: on && dc.reserve !== false && (!autoHide || pinned)' "$dock" \
   && ok "a dock that hides on hover reserves no room" || bad "the dock still reserves room while it hides"
-grep -q 'reveal: on && !Infinite.hideUi && (!autoHide || pinned ||' "$dock" \
+grep -q 'const open = pinned || hovering || apps.open || edit.open || editing' "$dock" \
+  && grep -q 'return !autoHide || open' "$dock" \
   && ok "the pin holds the dock out" || bad "the pin no longer holds the dock out"
 grep -q 'hideTimer; interval: 700; onTriggered: if (!dockMouse.containsMouse && !dock.overPanelItems && !apps.overPanel)' "$dock" \
   && ok "the dock stays while the pointer is on its app menu" || bad "the app menu does not keep the dock out"
@@ -39,3 +40,11 @@ out="$(printf '%s' "$out" | python3 -c 'import json, sys; print(" ".join(json.lo
 grep -q 'dc.pinButton === true' "$dock" && ok "the pin button is off until it is turned on" || bad "the pin button still shows by default"
 grep -q '"pinButton": false' "$root/settings/rice/desktop.json" && ok "the shipped settings keep the pin button off" || bad "the shipped settings show the pin button"
 grep -q '"pinButton": False' "$root/bin/desktop-set" && ok "a config made by desktop-set keeps the pin button off" || bad "desktop-set turns the pin button on"
+
+# V7.21: an old config (media and now text on) is turned off once, and written back so the dock sees it
+mkdir -p "$t/home/.config/rice"
+printf '%s' '{"rev":1,"dock":{"enabled":true,"media":true,"nowText":true}}' >"$t/home/.config/rice/desktop.json"
+out="$(HOME="$t/home" XDG_DATA_DIRS="$t/a:$t/b" XDG_DATA_HOME="$t/none" "$root/bin/desktop-set" state 2>&1)"
+on="$(printf '%s' "$out" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["dock"]["media"], d["dock"]["nowText"], d["rev"])')"
+[ "$on" = "False False 2" ] && ok "an old dock config starts with media and now text off" || bad "the old dock config was not migrated: $on"
+grep -q '"media": false' "$t/home/.config/rice/desktop.json" && ok "the migration is written back for the dock" || bad "the migrated config was not saved"

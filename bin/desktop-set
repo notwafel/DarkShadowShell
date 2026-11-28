@@ -57,8 +57,8 @@ DEFAULTS = {
     "widgets": {w: {"enabled": False} for w in WIDGETS},
     "clock": {"enabled": True, "onlyLocked": False, "placement": "draggable", "style": "expressive", "font": "outfit"},   # the only widget at first: in the middle
     "dock": {"enabled": False, "position": "bottom", "background": True, "hover": True, "pinnedStartup": False,
-             "media": True, "nowText": True, "pinButton": False, "appsButton": True, "tint": False, "shade": True, "appMenu": True,
-             "opacity": 0.78, "blur": True, "reserve": True,
+             "media": False, "nowText": False, "pinButton": False, "appsButton": True, "tint": False, "shade": True, "appMenu": True,
+             "opacity": 0.78, "blur": True, "reserve": True, "hideOver": True,
              # V4.87: the dock's look (its editor: right click on the dock > Edit dock)
              "style": "floating", "iconSize": 34, "gap": 6, "iconShape": "",
              # V4.92: its modules and the magnifying under the pointer (0 = off .. 100 % bigger)
@@ -77,6 +77,7 @@ DEFAULTS = {
     "autoHide": True,        # widgets hide while windows are open (Settings > Desktop); on from the start
     "editing": False,
     "editTab": "",
+    "rev": 2,
 }
 # the clock's styles: the V4.93 ones (Settings > Desktop > Widgets, Edit mode) and the older names they replaced
 # (issue #35: only the old names were let through here, so Expressive, Shape and Analog were refused and Settings
@@ -110,12 +111,23 @@ def merge(base, over):
     return out
 
 
+MIGRATED = False
+
+
 def load():
+    global MIGRATED
     try:
         raw = json.load(open(CFG))
     except Exception:
         raw = {}
     c = merge(DEFAULTS, raw)
+    # V7.21: the dock's media and now-playing text now start off (they were on and got in the way of a clean dock).
+    # A config from before this version has them turned off once; a deliberate on afterwards sticks.
+    if isinstance(raw, dict) and int(raw.get("rev", 1) or 1) < 2:
+        c["dock"]["media"] = False
+        c["dock"]["nowText"] = False
+        c["rev"] = 2
+        MIGRATED = True
     # keep saved positions, sizes and looks
     for w in WIDGETS + ["clock"]:
         if w == "clock":
@@ -288,7 +300,8 @@ def main(a):
     fcntl.flock(lk, fcntl.LOCK_EX)
     c = load()
     if cmd == "state":
-        if not os.path.exists(CFG):
+        # a migrated config (V7.21: the dock's media and now text) is written back, so the dock sees it at once
+        if not os.path.exists(CFG) or MIGRATED:
             save(c)
         print(json.dumps(c))
         return

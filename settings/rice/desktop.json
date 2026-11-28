@@ -58,12 +58,14 @@
     "background": true,
     "hover": true,
     "pinnedStartup": false,
-    "media": true,
+    "media": false,
     "pinButton": false,
     "appsButton": true,
     "tint": false,
     "opacity": 0.78,
-    "blur": true
+    "blur": true,
+    "nowText": false,
+    "hideOver": true
   },
   "lock": {
     "toolbars": false,
@@ -72,5 +74,6 @@
   },
   "widgetBlur": true,
   "autoHide": true,
-  "editing": false
+  "editing": false,
+  "rev": 2
 }

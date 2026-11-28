@@ -67,44 +67,61 @@ Item {
 
             SectionTitle { text: I18n.t("Dock") }
 
-            // live preview of the dock
+            // live preview of the dock: its edge, style, background and icon size, not a fixed picture
             Rectangle {
                 width: parent.width
-                height: 150
+                height: 190
                 radius: M3.sq ? 0 : (M3.rL)
                 clip: true
-                border.width: 0
-                border.color: M3.outlineVariant
                 gradient: Gradient {
                     GradientStop { position: 0; color: M3.stageTop }
                     GradientStop { position: 1; color: M3.stageBottom }
                 }
-                Rectangle { x: 40; y: 26; width: 180; height: 60; radius: M3.sq ? 0 : (10); color: Qt.rgba(1, 1, 1, 0.07) }
-                Rectangle { x: parent.width - 260; y: 18; width: 200; height: 76; radius: M3.sq ? 0 : (10); color: Qt.rgba(1, 1, 1, 0.05) }
-                Rectangle {
+                Rectangle { x: 34; y: 26; width: parent.width * 0.4; height: 82; radius: M3.sq ? 0 : 10; color: Qt.rgba(1, 1, 1, 0.07) }
+                Rectangle { x: parent.width - 34 - parent.width * 0.34; y: 18; width: parent.width * 0.34; height: 96; radius: M3.sq ? 0 : 10; color: Qt.rgba(1, 1, 1, 0.05) }
+
+                Item {
                     id: mockDock
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 14
-                    width: icons.width + 20
-                    height: 52
-                    radius: M3.sq ? 0 : (20)
-                    visible: page.dv("enabled", false) === true
-                    color: page.dv("background", true) === false ? "transparent"
-                         : Qt.rgba(0.1, 0.1, 0.11, Number(page.dv("opacity", 0.78)))
-                    border.width: page.dv("background", true) === false ? 0 : 1
-                    border.color: Qt.rgba(1, 1, 1, 0.07)
-                    Behavior on color { ColorAnimation { duration: 160 } }
-                    Row {
-                        id: icons
+                    readonly property bool enabled: page.dv("enabled", false) === true
+                    readonly property string pos: { const p = page.dv("position", "bottom"); return p === "left" || p === "right" ? p : "bottom" }
+                    readonly property bool vert: pos === "left" || pos === "right"
+                    readonly property bool pills: page.dv("style", "floating") === "pills"
+                    readonly property bool full: page.dv("style", "floating") === "full"
+                    readonly property real isz: Math.max(20, Math.min(38, Number(page.dv("iconSize", 34)) * 0.82))
+                    readonly property int n: Math.max(3, Math.min(6, page.pins.length > 0 ? page.pins.length : 6))
+                    readonly property real gap: 6
+                    readonly property real pad: 9
+                    readonly property real len: n * isz + (n - 1) * gap + pad * 2
+                    readonly property real thick2: isz + pad * 2
+                    visible: enabled
+                    width: vert ? thick2 : (full ? parent.width : len)
+                    height: vert ? (full ? parent.height : len) : thick2
+                    x: pos === "right" ? parent.width - width : (pos === "left" ? 0 : (parent.width - width) / 2)
+                    y: pos === "bottom" ? parent.height - height : (pos === "top" ? 0 : (parent.height - height) / 2)
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: M3.sq ? 0 : (full ? 0 : (pills ? 10 : thick2 / 2))
+                        color: page.dv("background", true) === false ? "transparent" : Qt.rgba(0.1, 0.1, 0.11, Number(page.dv("opacity", 0.78)))
+                        border.width: page.dv("background", true) === false ? 0 : 1
+                        border.color: Qt.rgba(1, 1, 1, 0.07)
+                    }
+                    Grid {
                         anchors.centerIn: parent
-                        spacing: 8
+                        columns: mockDock.vert ? 1 : mockDock.n
+                        spacing: mockDock.gap
                         Repeater {
-                            model: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd", "#56b6c2"]
+                            model: mockDock.n
                             delegate: Rectangle {
-                                width: 34; height: 34; radius: M3.sq ? 0 : (10)
-                                color: page.dv("tint", false) === true ? M3.inkDim : (page.dv("shade", true) !== false ? Qt.tint(modelData, Qt.rgba(M3.primary.r, M3.primary.g, M3.primary.b, 0.62)) : modelData)
-                                opacity: 0.9
+                                width: mockDock.isz; height: mockDock.isz
+                                radius: M3.sq ? 0 : (mockDock.pills ? 9 : 7)
+                                color: mockDock.pills ? Qt.rgba(1, 1, 1, 0.10) : "transparent"
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: mockDock.isz - (mockDock.pills ? 8 : 0); height: width
+                                    radius: M3.sq ? 0 : (mockDock.pills ? 6 : 7)
+                                    color: ["#e06c75", "#61afef", "#e5c07b", "#98c379", "#c678dd", "#56b6c2"][index % 6]
+                                    opacity: 0.92
+                                }
                             }
                         }
                     }
@@ -118,8 +135,11 @@ Item {
                 }
                 T {
                     anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 10
-                    visible: page.dv("enabled", false) === true && page.dv("blur", true) === true && page.dv("background", true) !== false
-                    text: I18n.t("blur on")
+                    visible: page.dv("enabled", false) === true
+                    text: (function() {
+                        const pn = page.dv("position", "bottom"), st = page.dv("style", "floating")
+                        return pn.charAt(0).toUpperCase() + pn.slice(1) + "  ·  " + st.charAt(0).toUpperCase() + st.slice(1)
+                    })()
                     color: M3.inkDim
                     font.pixelSize: 10
                 }
@@ -171,6 +191,12 @@ Item {
                 onToggled: function(v) { page.ctl.dset("dock", "hover", v ? "on" : "off") }
             }
             ToggleRow {
+                label: I18n.t("Hide when an app covers it")
+                desc: I18n.t("With Infinite Desktop on, the dock stays out on the empty desktop and steps away once a window reaches its edge")
+                dflt: true; checked: page.dv("hideOver", true) === true
+                onToggled: function(v) { page.ctl.dset("dock", "hideOver", v ? "on" : "off") }
+            }
+            ToggleRow {
                 // only a dock that stays out can keep room: one that hides on hover is over the windows when it shows
                 visible: page.dv("hover", true) !== true || page.dv("pinnedStartup", false) === true
                 label: I18n.t("Keep room for it")
@@ -190,13 +216,13 @@ Item {
             ToggleRow {
                 label: I18n.t("Media player")
                 desc: I18n.t("The song cover and a play / pause button in the dock")
-                dflt: true; checked: page.dv("media", true) === true
+                dflt: false; checked: page.dv("media", false) === true
                 onToggled: function(v) { page.ctl.dset("dock", "media", v ? "on" : "off") }
             }
             ToggleRow {
                 label: I18n.t("Now playing text")
                 desc: I18n.t("Write the song title and artist in the dock while something plays")
-                dflt: true; checked: page.dv("nowText", true) === true
+                dflt: false; checked: page.dv("nowText", false) === true
                 onToggled: function(v) { page.ctl.dset("dock", "nowText", v ? "on" : "off") }
             }
             ToggleRow {

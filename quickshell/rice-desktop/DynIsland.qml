@@ -563,39 +563,9 @@ Item {
     }
 
     // ---------- the card: the player or a notification, just beside the bar ----------
-    // V7.03 the drop: while the card leaves the island, a neck keeps them one shape and pinches off at the end.
-    // It is behind the island (bg) and behind the card, so only the part in the gap shows; the top is the pill's
-    // own bottom edge, the bottom disappears under the card. No neck at rest (tw reaches 0 before the card lands).
-    Canvas {
-        id: neck
-        x: card.x
-        y: isl.down ? isl.bh : card.y + card.height
-        width: Math.max(1, card.width)
-        height: Math.max(0, card.gapA)
-        visible: isl.big && card.opacity > 0.05 && neck.tw > 1 && height > 0.5
-        opacity: Math.min(1, neck.tw / 30) * card.opacity
-        readonly property real tw: Math.max(0, Math.min(card.width * 0.45, isl.width * 0.8) * (1 - card.tc))
-        readonly property real cx: Math.max(40, Math.min(width - 40, isl.width / 2 - card.x))
-        onTwChanged: requestPaint()
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
-        onPaint: {
-            const c = getContext("2d"), h = height, w = width
-            c.reset()
-            if (h < 0.5 || neck.tw < 1) return
-            const cx = neck.cx, tw = neck.tw, bw = Math.min(w - 8, 340), mid = h / 2
-            c.fillStyle = isl.fill.toString()
-            c.globalAlpha = isl.fill.a
-            c.beginPath()
-            c.moveTo(cx - tw / 2, 0)
-            // the waist: the control points pull inward, so the sides are concave and the neck looks like liquid
-            c.bezierCurveTo(cx - tw * 0.3, mid, cx - bw * 0.3, mid, cx - bw / 2, h)
-            c.lineTo(cx + bw / 2, h)
-            c.bezierCurveTo(cx + bw * 0.3, mid, cx + tw * 0.3, mid, cx + tw / 2, 0)
-            c.closePath()
-            c.fill()
-        }
-    }
+    // V7.10: no separate Canvas neck. The droplet is just the card's own small starting size, so one Rectangle
+    // morphs from a droplet into the panel and there is nothing that can differ in color (and no Canvas that can
+    // crash the shell, which the V7.08 one did).
     Shadow { anchors.fill: card; radius: Look.sq ? 0 : (card.radius); on: Look.shadows && Look.shadowBar; opacity: card.opacity; size: Look.shadowSize; strength: Look.shadowStrength }
     Rectangle {
         id: card
@@ -604,35 +574,35 @@ Item {
         // (a container transform: size, place and corners morph together, with a little overshoot)
         property real t: isl.big ? 1 : 0
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
-        // V7.05: the card is already its full size and attached to the island; it hangs there for the first part
-        // of the motion, then the neck stretches and it falls away (InOutCubic: a still start, a soft landing).
-        // 500 ms: 280 ms was a blink. The old width/height growth from the pill made a tiny shape appear first and
-        // the rest widen after it, which read as a second animation instead of one drop
-        Behavior on t { NumberAnimation { duration: Look.lite ? 240 : 500
+        // V7.10: 520 ms, in and out. The droplet drops in the first part, then widens into the panel; the ease is
+        // InOutCubic so it starts still and lands soft
+        Behavior on t { NumberAnimation { duration: Look.lite ? 240 : 520
             easing.type: Easing.InOutCubic } }
         property real cwA: isl.cw
         property real chA: isl.ch
         Behavior on cwA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         Behavior on chA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         readonly property real tc: Math.max(0, t)
-        // V6.85 liquid glass. V7.07: the whole card is drawn out of the island: it starts on the pill with no
-        // height and unrolls down to its full height while the drop falls (the content is revealed by the clip, not
-        // a ready panel with a drop on it). Width is full from the first frame, so no small shape widens first
-        readonly property real gapA: 12 * tc
-        readonly property real rev: Math.max(0, Math.min(1, tc))
-        width: cwA
-        height: Math.max(2, chA * rev)
+        // V7.10: the droplet is the card itself at its small size. It comes off the pill and drops a little (first
+        // ~34% of the motion), then opens up into the full panel (the rest). One Rectangle, so the droplet and the
+        // panel are the same layer and the same color; the content is revealed by the clip as it grows.
+        readonly property real dropW: 46
+        readonly property real dropH: 46
+        readonly property real fall: Math.min(1, tc / 0.34)
+        readonly property real openE: { const p = Math.max(0, Math.min(1, (tc - 0.34) / 0.66)); return p * p * (3 - 2 * p) }
+        readonly property real shown: tc < 0.02 ? 0 : 1
+        readonly property real gapA: 16 * fall
+        width: shown * (dropW + (cwA - dropW) * openE)
+        height: shown * (dropH + (chA - dropH) * openE)
         // centred on the island, but always on the screen
         readonly property real want: isl.partMid < 0 || width <= isl.width ? (isl.width - width) / 2
             : Math.max(isl.width - width, Math.min(0, isl.partMid - isl.x - width / 2))
-        x: Math.max(-isl.x, Math.min(isl.areaW - isl.x - width, (isl.width - width) / 2 + (want - (isl.width - width) / 2) * Math.min(1, tc)))
+        x: Math.max(-isl.x, Math.min(isl.areaW - isl.x - width, (isl.width - width) / 2 + (want - (isl.width - width) / 2) * Math.min(1, openE)))
         y: isl.down ? isl.bh + gapA : -height - gapA
-        radius: Look.sq ? 0 : (Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc)))
+        radius: Look.sq ? 0 : (Math.min(height / 2, dropH / 2 + (30 - dropH / 2) * openE))
         color: isl.fill
         visible: opacity > 0.01
-        // V7.07: the clip above is what draws the card in (it unrolls), so opacity is only a quick guard against a
-        // first-frame flash; the content is revealed by the growing height, not by fading a ready panel
-        opacity: tc < 0.02 ? 0 : Math.min(1, tc * 3)
+        opacity: tc < 0.02 ? 0 : Math.min(1, tc * 6)
         clip: true
         HoverHandler { id: hovC }
         // the glass edge and one sweep of light: a plain dark rectangle reads as a panel, not as glass
@@ -658,7 +628,7 @@ Item {
                 running: isl.big
                 PauseAnimation { duration: 90 }
                 NumberAnimation { target: sheen; property: "x"; from: -sheen.width; to: card.width + sheen.width
-                    duration: 500; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
+                    duration: 520; easing.type: Easing.BezierSpline; easing.bezierCurve: Look.emph }
             }
         }
 
@@ -1081,7 +1051,7 @@ Item {
         y: isl.down ? 0 : Math.round(parent.height - height)
         // it comes in once the shape has (nearly) grown to it, so it is never seen cut. V7.07: in the card the clip
         // reveals it as the card unrolls (height grows), so it is opaque and gets drawn out from the top, not faded
-        opacity: inCard ? (act ? 1 : 0)
+        opacity: inCard ? (act ? card.openE : 0)
             : (act && parent.width >= width * 0.82 && parent.height >= height * 0.82 ? 1 : 0)
         scale: act ? 1 : 0.94
         visible: opacity > 0.01

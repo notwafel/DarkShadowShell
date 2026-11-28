@@ -1,5 +1,9 @@
 # Changelog
 
+## V7.10: the droplet drops, then widens into the panel (plain rectangle, no Canvas)
+- **The motion you asked for:** a small droplet (46 px) comes off the pill and drops ~16 px, then it **opens up into the full panel at the end** (width and height grow together, corners from a circle to the panel). The content fades in as it opens
+- **One rectangle, one color.** The droplet is the card at its small size, so droplet and panel are literally the same layer and the same color; nothing can differ (and there is no Canvas, which is what crashed the shell in V7.08)
+
 ## V7.09: roll back the V7.08 card Canvas that crashed the shell
 - **The shell is back.** The V7.08 card was drawn from one Canvas path; that is what stopped the bar, the dock and the island from loading (the shell crash-looped). This puts the V7.07 card back, which rendered fine
 - The drop animation work moves to a safer approach; nothing else changes

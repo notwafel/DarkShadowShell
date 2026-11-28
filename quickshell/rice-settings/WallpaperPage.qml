@@ -9,7 +9,7 @@ Item {
     property var ctl
     property var w: ({ dir: "", current: "", still: "", walls: [] })
     property var st: ({ dirs: [], folders: [], waypaper: true, waypaper_found: false, waypaper_hook: false,
-                        slideshow: { on: false, minutes: 30, order: "shuffle", folder: "" }, live: { sound: false, now: "" }, have: {}, scene: "" })
+                        slideshow: { on: false, minutes: 30, order: "shuffle", folder: "" }, live: { sound: false, now: "" }, have: {} })
     Process {
         id: stProc
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-walls\" state 2>/dev/null"]
@@ -245,7 +245,7 @@ Item {
         ToggleRow {
             label: I18n.t("A different wallpaper at every login")
             desc: I18n.t("A random picture from your folders each time you log in, with its colors (not while the slideshow or a live wallpaper is on)")
-            checked: page.st.login_random !== false
+            checked: page.st.login_random === true
             onToggled: function(v) { const n = Object.assign({}, page.st); n.login_random = v; page.st = n
                 page.walls(["login-random", v ? "on" : "off"], v ? I18n.t("A new wallpaper at every login") : I18n.t("The wallpaper stays at login")) }
         }
@@ -292,50 +292,6 @@ Item {
             Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
                 text: I18n.t("Next"); sym: "skip_next"; icon: ""; primary: true
                 onClicked: { page.walls(["next"], I18n.t("Next wallpaper")); again.restart() } }
-        }
-
-        // ---------- V5.07: moving wallpapers drawn by the shell (no video, no mpvpaper) ----------
-        SectionTitle { text: I18n.t("Moving wallpapers"); sub: I18n.t("Drawn by the shell itself, no video needed: they stand still in Gaming mode and Light mode. Pick another wallpaper to stop one.") }
-        Flow {
-            width: parent.width
-            spacing: 12
-            Repeater {
-                model: [{ k: "aurora", n: "Aurora", i: "aurora.jpg" }, { k: "starfall", n: "Starfall", i: "" }, { k: "orbit", n: "Orbit", i: "orbit.jpg" }, { k: "mesh", n: "Mesh", i: "mesh.jpg" }]
-                delegate: Item {
-                    id: sc
-                    required property var modelData
-                    readonly property bool on: page.st.scene === modelData.k
-                    width: (parent.width - 36) / 4; height: width * 9 / 16 + 34
-                    Rectangle {
-                        id: scFace
-                        width: parent.width; height: width * 9 / 16
-                        radius: M3.sq ? 0 : M3.rM
-                        color: M3.surfaceHigh
-                        clip: true
-                        Image {
-                            anchors.fill: parent
-                            fillMode: Image.PreserveAspectCrop
-                            sourceSize.width: 400
-                            asynchronous: true
-                            source: sc.modelData.i !== "" ? "file://" + Quickshell.env("HOME") + "/.config/quickshell/rice-scene/" + sc.modelData.i
-                                    : "file://" + Quickshell.env("HOME") + "/Pictures/Wallpapers/starfall-lake.jpg"
-                        }
-                        Rectangle {
-                            anchors.fill: parent; radius: parent.radius; color: "transparent"
-                            border.width: sc.on ? 3 : 0; border.color: M3.primary
-                        }
-                        Rectangle {
-                            visible: sc.on
-                            anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 8
-                            width: 28; height: 28; radius: 14; color: M3.primary
-                            Icon { anchors.centerIn: parent; name: "check"; glyph: ""; size: 16; color: M3.inkPrimary }
-                        }
-                    }
-                    T { anchors.top: scFace.bottom; anchors.topMargin: 8; x: 4; text: I18n.t(sc.modelData.n); font.pixelSize: 13; font.weight: sc.on ? Font.DemiBold : Font.Normal }
-                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                        onClicked: page.walls(["scene", sc.on ? "off" : sc.modelData.k], sc.on ? I18n.t("Stopped") : I18n.t("Moving wallpaper: %1", I18n.t(sc.modelData.n))) }
-                }
-            }
         }
 
         // ---------- live wallpapers ----------

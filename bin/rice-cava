@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The music for the visualizer (cava), as numbers on stdout. It listens to what your speakers or headphones play
 # (the monitor of the default output), never to the microphone, and follows you when you switch the output.
-# rice-cava small (V6.10): 12 levels, 30 a second, for the beat of the moving wallpapers (rice-scene)
+# rice-cava small (V6.10): 12 levels, 30 a second, the beat the bar's visualizer (BarViz) draws
 small=0; [ "${1:-}" = small ] && small=1
 cfg="$HOME/.cache/rice/cava-widget.conf"
 log="$HOME/.cache/rice/cava-widget.log"

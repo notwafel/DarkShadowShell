@@ -91,13 +91,6 @@ case "$1" in
     [ -x "$HOME/.local/bin/rice-screentime" ] && setsid -f "$HOME/.local/bin/rice-screentime" watch >/dev/null 2>&1
     for _ in 1 2 3 4 5 6 7 8 9 10; do running || break; sleep 0.2; done
     setsid -f "$HOME/.local/bin/rice-desktop" keep >/dev/null 2>&1
-    # V6.10: a moving wallpaper that runs starts again too, so an update reaches it (it is drawn by its own
-    # Quickshell); the still picture under it stays, so nothing flashes
-    if pgrep -f "quickshell/rice-scene" >/dev/null 2>&1; then
-      pkill -f "quickshell/rice-scene"; sleep 0.3
-      q="$(command -v qs || command -v quickshell)"
-      [ -n "$q" ] && [ -f "$HOME/.config/quickshell/rice-scene/shell.qml" ] && setsid -f "$q" -n -p "$HOME/.config/quickshell/rice-scene" >/dev/null 2>&1 </dev/null
-    fi
     ;;
   status) running && echo running || { echo stopped; exit 1; } ;;
   # V4.94: the shell runs under this: after a crash it starts again by itself (at most 4 times in 2 minutes; a stop

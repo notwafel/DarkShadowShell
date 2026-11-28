@@ -234,8 +234,6 @@ Item {
 
         // ---------- the desktop ----------
         SectionTitle { text: I18n.t("On the desktop"); sub: I18n.t("Under your windows, so it never gets in the way.") }
-        ToggleRow { label: I18n.t("Moving wallpapers dance"); desc: I18n.t("Aurora flares on the low notes, shooting stars fall on the beat, the orbit's ring pulses, the mesh breathes")
-            dflt: true; checked: page.v("beat", true) !== false; onToggled: function(x) { page.setv("beat", x ? "on" : "off") } }
         ToggleRow { label: I18n.t("Edge glow"); desc: I18n.t("A soft light along the bottom of the screen that moves with the music")
             dflt: false; checked: page.v("edge", false) === true; onToggled: function(x) { page.setv("edge", x ? "on" : "off") } }
         SegRow { label: I18n.t("Edge style"); desc: I18n.t("Glow rises and fades; Liquid is a clear shape with a bright edge")

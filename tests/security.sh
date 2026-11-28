@@ -980,5 +980,41 @@ else
   bad "copy_tree overwrote a user's QML edit"
 fi
 
+# ---- rice-walls: "a different wallpaper at every login" is off by default, migrates the old on, and only spends
+# the login's one chance when it really sets a new picture (a start before awww-daemon is up no longer eats it)
+python3 - "$root/bin/rice-walls" "$tmp/rw" <<'PYW' && ok "login wallpaper: off by default, migrated, and not spent too early" || bad "login-random is broken"
+import importlib.machinery, importlib.util, json, os, sys
+ldr = importlib.machinery.SourceFileLoader("rw", sys.argv[1])
+spec = importlib.util.spec_from_loader("rw", ldr); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+t = sys.argv[2]; os.makedirs(t, exist_ok=True)
+m.CONF = t + "/cfg.json"
+# fresh install: off
+if os.path.exists(m.CONF): os.remove(m.CONF)
+assert m.load()["login_random"] is False, "fresh config should be off"
+# an old config (no rev) that had it on: turned off once, and the rev is set
+json.dump({"login_random": True}, open(m.CONF, "w"))
+c = m.load(); assert c["login_random"] is False and c["rev"] == 2, "old on should migrate off"
+# a deliberate on afterwards sticks
+json.dump({"login_random": True, "rev": 2}, open(m.CONF, "w"))
+assert m.load()["login_random"] is True, "a saved on must stick"
+# login_random: awww not up and no commands.sh -> no mark, no set
+m.RUN = t + "/run"; os.makedirs(m.RUN, exist_ok=True)
+m.CURRENT = t + "/cur"; open(m.CURRENT, "w").write("/walls/a.jpg")
+m.APPLY = t + "/commands.sh"
+if os.path.exists(m.APPLY): os.remove(m.APPLY)
+m.all_files = lambda c: ["/walls/a.jpg", "/walls/b.jpg"]
+m.is_video = lambda f: False
+m.live_now = lambda: False
+m.shown_picture = lambda: None
+calls = []
+m.cmd_set = lambda f: calls.append(f)
+cfg = {"login_random": True, "slideshow": {"on": False}}
+assert m.login_random(cfg) is False and not os.path.exists(m.RUN + "/rice-walls-login") and not calls, "spent too early"
+# commands.sh can set it even when awww is not up: now it works, and marks the login
+open(m.APPLY, "w").write("")
+assert m.login_random(cfg) is True and calls and os.path.exists(m.RUN + "/rice-walls-login"), "should set and mark"
+assert m.login_random(cfg) is False and len(calls) == 1, "once a session"
+PYW
+
 bash -n "$root/install.sh" && ok "install.sh parses" || bad "install.sh syntax"
 echo "# $n checks passed"

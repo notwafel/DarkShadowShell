@@ -10,7 +10,7 @@ import QtQuick
 //   barStyle / barSize  the visualizer on the bar: bars | liquid | dots, small | medium | wide
 //   edge    a soft light along the bottom of the screen that moves with the music (VibeEdge.qml), glow | liquid
 //   island  the island's edge breathes with the beat
-//   beat    the moving wallpapers move with the music (rice-scene reads vibe.json itself)
+//   beat    the beat of the music, 0..1 (the bar's visualizer reads it)
 //   lock    a ring around the cover on the lock screen (the lock screen reads vibe.json itself)
 //   weather rain, snow, a storm or fog on the desktop when it is like that outside (VibeWeather.qml);
 //           weatherMode (V6.11): live (the weather outside) or always rain | snow | storm | fog | petals | fireflies

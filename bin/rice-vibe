@@ -13,7 +13,7 @@
   rice-vibe border reset [--if-set]   the wallpaper's border colors again (border-sync); --if-set: only when the
                                   cover's colors were put on them (the desktop shell checks this when it starts)
 
-The desktop shell, the moving wallpapers and the lock screen read vibe.json themselves when it changes.
+The desktop shell and the lock screen read vibe.json themselves when it changes.
 """
 import json
 import os

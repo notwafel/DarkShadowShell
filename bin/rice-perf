@@ -32,8 +32,6 @@ def name_of(pid):
         return "shell (desktop)", full
     if "quickshell/rice-settings" in full:
         return "Settings", full
-    if "quickshell/rice-scene" in full:
-        return "Moving wallpaper", full
     if "quickshell/rice-welcome" in full:
         return "Welcome", full
     if "quickshell/rice-apps" in full:
@@ -110,9 +108,6 @@ def main(a):
     def mem_of(n):
         return sum(r["mem"] for r in out if r["name"] == n)
     bin_ = home + "/.local/bin/"
-    if mem_of("Moving wallpaper"):
-        fixes.append({"id": "scene", "text": "A moving wallpaper is on. It stands still under windows, but a picture is lighter.",
-                      "label": "Use a still picture", "frees": mem_of("Moving wallpaper"), "cmd": [bin_ + "rice-walls", "scene", "off"]})
     if mem_of("mpvpaper"):
         fixes.append({"id": "live", "text": "A live wallpaper plays a video all the time.", "label": "Use a still picture",
                       "frees": mem_of("mpvpaper"),

@@ -1,5 +1,10 @@
 # Changelog
 
+## V7.11: the droplet stays joined to the island, then lets go
+- **The bridge you asked for:** the droplet leaves the pill as one liquid shape with it, widens into the panel while still joined, and only then the bridge pinches off in the last ~14% of the motion, so the panel detaches and settles on its own
+- The bridge is a single `ShapePath` (one filled path, same fill as the card), so the droplet, the bridge and the panel are one colour and one layer. `QtQuick.Shapes` is already used by the bar and the screen frame
+- 520 ms, `InOutCubic`
+
 ## V7.10: the droplet drops, then widens into the panel (plain rectangle, no Canvas)
 - **The motion you asked for:** a small droplet (46 px) comes off the pill and drops ~16 px, then it **opens up into the full panel at the end** (width and height grow together, corners from a circle to the panel). The content fades in as it opens
 - **One rectangle, one color.** The droplet is the card at its small size, so droplet and panel are literally the same layer and the same color; nothing can differ (and there is no Canvas, which is what crashed the shell in V7.08)

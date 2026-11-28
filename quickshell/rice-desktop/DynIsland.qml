@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 import QtQuick
 import QtQuick.Effects
+import QtQuick.Shapes
 
 // The island of the Dynamic bar style: it sits where the clock is and grows into whatever happens right now.
 //   idle    the time (and, while music plays, the cover in your shape and a small moving wave)
@@ -563,9 +564,44 @@ Item {
     }
 
     // ---------- the card: the player or a notification, just beside the bar ----------
-    // V7.10: no separate Canvas neck. The droplet is just the card's own small starting size, so one Rectangle
-    // morphs from a droplet into the panel and there is nothing that can differ in color (and no Canvas that can
-    // crash the shell, which the V7.08 one did).
+    // V7.11 the liquid bridge: a Shape (one filled path) keeps the panel one shape with the island while it opens,
+    // then pinches to nothing so it detaches. Being a single ShapePath it is one layer, so there is no place where
+    // a second translucent layer could darken it (that was the colour difference). One ShapePath, no Canvas.
+    Shape {
+        id: dropNeck
+        x: card.x
+        y: isl.down ? isl.bh : card.y + card.height
+        width: Math.max(1, card.width)
+        height: Math.max(0, card.gapA)
+        visible: card.tc > 0.02 && card.gapA > 0.5 && card.opacity > 0.02 && isl.fill.a > 0.02
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            fillColor: isl.fill
+            strokeColor: "transparent"
+            fillRule: ShapePath.WindingFill
+            PathSvg { path: {
+                const W = dropNeck.width, H = dropNeck.height
+                if (H < 0.5 || W < 1) return ""
+                // the pill's middle, in the shape's own coordinates (the card can sit off-centre when it is
+                // clamped to the screen, so this is not always W / 2)
+                const cx = Math.max(4, Math.min(W - 4, isl.width / 2 - card.x))
+                // the top of the bridge is 0.62 of the panel wide, but never wider than the pill's own flat bottom
+                // (otherwise it would poke out of the pill's round corners), and it pinches to nothing in the last
+                // 14% (that is the let-go: the panel is free and settles the last few pixels on its own)
+                const nt = Math.min(W * 0.62, isl.width * 0.78)
+                    * (1 - Math.max(0, Math.min(1, (card.tc - 0.86) / 0.14)))
+                if (nt < 0.5) return ""
+                // the bottom edge is the card's whole top edge, so the two shapes meet with no step
+                const py = isl.down ? 0 : H
+                const cy = isl.down ? H : 0
+                const mid = H / 2
+                return "M" + (cx - nt / 2) + " " + py +
+                  " C" + (cx - nt * 0.3) + " " + mid + " 0 " + mid + " 0 " + cy +
+                  " L" + W + " " + cy +
+                  " C" + W + " " + mid + " " + (cx + nt * 0.3) + " " + mid + " " + (cx + nt / 2) + " " + py + " Z"
+            } }
+        }
+    }
     Shadow { anchors.fill: card; radius: Look.sq ? 0 : (card.radius); on: Look.shadows && Look.shadowBar; opacity: card.opacity; size: Look.shadowSize; strength: Look.shadowStrength }
     Rectangle {
         id: card
@@ -574,8 +610,9 @@ Item {
         // (a container transform: size, place and corners morph together, with a little overshoot)
         property real t: isl.big ? 1 : 0
         onTChanged: if (t < 0.01 && !isl.big) isl.cardMode = ""
-        // V7.10: 520 ms, in and out. The droplet drops in the first part, then widens into the panel; the ease is
-        // InOutCubic so it starts still and lands soft
+        // V7.11: 520 ms, in and out. The droplet is connected to the island by the bridge above, widens into the
+        // panel while it stays connected, and the bridge pinches at the end (it lets go). InOutCubic: still start,
+        // soft landing
         Behavior on t { NumberAnimation { duration: Look.lite ? 240 : 520
             easing.type: Easing.InOutCubic } }
         property real cwA: isl.cw
@@ -583,15 +620,14 @@ Item {
         Behavior on cwA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         Behavior on chA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         readonly property real tc: Math.max(0, t)
-        // V7.10: the droplet is the card itself at its small size. It comes off the pill and drops a little (first
-        // ~34% of the motion), then opens up into the full panel (the rest). One Rectangle, so the droplet and the
-        // panel are the same layer and the same color; the content is revealed by the clip as it grows.
+        // V7.11: the droplet is the card at its small size. It is connected to the island by the bridge from the
+        // first frame, widens into the panel over the first ~72% (the island pours into the panel), then the bridge
+        // pinches (the let-go in the last 14%). Content is revealed by the clip as it grows.
         readonly property real dropW: 46
         readonly property real dropH: 46
-        readonly property real fall: Math.min(1, tc / 0.34)
-        readonly property real openE: { const p = Math.max(0, Math.min(1, (tc - 0.34) / 0.66)); return p * p * (3 - 2 * p) }
+        readonly property real openE: { const p = Math.max(0, Math.min(1, (tc - 0.08) / 0.64)); return p * p * (3 - 2 * p) }
         readonly property real shown: tc < 0.02 ? 0 : 1
-        readonly property real gapA: 16 * fall
+        readonly property real gapA: { const p = Math.max(0, Math.min(1, tc / 0.4)); return 12 * p * p * (3 - 2 * p) }
         width: shown * (dropW + (cwA - dropW) * openE)
         height: shown * (dropH + (chA - dropH) * openE)
         // centred on the island, but always on the screen
@@ -610,7 +646,7 @@ Item {
             anchors.fill: parent; radius: parent.radius
             color: "transparent"; border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.16)
-            visible: !Look.sq && card.opacity > 0.5
+            visible: !Look.sq && card.opacity > 0.5 && card.tc > 0.9   // V7.11: no hairline across the bridge
         }
         Rectangle {
             id: sheen

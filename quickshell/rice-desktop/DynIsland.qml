@@ -43,6 +43,7 @@ Item {
     // the card beside the bar: a notification, the info card (today, system) or the player
     property string flash: ""                  // volume | mic | ws (for a moment)
     property bool hoverOpen: false
+    property bool hoverToday: false            // the info card, opened by pointing at the island (nothing playing)
     property bool pinned: false                // the player, opened from the info card
     property var note: null                    // the notification it shows
     property bool infoOpen: false
@@ -51,7 +52,7 @@ Item {
     onBigChanged: if (!big) mediaLyr = false
     readonly property string mode: flash !== "" ? flash : (bar && bar.recOn ? "rec" : "idle")
     readonly property string cardWant: note ? "notif"
-        : (infoOpen ? "info" : ((pinned || hoverOpen) && Player.has && !ghost ? "media" : ""))
+        : (infoOpen || hoverToday ? "info" : ((pinned || hoverOpen) && Player.has && !ghost ? "media" : ""))
     readonly property bool big: cardWant !== ""
     function show(what, ms) { if (flash !== what) bump.restart(); flash = what; flashT.interval = ms; flashT.restart() }
     // something new in the island: it gives a small squeeze, like a drop landing
@@ -66,7 +67,7 @@ Item {
     property bool ghost: false
     // the cards you opened (not the ones that come and go by themselves): Esc, the desktop or another window close them
     readonly property bool sticky: big && (infoOpen || pinned)
-    function closeCards() { infoOpen = false; pinned = false; hoverOpen = false }
+    function closeCards() { infoOpen = false; pinned = false; hoverOpen = false; hoverToday = false }
     // Another window taking the focus closes the opened card. Opening the card takes the keyboard, so the window
     // that had it (Settings, a browser) lets it go: that is not "another window" and must not close the card again
     // (it did: with any window open the card closed as soon as it opened).
@@ -80,7 +81,10 @@ Item {
         }
     }
     function openInfo(tab, toggle) {
-        if (toggle && infoOpen && infoTab === tab) { infoOpen = false; return }
+        // a click on the card the pointer already opened keeps it (it turns into a pinned one), instead of closing it
+        const wasHover = hoverToday
+        hoverToday = false
+        if (toggle && infoOpen && infoTab === tab && !wasHover) { infoOpen = false; return }
         infoTab = tab; pinned = false; hoverOpen = false; infoOpen = true
         if (!hovering) pinT.restart()
     }
@@ -273,12 +277,16 @@ Item {
     // pointing at it: opens the player; cards close a moment after the pointer leaves (opened ones wait longer)
     readonly property bool hovering: hov.hovered || hovC.hovered
     HoverHandler { id: hov }
+    // V7.15: pointing at the island opens what it has: the player while a song plays, Today when nothing does (a
+    // click is not needed; V7.14 only opened the player, so with nothing playing the pointer did nothing at all)
     onHoveringChanged: {
-        if (hovering) { closeT.stop(); pinT.stop(); if (on("island_hover") && !big && !ghost) openT.restart() }
-        else { openT.stop(); closeT.restart(); if (pinned || infoOpen) pinT.restart() }
+        if (hovering) { closeT.stop(); pinT.stop()
+            if (!big && !ghost) { if (Player.has && on("island_hover")) openT.restart(); else if (dynamic && !Player.has) todayT.restart() } }
+        else { openT.stop(); todayT.stop(); closeT.restart(); if (pinned || infoOpen) pinT.restart() }
     }
     Timer { id: openT; interval: 280; onTriggered: isl.hoverOpen = Player.has }
-    Timer { id: closeT; interval: 450; onTriggered: isl.hoverOpen = false }
+    Timer { id: todayT; interval: 280; onTriggered: if (!isl.big) isl.hoverToday = true }
+    Timer { id: closeT; interval: 450; onTriggered: { isl.hoverOpen = false; isl.hoverToday = false } }
     Timer { id: pinT; interval: Math.max(2, isl.cfg.island_close || 4) * 1000; onTriggered: { isl.pinned = false; isl.infoOpen = false } }
     // the player closes by itself when nothing plays any more
     onPlayingChanged: if (!playing && !hovering) { pinT.restart(); closeT.restart() }
@@ -339,24 +347,30 @@ Item {
                 ShapeImage { visible: Player.playing; width: 22; height: 22; anchors.verticalCenter: parent.verticalCenter
                     kind: Look.shape; source: Player.art; empty: isl.pal ? isl.pal.container : "#333"; fallbackColor: isl.pal ? isl.pal.inkContainer : "#ccc"
                     SlowSpin { turn: 360; period: 9000; running: Player.playing && isl.pillMode === "idle" && !Look.lite } }
-                // the date (as the bar's Date module) and the time in a pill in your key color
-                // V6.95: the day in small capitals in your key color, a dot, then the date in the numbers font
-                Row {
-                    visible: isl.showDate; anchors.verticalCenter: parent.verticalCenter; spacing: 7
-                    Text { anchors.verticalCenter: parent.verticalCenter
-                        text: isl.bar ? Qt.locale().dayName(isl.bar.now.getDay(), Locale.ShortFormat).toUpperCase() : ""
-                        color: isl.pal ? isl.pal.primary : "#8f8"
-                        font.family: Fonts.main; font.pixelSize: 10; font.weight: Font.Bold; font.letterSpacing: 1.4 }
-                    Rectangle { width: 3; height: 3; radius: Look.sq ? 0 : (1.5); anchors.verticalCenter: parent.verticalCenter
-                        color: isl.pal ? isl.pal.dim : "#aaa" }
-                    Text { anchors.verticalCenter: parent.verticalCenter
-                        text: isl.bar ? isl.bar.two(isl.bar.now.getDate()) + "/" + isl.bar.two(isl.bar.now.getMonth() + 1) : ""
-                        color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.numbers; font.pixelSize: 14; font.weight: Font.DemiBold }
-                }
+                // V7.15: the day, the date and the time in one pill in your key color, the same size and the same ink,
+                // so the island reads as one thing. Before, the day was tiny capitals in the key color, the date plain
+                // bold text and only the time sat in a pill: three treatments side by side
                 Rectangle { visible: isl.showDate; anchors.verticalCenter: parent.verticalCenter
-                    width: tp.implicitWidth + 18; height: isl.bh - 14; radius: Look.sq ? 0 : (height / 2); color: isl.pal ? isl.pal.primary : "#8f8"
-                    Text { id: tp; anchors.centerIn: parent; text: isl.bar ? isl.bar.timeText : ""; color: isl.pal ? isl.pal.inkPrimary : "black"
-                        font.family: Fonts.numbers; font.pixelSize: 13; font.weight: Font.DemiBold } }
+                    width: dtRow.implicitWidth + 18; height: isl.bh - 14; radius: Look.sq ? 0 : (height / 2)
+                    color: isl.pal ? isl.pal.primary : "#8f8"
+                    Row {
+                        id: dtRow; anchors.centerIn: parent; spacing: 6
+                        readonly property color ink: isl.pal ? isl.pal.inkPrimary : "black"
+                        Text { anchors.verticalCenter: parent.verticalCenter
+                            text: isl.bar ? Qt.locale().dayName(isl.bar.now.getDay(), Locale.ShortFormat) : ""
+                            color: dtRow.ink; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.DemiBold }
+                        Rectangle { width: 3; height: 3; radius: Look.sq ? 0 : (1.5); anchors.verticalCenter: parent.verticalCenter
+                            color: Qt.rgba(dtRow.ink.r, dtRow.ink.g, dtRow.ink.b, 0.45) }
+                        Text { anchors.verticalCenter: parent.verticalCenter
+                            text: isl.bar ? isl.bar.two(isl.bar.now.getDate()) + "/" + isl.bar.two(isl.bar.now.getMonth() + 1) : ""
+                            color: dtRow.ink; font.family: Fonts.numbers; font.pixelSize: 12; font.weight: Font.DemiBold }
+                        Rectangle { width: 1; height: 12; anchors.verticalCenter: parent.verticalCenter
+                            color: Qt.rgba(dtRow.ink.r, dtRow.ink.g, dtRow.ink.b, 0.28) }
+                        Text { anchors.verticalCenter: parent.verticalCenter
+                            text: isl.bar ? isl.bar.timeText : ""
+                            color: dtRow.ink; font.family: Fonts.numbers; font.pixelSize: 12; font.weight: Font.DemiBold }
+                    }
+                }
                 Text { visible: !isl.showDate; anchors.verticalCenter: parent.verticalCenter; text: isl.bar ? isl.bar.timeText : ""
                     color: isl.pal ? isl.pal.fg : "white"; font.family: Fonts.main; font.pixelSize: 14; font.weight: Font.DemiBold }
                 Row {

@@ -39,13 +39,13 @@ RI.ws = nil
 RI.z, RI.ox, RI.oy = 1.0, 0, 0
 RI.world = {}      -- address -> { x, y, w, h } on the canvas (screen = offset + canvas * zoom)
 RI.tiled = {}      -- address -> true: it was tiled before, tile it again when turned off
-RI.cfg = { step = 0.12, min = 0.2, max = 1.0, pan = 180, screens = 1, speed = 1.0, dir = 1 }   -- V5.02: this workspace by default
+RI.cfg = { step = 0.12, min = 0.2, max = 1.0, pan = 180, screens = 0, speed = 1.0, dir = 1 }   -- V7.16: every screen by default
 
 local function run(d)
     if d then pcall(hl.dispatch, d) end
 end
 
--- every screen is one canvas (screens = 0), or only the workspace it was turned on (screens = 1, the default)
+-- every screen is one canvas (screens = 0, the default), or only the workspace it was turned on (screens = 1)
 local function shared()
     return tonumber(RI.cfg.screens) ~= 1
 end

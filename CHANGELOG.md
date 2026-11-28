@@ -1,5 +1,9 @@
 # Changelog
 
+## V7.09: roll back the V7.08 card Canvas that crashed the shell
+- **The shell is back.** The V7.08 card was drawn from one Canvas path; that is what stopped the bar, the dock and the island from loading (the shell crash-looped). This puts the V7.07 card back, which rendered fine
+- The drop animation work moves to a safer approach; nothing else changes
+
 ## V7.08: the island droplet and the card are one shape, one color
 - **No color difference between the droplet and the panel.** The neck and the card body are now painted as a single path in one fill, so they are exactly the same color and alpha. Before, they were two translucent layers (the surface is 90% opaque) and where they met it was darker, so the droplet read as a different color stuck on a ready panel
 - **The whole panel is drawn out of the island.** It unrolls from no height to full height by ~70% of the 500 ms, then the neck (the droplet) pinches off and the card sits 16 px below; the content is revealed by the clip, so it is drawn, not faded in

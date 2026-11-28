@@ -563,62 +563,36 @@ Item {
     }
 
     // ---------- the card: the player or a notification, just beside the bar ----------
-    // V7.08 the drop is ONE shape. The neck and the card body are filled as a single path (one fill call), so the
-    // droplet and the panel are exactly the same color and alpha. V7.03-V7.07 drew them as two translucent layers
-    // and the place where they met was darker, so the droplet looked like a different color stuck on a ready panel.
+    // V7.03 the drop: while the card leaves the island, a neck keeps them one shape and pinches off at the end.
+    // It is behind the island (bg) and behind the card, so only the part in the gap shows; the top is the pill's
+    // own bottom edge, the bottom disappears under the card. No neck at rest (tw reaches 0 before the card lands).
     Canvas {
-        id: blob
+        id: neck
         x: card.x
-        y: isl.down ? isl.bh : card.y
+        y: isl.down ? isl.bh : card.y + card.height
         width: Math.max(1, card.width)
-        height: Math.max(0, isl.down ? (card.y + card.height - isl.bh) : (-card.y))
-        visible: card.height > 1 && card.tc > 0.005 && isl.fill.a > 0.02
-        // fade in over the first frames so the 2 px starting height is not a hairline flash across the bar
-        opacity: card.opacity * Math.min(1, card.tc * 10)
-        // the droplet: as wide as the pill at the top, pinching to nothing as it lets go of the island
-        readonly property real tw: Math.max(0.001, Math.min(card.width * 0.45, isl.width * 0.8) * (1 - card.tc))
-        readonly property real cx: Math.max(20, Math.min(width - 20, isl.width / 2 - card.x))
-        readonly property real _r: card.radius + card.gapA + card.tc + isl.fill.a
+        height: Math.max(0, card.gapA)
+        visible: isl.big && card.opacity > 0.05 && neck.tw > 1 && height > 0.5
+        opacity: Math.min(1, neck.tw / 30) * card.opacity
+        readonly property real tw: Math.max(0, Math.min(card.width * 0.45, isl.width * 0.8) * (1 - card.tc))
+        readonly property real cx: Math.max(40, Math.min(width - 40, isl.width / 2 - card.x))
         onTwChanged: requestPaint()
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
-        onVisibleChanged: requestPaint()
-        on_rChanged: requestPaint()
         onPaint: {
-            const c = getContext("2d"), W = width
-            const cw = Math.min(card.width, W), chh = Math.max(1, card.height), gap = Math.max(0.5, card.gapA)
-            const r = Math.max(0, Math.min(card.radius, cw / 2, chh / 2))
-            const cx = blob.cx, tw = blob.tw, bw = Math.min(cw, 380)
+            const c = getContext("2d"), h = height, w = width
             c.reset()
-            c.fillStyle = Qt.rgba(isl.fill.r, isl.fill.g, isl.fill.b, 1)
+            if (h < 0.5 || neck.tw < 1) return
+            const cx = neck.cx, tw = neck.tw, bw = Math.min(w - 8, 340), mid = h / 2
+            c.fillStyle = isl.fill.toString()
             c.globalAlpha = isl.fill.a
-            function rr(x, y, w, h, rad) {
-                const q = Math.max(0, Math.min(rad, w / 2, h / 2))
-                c.moveTo(x + q, y)
-                c.lineTo(x + w - q, y); c.quadraticCurveTo(x + w, y, x + w, y + q)
-                c.lineTo(x + w, y + h - q); c.quadraticCurveTo(x + w, y + h, x + w - q, y + h)
-                c.lineTo(x + q, y + h); c.quadraticCurveTo(x, y + h, x, y + h - q)
-                c.lineTo(x, y + q); c.quadraticCurveTo(x, y, x + q, y)
-                c.closePath()
-            }
             c.beginPath()
-            if (isl.down) {
-                const y0 = 0, y1 = gap, mid = (y0 + y1) / 2
-                c.moveTo(cx - tw / 2, y0)
-                c.bezierCurveTo(cx - tw * 0.25, mid, cx - bw * 0.4, mid, cx - bw / 2, y1)
-                c.lineTo(cx + bw / 2, y1)
-                c.bezierCurveTo(cx + bw * 0.4, mid, cx + tw * 0.25, mid, cx + tw / 2, y0)
-                c.closePath()
-                rr(0, gap, cw, chh, r)
-            } else {
-                const y0 = chh, y1 = chh + gap, mid = (y0 + y1) / 2
-                c.moveTo(cx - bw / 2, y0)
-                c.bezierCurveTo(cx - bw * 0.4, mid, cx - tw * 0.25, mid, cx - tw / 2, y1)
-                c.lineTo(cx + tw / 2, y1)
-                c.bezierCurveTo(cx + tw * 0.25, mid, cx + bw * 0.4, mid, cx + bw / 2, y0)
-                c.closePath()
-                rr(0, 0, cw, chh, r)
-            }
+            c.moveTo(cx - tw / 2, 0)
+            // the waist: the control points pull inward, so the sides are concave and the neck looks like liquid
+            c.bezierCurveTo(cx - tw * 0.3, mid, cx - bw * 0.3, mid, cx - bw / 2, h)
+            c.lineTo(cx + bw / 2, h)
+            c.bezierCurveTo(cx + bw * 0.3, mid, cx + tw * 0.3, mid, cx + tw / 2, 0)
+            c.closePath()
             c.fill()
         }
     }
@@ -641,12 +615,11 @@ Item {
         Behavior on cwA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         Behavior on chA { SpringAnimation { spring: 2.4; damping: 0.36; epsilon: 0.4 } }
         readonly property real tc: Math.max(0, t)
-        // V6.85 liquid glass. V7.08: the whole card is drawn out of the island, one shape with the droplet. It
-        // starts on the pill with no height and unrolls to its full height a little before the drop lets go (rev
-        // reaches 1 at ~70% of the motion), so the panel is drawn and then the neck snaps; width is full from the
-        // first frame, so no small shape widens first
-        readonly property real gapA: 16 * tc
-        readonly property real rev: Math.max(0, Math.min(1, tc * 1.4))
+        // V6.85 liquid glass. V7.07: the whole card is drawn out of the island: it starts on the pill with no
+        // height and unrolls down to its full height while the drop falls (the content is revealed by the clip, not
+        // a ready panel with a drop on it). Width is full from the first frame, so no small shape widens first
+        readonly property real gapA: 12 * tc
+        readonly property real rev: Math.max(0, Math.min(1, tc))
         width: cwA
         height: Math.max(2, chA * rev)
         // centred on the island, but always on the screen
@@ -655,11 +628,11 @@ Item {
         x: Math.max(-isl.x, Math.min(isl.areaW - isl.x - width, (isl.width - width) / 2 + (want - (isl.width - width) / 2) * Math.min(1, tc)))
         y: isl.down ? isl.bh + gapA : -height - gapA
         radius: Look.sq ? 0 : (Math.min(height / 2, isl.bh / 2 + (30 - isl.bh / 2) * Math.min(1, tc)))
-        color: "transparent"      // V7.08: the blob above paints the card and the droplet as one shape (no seam)
+        color: isl.fill
         visible: opacity > 0.01
-        // V7.08: the blob draws the card in (it unrolls), so the content is opaque and revealed by the clip; the
-        // opacity is only on/off (open or closing), never a fade of a ready panel
-        opacity: (isl.big || tc > 0.02) ? 1 : 0
+        // V7.07: the clip above is what draws the card in (it unrolls), so opacity is only a quick guard against a
+        // first-frame flash; the content is revealed by the growing height, not by fading a ready panel
+        opacity: tc < 0.02 ? 0 : Math.min(1, tc * 3)
         clip: true
         HoverHandler { id: hovC }
         // the glass edge and one sweep of light: a plain dark rectangle reads as a panel, not as glass
@@ -667,7 +640,7 @@ Item {
             anchors.fill: parent; radius: parent.radius
             color: "transparent"; border.width: 1
             border.color: Qt.rgba(1, 1, 1, 0.16)
-            visible: !Look.sq && card.opacity > 0.5 && card.tc > 0.97   // V7.08: no hairline across the neck
+            visible: !Look.sq && card.opacity > 0.5
         }
         Rectangle {
             id: sheen

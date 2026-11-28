@@ -1,5 +1,10 @@
 # Changelog
 
+## V7.13: the strand is a thread now, not a long sliver
+- **The long line was the strand itself.** Its bottom edge was the panel's whole top edge, so as it thinned it stayed a full-width sliver over the panel and never actually got smaller, then vanished in one frame. Its bottom is now a narrow flare into the panel, so the whole shape shrinks with the width and the last frames are a fraction of a pixel
+- The strand only starts once the panel has pulled away, so the first two thirds are still one silhouette with the pill (no seam), and closing runs the same shape backwards
+- No other change
+
 ## V7.12: the join no longer has a seam, and the let-go fades out instead of cutting
 - **Why it looked stuck on:** the panel's glass hairline kept drawing a 1px line across the join while the droplet was still one shape with the pill. The hairline now stays hidden while the panel is flush with the pill or still joined, and fades in only once the panel is clearly away
 - **Smooth ending (and the reverse):** the panel is flush with the pill for the first two thirds, so the two are a single silhouette while it grows; in the last third it pulls away and the strand between them thins with a tail, so the final frames are already sub-pixel. Closing runs the same shape backwards

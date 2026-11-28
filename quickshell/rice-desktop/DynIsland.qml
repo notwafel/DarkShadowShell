@@ -586,7 +586,7 @@ Item {
         readonly property real cx: Math.max(4, Math.min(width - 4, isl.width / 2 - card.x))
         // joined while the strand is still visible at all; a sub-pixel strand counts as gone, and by then the panel
         // already sits away from the pill, so that change cannot be seen
-        readonly property bool joined: card.tc > 0.02 && card.gapA > 0.05 && tw >= 0.75
+        readonly property bool joined: card.tc > 0.02 && card.gapA > 0.02 && tw >= 0.15
         visible: joined && card.opacity > 0.02 && isl.fill.a > 0.02
         preferredRendererType: Shape.CurveRenderer
         ShapePath {
@@ -595,17 +595,19 @@ Item {
             fillRule: ShapePath.WindingFill
             PathSvg { path: {
                 const W = dropNeck.width, H = dropNeck.height, tw = dropNeck.tw
-                if (H < 0.05 || tw < 0.75 || W < 1) return ""
+                if (H < 0.02 || tw < 0.15 || W < 1) return ""
                 const cx = dropNeck.cx
-                // the bottom edge is the panel's whole top edge, so the strand comes out of the panel with no step
-                // and, as it thins, melts back into that edge instead of stopping on it
+                // V7.13: the bottom is narrow too (a small flare into the panel), not the panel's whole top edge.
+                // With the full width down there the strand shrank into a long thin line that still covered the
+                // panel, so it never got smaller, it just popped away at the end. Now its area goes to zero with tw
+                const tb = Math.min(W, tw * 1.45)
                 const py = isl.down ? 0 : H
                 const cy = isl.down ? H : 0
-                const mid = H / 2
+                const midUp = py + (cy - py) * 0.52, midDn = cy - (cy - py) * 0.42
                 return "M" + (cx - tw / 2) + " " + py +
-                  " C" + (cx - tw * 0.3) + " " + mid + " 0 " + mid + " 0 " + cy +
-                  " L" + W + " " + cy +
-                  " C" + W + " " + mid + " " + (cx + tw * 0.3) + " " + mid + " " + (cx + tw / 2) + " " + py + " Z"
+                  " C" + (cx - tw * 0.42) + " " + midUp + " " + (cx - tb * 0.5) + " " + midDn + " " + (cx - tb / 2) + " " + cy +
+                  " L" + (cx + tb / 2) + " " + cy +
+                  " C" + (cx + tb * 0.5) + " " + midDn + " " + (cx + tw * 0.42) + " " + midUp + " " + (cx + tw / 2) + " " + py + " Z"
             } }
         }
     }

@@ -1,5 +1,15 @@
 # Changelog
 
+## V7.16: the island's date has no outline, a calmer Music module, a smoother Infinite Desktop
+- **The island's date pill has no outline.** The 1 px line drawn over the island read as a second edge; it is gone, more of the island shows through (0.34 alpha) and the pill is a little taller and wider so the row has room to breathe
+- **The bar's Music card content moves with the card.** It ran its own 760 ms stagger, so it was the only card still moving after the shape had finished opening; it now follows the card's open curve like Weather, System and Date, and its glass line is drawn only once it is clearly away, never across the strand
+- **The Music module is calm like the rest of the bar.** It was the only module that grew with an OutBack bounce and shrank on press; it uses the OutCubic width and the shared hover tint now
+- **A long app title no longer reaches the island.** It is cut at 40 characters and the module at 220 px (the rest is elided), so it stays clear of the middle
+- **Infinite Desktop is every screen by default.** A fresh install floats windows across all monitors (screens = 0), not only the workspace it was turned on
+- **SUPER + ALT drag is smooth.** Hyprland's window move animation chased each 16 ms target and lagged behind it, so the windows jumped in steps; it is turned off for the drag and put back when the mouse is let go
+- **A floating window stays on screen when Infinite Desktop is turned off.** A window such as Settings that stuck out a little came back half off the screen and looked gone; the whole rectangle is kept inside the usable area now
+- No other change
+
 ## V7.15: the island opens on a hover again, one pill for the date, one updater
 - **Pointing at the island opens it again.** With nothing playing the pointer did nothing and a click opened Today; the island now opens Today on a hover by itself, and a click on the open card keeps it (it turns into a pinned one). While a song plays, hovering still opens the player
 - **The island's date is one piece.** The day was small capitals in your key color, the date plain bold text and only the time sat in a pill: three treatments side by side. All three share one pill now, the same size and the same ink, with a small calendar before the day (like the weather's cloud) and the island's own surface behind it, see-through

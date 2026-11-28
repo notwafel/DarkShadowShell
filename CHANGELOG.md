@@ -1,5 +1,12 @@
 # Changelog
 
+## V7.14: the Wi-Fi, Bluetooth, sound and power cards move like the island
+- **The other cards now do what the island does.** Wi-Fi, Bluetooth, sound and power used to just scale up 6% and slide 10 px out of the bar. Now the module's pill on the bar stretches into the card, flush with the bar, and only in the last third does the card pull away while the strand between them thins to nothing; closing is the same shape backwards
+- The card's glass line stays off while it is joined, so no line is drawn across the strand (the island's own fix)
+- The content keeps its place and is uncovered by the shape as it grows, so nothing jumps when the card lands
+- One new file, `DropCard.qml`, used by those four menus; the bar now tells `BarSvc` its edge and height, because the menus are other windows and cannot read them
+- Cards that open from the dock, a bottom bar or a side bar still grow and move, just without the strand (it only fits a bar at the top)
+
 ## V7.13: the strand is a thread now, not a long sliver
 - **The long line was the strand itself.** Its bottom edge was the panel's whole top edge, so as it thinned it stayed a full-width sliver over the panel and never actually got smaller, then vanished in one frame. Its bottom is now a narrow flare into the panel, so the whole shape shrinks with the width and the last frames are a fraction of a pixel
 - The strand only starts once the panel has pulled away, so the first two thirds are still one silhouette with the pill (no seam), and closing runs the same shape backwards

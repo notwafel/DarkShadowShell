@@ -12,12 +12,9 @@ PanelWindow {
     NPal { id: sqPal; theme: "shell"; alpha: Math.min(1, BarSvc.barAlpha + 0.04) }
     property bool open: false
     property real t: 0
-    // V6.86: the island's motion: 620 ms in (Light mode shorter), 280 ms out, a small overshoot so it springs,
-    // and the 8 px gap to the bar opens only at the end: the card peels off the bar instead of jumping away
-    Behavior on t { NumberAnimation { duration: Look.lite ? 340 : 620
-        easing.type: pw.open ? Easing.OutBack : Easing.InBack; easing.overshoot: Look.lite ? 0 : 0.12 } }
+    // V7.14: the Dynamic island's motion, 520 ms both ways; DropCard does the growing shape and the gap
+    Behavior on t { NumberAnimation { duration: Look.lite ? 240 : 520; easing.type: Easing.InOutCubic } }
     readonly property real et: t
-    readonly property real gapA: 8 * Math.max(0, Math.min(1, (pw.t - 0.45) / 0.35))
     onOpenChanged: t = open ? 1 : 0
 
     readonly property color fg: "#F6F5F4"
@@ -74,7 +71,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: pw; items: [card]; radius: Look.sq ? 0 : (card.radius); on: pw.open && pw.et > 0.94 }
+    NiriBlur { win: pw; items: [card.shapeItem]; radius: card.radius; on: pw.open && pw.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -83,24 +80,18 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     MouseArea { anchors.fill: parent; onClicked: pw.hide() }
 
-    Rectangle {
+    DropCard {
         id: card
-        Frame { }      // V4.98 Minimal mode
-        width: 220
-        height: col.height + 16
-        x: pw.side ? (pw.atRight ? pw.width - pw.sideSpace - width - pw.gapA : pw.sideSpace + pw.gapA)
-                     : Math.max(12, Math.min(pw.width - width - 12, pw.cx - width / 2))
-        y: pw.side ? Math.max(12, Math.min(pw.height - height - 12, (pw.cy < 0 ? pw.height / 2 : pw.cy) - 30))
-                     : (pw.atBottom ? pw.height - pw.barSpace - height - pw.gapA : pw.barSpace + pw.gapA)
-        radius: Look.sq ? 0 : (20)
-        color: pw.bg
-        border.width: 1; border.color: pw.line
-        opacity: Math.min(1, pw.et * 1.6)
-        scale: 0.94 + 0.06 * pw.et
-        transformOrigin: pw.side ? (pw.atRight ? Item.Right : Item.Left) : (pw.atBottom ? Item.Bottom : Item.Top)
-        // it comes out of the bar: down from a top bar, up from a bottom one, sideways from a bar on the side
-        transform: Translate { x: pw.side ? (1 - pw.et) * (pw.atRight ? 10 : -10) : 0
-                               y: pw.side ? 0 : (1 - pw.et) * (pw.atBottom ? 10 : -10) }
+        anchors.fill: parent
+        t: pw.et
+        openW: 220
+        openH: col.height + 16
+        fromW: 38; pillH: 26
+        ax: pw.cx; ay: pw.cy
+        side: pw.side; atRight: pw.atRight; down: !pw.atBottom
+        barSpace: pw.barSpace; sideSpace: pw.sideSpace
+        rad: Look.sq ? 0 : 20
+        bg: pw.bg; line: pw.line
         focus: true
         Keys.onEscapePressed: pw.hide()
         MouseArea { anchors.fill: parent }

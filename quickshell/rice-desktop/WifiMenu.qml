@@ -12,12 +12,9 @@ PanelWindow {
     NPal { id: sqPal; theme: "shell"; alpha: Math.min(1, BarSvc.barAlpha + 0.04) }
     property bool open: false
     property real t: 0
-    // V6.86: the island's motion: 620 ms in (Light mode shorter), 280 ms out, a small overshoot so it springs,
-    // and the 8 px gap to the bar opens only at the end: the card peels off the bar instead of jumping away
-    Behavior on t { NumberAnimation { duration: Look.lite ? 340 : 620
-        easing.type: wm.open ? Easing.OutBack : Easing.InBack; easing.overshoot: Look.lite ? 0 : 0.12 } }
+    // V7.14: the Dynamic island's motion, 520 ms both ways; DropCard does the growing shape and the gap
+    Behavior on t { NumberAnimation { duration: Look.lite ? 240 : 520; easing.type: Easing.InOutCubic } }
     readonly property real et: t
-    readonly property real gapA: 8 * Math.max(0, Math.min(1, (wm.t - 0.45) / 0.35))
     onOpenChanged: t = open ? 1 : 0
 
     // ---------- look ----------
@@ -177,7 +174,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind the card (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: wm; items: [card]; radius: Look.sq ? 0 : (card.radius); on: wm.open && wm.et > 0.94 }
+    NiriBlur { win: wm; items: [card.shapeItem]; radius: card.radius; on: wm.open && wm.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -190,25 +187,18 @@ PanelWindow {
 
     readonly property int shown: Math.min(Math.max(nets.length, 1), maxRows)
     readonly property real listH: shown * rowH + (askFor !== "" && nets.length <= maxRows ? 52 : 0)
-    Rectangle {
+    DropCard {
         id: card
-        Frame { }      // V4.98 Minimal mode
-        width: wm.cardW
-        height: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14
-        Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-        x: wm.side ? (wm.atRight ? wm.width - wm.sideSpace - width - wm.gapA : wm.sideSpace + wm.gapA)
-                     : Math.max(12, Math.min(wm.width - width - 12, wm.cx - width / 2))
-        y: wm.side ? Math.max(12, Math.min(wm.height - height - 12, (wm.cy < 0 ? wm.height / 2 : wm.cy) - 30))
-                     : (wm.atBottom ? wm.height - wm.barSpace - height - wm.gapA : wm.barSpace + wm.gapA)
-        radius: Look.sq ? 0 : (20)
-        color: wm.bg
-        border.width: 1; border.color: wm.line
-        opacity: Math.min(1, wm.et * 1.6)
-        scale: 0.94 + 0.06 * wm.et
-        transformOrigin: wm.side ? (wm.atRight ? Item.Right : Item.Left) : (wm.atBottom ? Item.Bottom : Item.Top)
-        // it comes out of the bar: down from a top bar, up from a bottom one, sideways from a bar on the side
-        transform: Translate { x: wm.side ? (1 - wm.et) * (wm.atRight ? 10 : -10) : 0
-                               y: wm.side ? 0 : (1 - wm.et) * (wm.atBottom ? 10 : -10) }
+        anchors.fill: parent
+        t: wm.et
+        openW: wm.cardW
+        openH: head.height + 14 + wm.listH + (wm.msg !== "" ? 34 : 0) + 14
+        fromW: 38; pillH: 26
+        ax: wm.cx; ay: wm.cy
+        side: wm.side; atRight: wm.atRight; down: !wm.atBottom
+        barSpace: wm.barSpace; sideSpace: wm.sideSpace
+        rad: Look.sq ? 0 : 20
+        bg: wm.bg; line: wm.line
         focus: true
         Keys.onEscapePressed: wm.hide()
         MouseArea { anchors.fill: parent }

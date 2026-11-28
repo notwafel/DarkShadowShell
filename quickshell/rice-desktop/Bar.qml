@@ -27,8 +27,11 @@ PanelWindow {
     // one rice-services and one rice-weather for every bar (BarSvc.qml): a copy for another screen only reads them
     onOnChanged: if (!bar.extra) BarSvc.shown = bar.on || bar.ghostOnly
     onGhostOnlyChanged: if (!bar.extra) BarSvc.shown = bar.on || bar.ghostOnly
-    Component.onCompleted: if (!bar.extra) { BarSvc.shown = bar.on || bar.ghostOnly; BarSvc.barAlpha = alpha }
+    Component.onCompleted: if (!bar.extra) { BarSvc.shown = bar.on || bar.ghostOnly; BarSvc.barAlpha = alpha
+        BarSvc.barInset = bar.gap; BarSvc.barH = bar.barH }
     onAlphaChanged: if (!bar.extra) BarSvc.barAlpha = alpha
+    onGapChanged: if (!bar.extra) BarSvc.barInset = bar.gap
+    onBarHChanged: if (!bar.extra) BarSvc.barH = bar.barH
 
     // ---------- settings (~/.config/rice/bar.json) ----------
     property var bc: ({})

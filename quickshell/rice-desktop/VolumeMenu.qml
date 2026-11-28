@@ -14,14 +14,9 @@ PanelWindow {
     NPal { id: sqPal; theme: "shell"; alpha: Math.min(1, BarSvc.barAlpha + 0.04) }
     property bool open: false
     property real t: 0
-    // t runs evenly; the menu eases on its own: it grows out of the bar (quick start, soft landing) and
-    // folds back up quickly when it closes
-    // V6.86: the island's motion: 620 ms in (Light mode shorter), 280 ms out, a small overshoot so it springs,
-    // and the 8 px gap to the bar opens only at the end: the card peels off the bar instead of jumping away
-    Behavior on t { NumberAnimation { duration: Look.lite ? 340 : 620
-        easing.type: vm.open ? Easing.OutBack : Easing.InBack; easing.overshoot: Look.lite ? 0 : 0.12 } }
+    // V7.14: the Dynamic island's motion, 520 ms both ways; DropCard does the growing shape and the gap
+    Behavior on t { NumberAnimation { duration: Look.lite ? 240 : 520; easing.type: Easing.InOutCubic } }
     readonly property real et: t
-    readonly property real gapA: 8 * Math.max(0, Math.min(1, (vm.t - 0.45) / 0.35))
     onOpenChanged: t = open ? 1 : 0
 
     readonly property color fg: "#F6F5F4"
@@ -78,7 +73,7 @@ PanelWindow {
     // if the closing animation ever stalls (the compositor sent no frames for a moment), it still goes away
     Timer { id: closeT; property bool done: false; interval: 600; running: !open; onRunningChanged: if (running) done = false; onTriggered: done = true }
     // niri: blur behind it (Hyprland blurs this layer with its own rule)
-    NiriBlur { win: vm; items: [card]; radius: Look.sq ? 0 : (card.radius); on: vm.open && vm.et > 0.94 }
+    NiriBlur { win: vm; items: [card.shapeItem]; radius: card.radius; on: vm.open && vm.et > 0.94 }
     color: "transparent"
     anchors { top: true; left: true; right: true; bottom: true }
     exclusionMode: ExclusionMode.Ignore
@@ -151,26 +146,18 @@ PanelWindow {
     }
     component Head: Text { color: vm.fg; font.family: Fonts.main; font.pixelSize: 12; font.weight: Font.DemiBold; topPadding: 8; leftPadding: 8; opacity: 0.85 }
 
-    Rectangle {
+    DropCard {
         id: card
-        Frame { }      // V4.98 Minimal mode
-        width: 380
-        height: Math.min(col.implicitHeight + 28, vm.height - (vm.side ? 24 : vm.barSpace + 20))
-        x: vm.side ? (vm.atRight ? vm.width - vm.sideSpace - width - vm.gapA : vm.sideSpace + vm.gapA)
-                     : Math.max(12, Math.min(vm.width - width - 12, vm.cx - width / 2))
-        y: vm.side ? Math.max(12, Math.min(vm.height - height - 12, (vm.cy < 0 ? vm.height / 2 : vm.cy) - 30))
-                     : (vm.atBottom ? vm.height - vm.barSpace - height - vm.gapA : vm.barSpace + vm.gapA)
-        radius: Look.sq ? 0 : (20)
-        color: vm.bg
-        border.width: 1; border.color: vm.line
-        clip: true
-        opacity: Math.min(1, vm.et * 1.6)
-        scale: 0.94 + 0.06 * vm.et
-        transformOrigin: vm.side ? (vm.atRight ? Item.Right : Item.Left) : (vm.atBottom ? Item.Bottom : Item.Top)
-        // it comes out of the bar: down from a top bar, up from a bottom one, sideways from a bar on the side
-        transform: Translate { x: vm.side ? (1 - vm.et) * (vm.atRight ? 10 : -10) : 0
-                               y: vm.side ? 0 : (1 - vm.et) * (vm.atBottom ? 10 : -10) }
-        Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        anchors.fill: parent
+        t: vm.et
+        openW: 380
+        openH: Math.min(col.implicitHeight + 28, vm.height - (vm.side ? 24 : vm.barSpace + 20))
+        fromW: 38; pillH: 26
+        ax: vm.cx; ay: vm.cy
+        side: vm.side; atRight: vm.atRight; down: !vm.atBottom
+        barSpace: vm.barSpace; sideSpace: vm.sideSpace
+        rad: Look.sq ? 0 : 20
+        bg: vm.bg; line: vm.line
         focus: true
         Keys.onEscapePressed: vm.hide()
         MouseArea { anchors.fill: parent; onWheel: function(e) { } }

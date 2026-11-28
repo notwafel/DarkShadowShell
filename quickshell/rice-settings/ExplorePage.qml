@@ -54,6 +54,30 @@ Item {
         }
     }
 
+    // ---------- import a theme a friend sent you (a .dstheme file): the same file Themes exports ----------
+    property var imp: null
+    function importTheme(f) {
+        const pth = String(f).trim()
+        if (pth === "") { impF.forceActiveFocus(); return }
+        imp.what = "Imported: it is with your themes above"
+        imp.command = ["bash", "-c", "\"$HOME/.local/bin/rice-theme\" import \"$1\"", "_", pth]
+        imp.running = true
+        impF.text = ""
+    }
+    Process {
+        id: imp
+        property string what: ""
+        stderr: StdioCollector { id: impErr }
+        onExited: function(code) {
+            if (page.ctl) page.ctl.status = code === 0 ? I18n.t(imp.what) : (impErr.text.trim().split("\n").pop() || I18n.t("That did not work"))
+            page.reload(false)
+        }
+    }
+    Process {
+        id: impPick
+        stdout: StdioCollector { onStreamFinished: { const d = text.trim(); if (d) page.importTheme(d) } }
+    }
+
     PageScroll {
         anchors.fill: parent
 
@@ -95,14 +119,49 @@ Item {
         }
 
         Item { width: 1; height: 8 }
-        Row {
+
+        // ---------- a theme from a friend ----------
+        Rectangle {
             width: parent.width
-            spacing: 10
-            T { anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Themes"); font.pixelSize: 15; font.weight: Font.DemiBold }
-            T { anchors.verticalCenter: parent.verticalCenter; color: M3.inkDim; font.pixelSize: 12
-                text: page.loading ? I18n.t("Looking...") : (page.pd.offline ? I18n.t("Offline: the list from last time") : I18n.t("%1 themes", (page.pd.themes || []).length)) }
+            height: impRow.height + 28
+            radius: M3.sq ? 0 : (M3.rL)
+            color: M3.surfaceC
+            Row {
+                id: impRow
+                x: 18; y: 14
+                width: parent.width - 36
+                spacing: 12
+                Icon { anchors.verticalCenter: parent.verticalCenter; name: "folder_open"; glyph: ""; size: 20; color: M3.primary }
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - 20 - impBtn.width - impPickBtn.width - 36
+                    spacing: 2
+                    T { text: I18n.t("Import a theme"); font.pixelSize: 14; font.weight: Font.DemiBold }
+                    T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim
+                        text: I18n.t("A .dstheme file (one you saved and sent, or a friend did). It shows up with your themes.") }
+                }
+                Field { id: impF; width: 260; anchors.verticalCenter: parent.verticalCenter; placeholder: I18n.t("~/Downloads/theme.dstheme")
+                    onAccepted: page.importTheme(text) }
+                Btn { id: impPickBtn; anchors.verticalCenter: parent.verticalCenter; sym: "folder"; icon: ""; text: I18n.t("Pick")
+                    onClicked: { impPick.command = ["bash", "-c", "zenity --file-selection --file-filter='*.dstheme' --title=\"$1\" 2>/dev/null || kdialog --getopenfilename ~ '*.dstheme' 2>/dev/null", "_", I18n.t("A theme file")]; impPick.running = true } }
+                Btn { id: impBtn; anchors.verticalCenter: parent.verticalCenter; primary: true; sym: "download"; icon: ""; text: I18n.t("Import")
+                    onClicked: page.importTheme(impF.text) }
+            }
         }
-        Btn { sym: "refresh"; icon: ""; text: I18n.t("Look again"); enabled: !page.loading; onClicked: page.reload(true) }
+
+        Item {
+            width: parent.width; height: 34
+            Row {
+                anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
+                spacing: 10
+                T { anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Themes"); font.pixelSize: 15; font.weight: Font.DemiBold }
+                T { anchors.verticalCenter: parent.verticalCenter; color: M3.inkDim; font.pixelSize: 12
+                    text: page.loading ? I18n.t("Looking...") : (page.pd.offline ? I18n.t("Offline: the list from last time") : I18n.t("%1 themes", (page.pd.themes || []).length)) }
+            }
+            // moved here from its own line (it sat oddly under the list heading)
+            Btn { anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                sym: "refresh"; icon: ""; text: I18n.t("Look again"); enabled: !page.loading; onClicked: page.reload(true) }
+        }
 
         T {
             visible: !page.loading && (page.pd.themes || []).length === 0

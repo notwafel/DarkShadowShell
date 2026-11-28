@@ -26,6 +26,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/lua"
           ln -s "$(command -v lua5.4)" "$RUNNER_TEMP/lua/lua"
           PATH="$RUNNER_TEMP/lua:$PATH" bash tests/infinite.sh
+      - name: Fullscreen key on a self-fullscreen game
+        run: |
+          bash tests/keymap.sh
       - name: Dock
         run: |
           bash tests/dock.sh

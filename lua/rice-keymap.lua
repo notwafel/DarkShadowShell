@@ -28,7 +28,18 @@ RK.actions = {
     -- V6.94: a game that shrinks itself and then refuses its own fullscreen can still be made fullscreen from here
     -- V6.96: the Lua call, not the old hyprctl dispatcher: a Lua-config Hyprland refuses the old names, and its
     -- mode 1 meant maximize (the window only filled its tile), not fullscreen
-    fullscreen= { "SUPER + SHIFT + F", function() return hl.dsp.window.fullscreen() end, true },
+    -- V7.17: a game that runs its own fullscreen (CS2) is asked to leave it through fullscreen_state instead of
+    -- having the compositor resize the surface under its running swapchain, which killed the game to a black screen.
+    -- The check has to run on every press, so this action gives a callback rather than one dispatcher bound once.
+    fullscreen= { "SUPER + SHIFT + F", function()
+        return function()
+            local w = hl.get_active_window()
+            if w and (tonumber(w.fullscreen_client) or 0) ~= 0 then
+                return hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 0, client = 0 }))
+            end
+            return hl.dispatch(hl.dsp.window.fullscreen())
+        end
+    end, true },
     clipboard = { "SUPER + V",         exec(BIN .. "rice-clip toggle") },
     shot      = { "Print",             exec(BIN .. "rice-hotcorner shot region") },
     shotfull  = { "SHIFT + Print",     exec(BIN .. "rice-hotcorner shot full") },

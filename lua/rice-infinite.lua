@@ -364,16 +364,16 @@ local function live_off()
     live_write(false)
 end
 
-local poll = { last = nil, held = false, ax = 0, ay = 0, wait = 0 }
+local poll = { last = nil, held = false, ax = 0, ay = 0 }
 
--- The pointer is put back inside the edge on every tick, so it drifts away from it for one tick only: at 16 ms that
--- was 5-16 px of shake at the edge, easy to see; at 1 ms it is under a pixel at any speed you pan at. The canvas still
--- moves every 16 ms (moving every window a thousand times a second would be a lot of work for nothing).
-local TICK_IDLE, TICK_FAST = 16, 1
-local TIMER, TICK_MS = nil, TICK_IDLE
+-- The canvas moves on every tick while SUPER + ALT are held, so the windows sit wherever the pointer is at the
+-- monitor's own refresh: no step every 16 ms (which read as a stutter on a fast screen), and no counting of ticks
+-- that drift when the compositor coalesces the timer. The idle tick only watches the keys. TICK_FAST is 8 ms so a
+-- 120 Hz screen still gets an update every frame; a still pointer costs nothing (a zero move is not sent).
+local TICK_IDLE, TICK_FAST = 16, 8
+local TIMER = nil
 
 local function tick_rate(ms)
-    TICK_MS = ms
     if TIMER then pcall(TIMER.set_timeout, TIMER, ms) end
 end
 
@@ -384,22 +384,15 @@ local function cursor_pos()
 end
 
 local function tick()
-    poll.wait = poll.wait + TICK_MS
-    local step = poll.wait >= TICK_IDLE     -- the keys, and the canvas: every 16 ms
-    if step then poll.wait = 0 end
-
-    if step then
-        local down = hold_down()
-        if down ~= poll.held then
-            poll.held = down
-            poll.last, poll.ax, poll.ay = nil, 0, 0
-            if down then poll.last = cursor_pos() end
-            tick_rate(down and TICK_FAST or TICK_IDLE)
-            live_write(down)
-            if not down then pcall(RI.save) end     -- the place is written down once, at the end
-            return
-        end
-        if not down then return end
+    local down = hold_down()
+    if down ~= poll.held then
+        poll.held = down
+        poll.last, poll.ax, poll.ay = nil, 0, 0
+        if down then poll.last = cursor_pos() end
+        tick_rate(down and TICK_FAST or TICK_IDLE)
+        live_write(down)
+        if not down then pcall(RI.save) end     -- the place is written down once, at the end
+        return
     end
     if not poll.held then return end
 
@@ -416,7 +409,6 @@ local function tick()
         -- the pointer is there now: the jump itself is not movement (else the canvas would jump back by it)
         poll.last = { x = wx, y = wy }
     end
-    if not step then return end
 
     local sign = tonumber(RI.cfg.dir) == 2 and -1 or 1
     -- whole pixels now, the rest kept: a slow move is not lost (the same as rice-canvasd)

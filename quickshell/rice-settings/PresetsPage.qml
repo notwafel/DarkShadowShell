@@ -257,7 +257,5 @@ Item {
             Btn { anchors.right: parent.right; anchors.rightMargin: 12; anchors.verticalCenter: parent.verticalCenter
                 enabled: page.busy === ""; text: I18n.t("Go back"); sym: "undo"; icon: ""; onClicked: page.use("before") }
         }
-        T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 11; color: M3.inkDim
-            text: I18n.t("Widgets you placed stay where they are. Change anything afterwards on the other pages; Themes keeps a look of your own under a name.") }
     }
 }

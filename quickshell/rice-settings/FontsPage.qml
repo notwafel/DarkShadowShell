@@ -155,7 +155,19 @@ Item {
             }
         }
         T { kind: "reading"; width: parent.width; wrapMode: Text.WordWrap; font.pixelSize: 12; color: M3.inkDim; topPadding: 6
-            text: I18n.t("Type an installed family and press Enter, or pick a suggestion. Monospace is for kitty and code.") }
+            text: I18n.t("Pick a font for each part from the ones installed on your computer. Monospace is for kitty and code.") }
+
+        // ---------- text ----------
+        SectionTitle { text: I18n.t("Text"); sub: I18n.t("Size and weight of every label in Settings.") }
+        SliderRow {
+            label: I18n.t("Text size")
+            desc: I18n.t("100 % is the normal size")
+            from: 85; to: 130; step: 5; unit: " %"
+            value: Math.round(Prefs.textScale * 100)
+            onCommitted: function(v) { Prefs.setTextScale(v / 100) }
+        }
+        ToggleRow { label: I18n.t("Emphasized headings"); desc: I18n.t("Titles and headlines one step heavier"); checked: Prefs.emphHeadings; onToggled: function(v) { Prefs.setEmphHeadings(v) } }
+        ToggleRow { label: I18n.t("Rounded letters"); desc: I18n.t("Google Sans Flex with soft, round stroke ends"); checked: Prefs.roundText; onToggled: function(v) { Prefs.setRoundText(v) } }
 
         Repeater {
             model: page.roles
@@ -184,13 +196,20 @@ Item {
                             T { text: modelData.label; font.pixelSize: 14; font.weight: Font.Medium }
                             T { text: modelData.desc; font.pixelSize: 11; color: M3.inkDim }
                         }
-                        Field {
-                            width: Math.min(260, parent.width * 0.4)
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: card.fam
-                            placeholder: I18n.t("Font family")
-                            onAccepted: page.applyFont(modelData.key, text)
+                        Rectangle {
+                            width: Math.min(280, parent.width * 0.46); height: 36
+                            anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+                            radius: M3.sq ? 0 : 10
+                            color: fm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh
+                            border.width: 1; border.color: M3.outlineVariant
+                            T { anchors.left: parent.left; anchors.leftMargin: 12; anchors.right: chev.left; anchors.rightMargin: 8
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: card.fam !== "" ? card.fam : I18n.t("Choose a font")
+                                font.pixelSize: 13; elide: Text.ElideRight }
+                            Icon { id: chev; anchors.right: parent.right; anchors.rightMargin: 10; anchors.verticalCenter: parent.verticalCenter
+                                name: card.open ? "expand_less" : "expand_more"; glyph: ""; size: 18; color: M3.inkDim }
+                            MouseArea { id: fm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                onClicked: page.openKey = card.open ? "" : modelData.key }
                         }
                     }
                     // the sample, in that font
@@ -202,23 +221,14 @@ Item {
                         elide: Text.ElideRight
                         color: M3.ink
                     }
-                    Row {
-                        spacing: 8
-                        T { text: card.fam !== "" && !page.have(card.fam) ? I18n.t("Not installed: ") + card.fam : ""; visible: text !== ""; font.pixelSize: 11; color: M3.error; anchors.verticalCenter: parent.verticalCenter }
-                        Rectangle {
-                            visible: modelData.key !== "icons"
-                            width: st.implicitWidth + 24; height: 30; radius: M3.sq ? 0 : (15)
-                            color: sm.containsMouse ? M3.surfaceHighest : M3.surfaceHigh
-                            T { id: st; anchors.centerIn: parent; text: card.open ? I18n.t("Hide suggestions") : I18n.t("Suggestions"); font.pixelSize: 12 }
-                            MouseArea { id: sm; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: page.openKey = card.open ? "" : modelData.key }
-                        }
-                    }
+                    T { text: card.fam !== "" && !page.have(card.fam) ? I18n.t("Not installed: ") + card.fam : ""
+                        visible: text !== ""; font.pixelSize: 11; color: M3.error }
                     Flow {
                         visible: card.open
                         width: parent.width
                         spacing: 8
                         Repeater {
-                            model: page.suggestions.filter(function(f) { return page.have(f) && (modelData.key === "mono" ? f.indexOf("Mono") >= 0 || f.indexOf("Iosevka") >= 0 || f.indexOf("Code") >= 0 : f.indexOf("Code") < 0) })
+                            model: page.fams.slice().sort().filter(function(f) { return modelData.key === "mono" ? /mono|code|iosevka|fixed/i.test(f) : !/mono|code|iosevka|fixed|nerd font|symbol/i.test(f) })
                             delegate: Rectangle {
                                 readonly property bool on: card.fam === modelData
                                 width: sg.implicitWidth + 28; height: 36; radius: M3.sq ? 0 : (on ? 18 : 10)
@@ -318,65 +328,6 @@ Item {
             }
         }
 
-        // ---------- text ----------
-        SectionTitle { text: I18n.t("Text"); sub: I18n.t("Size and weight of every label in Settings.") }
-        SliderRow {
-            label: I18n.t("Text size")
-            desc: I18n.t("100 % is the normal size")
-            from: 85; to: 130; step: 5; unit: " %"
-            value: Math.round(Prefs.textScale * 100)
-            onCommitted: function(v) { Prefs.setTextScale(v / 100) }
-        }
-        ToggleRow { label: I18n.t("Emphasized headings"); desc: I18n.t("Titles and headlines one step heavier"); checked: Prefs.emphHeadings; onToggled: function(v) { Prefs.setEmphHeadings(v) } }
-        ToggleRow { label: I18n.t("Rounded letters"); desc: I18n.t("Google Sans Flex with soft, round stroke ends"); checked: Prefs.roundText; onToggled: function(v) { Prefs.setRoundText(v) } }
-
-        // ---------- the type scale ----------
-        SectionTitle { text: I18n.t("Type scale"); sub: I18n.t("The 15 text roles of Material 3 in your fonts. Type to try your own words.") }
-        Field {
-            width: parent.width
-            text: page.sampleText
-            placeholder: I18n.t("Sample text")
-            onAccepted: page.sampleText = text
-            onTextChanged: if (text.length) page.sampleText = text
-        }
-        Rectangle {
-            width: parent.width
-            height: tsCol.implicitHeight + 28
-            radius: M3.sq ? 0 : (M3.rL)
-            color: M3.surfaceC
-            clip: true
-            Column {
-                id: tsCol
-                x: 18; y: 14
-                width: parent.width - 36
-                spacing: 6
-                Repeater {
-                    model: page.scale
-                    delegate: Item {
-                        width: tsCol.width
-                        height: Math.max(30, smp.implicitHeight)
-                        Column {
-                            width: 128
-                            anchors.verticalCenter: parent.verticalCenter
-                            T { text: modelData[0]; font.pixelSize: 12; font.weight: Font.Medium; color: M3.primary }
-                            T { kind: "code"; text: modelData[1] + " / " + modelData[2]; font.pixelSize: 10; color: M3.inkDim }
-                        }
-                        T {
-                            id: smp
-                            scaled: false
-                            x: 140
-                            width: parent.width - 140
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: page.sampleText
-                            elide: Text.ElideRight
-                            font.family: index < 9 ? Fonts.title : Fonts.main
-                            font.pixelSize: Math.round(modelData[1] * Prefs.textScale)
-                            font.weight: index < 6 && Prefs.emphHeadings ? Font.DemiBold : modelData[2]
-                        }
-                    }
-                }
-            }
-        }
 
     }
 }

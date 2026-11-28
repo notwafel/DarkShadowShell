@@ -21,25 +21,6 @@ Item {
         page.ctl.status = I18n.t("Cursor: ") + id.replace(/-/g, " ")
     }
 
-    // cursor packs from GitHub (rice-cursor get)
-    property string getting: ""
-    function getPack(id) {
-        getting = id
-        getProc.command = ["bash", "-c", "\"$HOME/.local/bin/rice-cursor\" get \"$1\" 2>&1", "_", id]
-        getProc.running = true
-        page.ctl.status = I18n.t("Downloading cursors...")
-    }
-    Process {
-        id: getProc
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const l = text.trim().split("\n").pop()
-                page.ctl.status = l.indexOf("could not") >= 0 ? l : I18n.t("Installed: ") + l.replace(/^[^:]*: /, "")
-                page.getting = ""
-                stateProc.running = true
-            }
-        }
-    }
     Process {
         id: stateProc
         command: ["bash", "-c", "\"$HOME/.local/bin/rice-cursor\" state"]
@@ -175,42 +156,6 @@ Item {
                         onExited: if (page.pick === modelData.id) page.pick = ""
                         onClicked: page.apply(modelData.id)
                     }
-                }
-            }
-        }
-        SectionTitle { text: I18n.t("Get more cursors"); sub: I18n.t("Downloaded from GitHub into ~/.local/share/icons. Hyprcursor themes are drawn by Hyprland itself (sharp at any size); apps use Bibata meanwhile.") }
-        Repeater {
-            model: page.cs.packs || []
-            delegate: Rectangle {
-                width: parent ? parent.width : 400
-                height: 64
-                radius: M3.sq ? 0 : (14)
-                color: M3.surfaceC
-                border.width: 1
-                border.color: M3.outlineVariant
-                Column {
-                    x: 18; anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - 18 - 170
-                    spacing: 3
-                    T { text: modelData.name; font.pixelSize: 14; font.bold: true; width: parent.width; elide: Text.ElideRight }
-                    T { kind: "reading"; text: modelData.installed ? modelData.themes.join(", ") : modelData.desc; font.pixelSize: 11; color: M3.inkDim; width: parent.width; elide: Text.ElideRight }
-                }
-                // installed: a quiet mark (V5.02: an Update button sat on every installed pack)
-                Btn {
-                    visible: !modelData.installed
-                    anchors.right: parent.right; anchors.rightMargin: 14
-                    anchors.verticalCenter: parent.verticalCenter
-                    primary: page.getting === ""
-                    text: page.getting === modelData.id ? I18n.t("Downloading...") : I18n.t("Install")
-                    onClicked: if (page.getting === "") page.getPack(modelData.id)
-                }
-                Row {
-                    visible: modelData.installed
-                    anchors.right: parent.right; anchors.rightMargin: 20
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
-                    Icon { anchors.verticalCenter: parent.verticalCenter; name: "check_circle"; glyph: ""; size: 16; color: M3.primary }
-                    T { anchors.verticalCenter: parent.verticalCenter; text: I18n.t("Installed"); font.pixelSize: 13; font.weight: Font.Medium; color: M3.primary }
                 }
             }
         }

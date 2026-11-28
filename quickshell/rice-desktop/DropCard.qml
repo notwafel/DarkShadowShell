@@ -6,6 +6,8 @@ import QtQuick.Shapes
 // the card (its content is clipped in and comes in once there is room), and once it is open the card pulls away from
 // the bar while the strand between them thins to nothing. Closing is the same shape backwards, so it is smooth both
 // ways. The card's glass line is off while it is joined, otherwise it would be drawn straight across the strand.
+// V7.15: the closed shape is the module's pill itself, inside the bar (not a nub under it), and the last frames fade,
+// so the close ends on the module the way the island's panel ends on the island.
 Item {
     id: dc
     property real t: 0                  // 0 closed .. 1 open
@@ -35,17 +37,26 @@ Item {
     readonly property real w: fromW + (openW - fromW) * openE
     readonly property real h: pillH + (openH - pillH) * openE
     readonly property real x0: Math.max(12, Math.min(dc.width - openW - 12, ax - openW / 2))
-    // the bar's own edge is in BarSvc (the menus are other windows and cannot read the bar): the pill starts a few
-    // pixels over it, so the card is one piece with the bar until it lets go
-    readonly property real top0: BarSvc.barInset + BarSvc.barH - 6
+    // the bar's own edges are in BarSvc (the menus are other windows and cannot read the bar). V7.15: the card is
+    // the module's pill when it is small, inside the bar, and hangs from the bar's edge once it has width; so the
+    // close lands the last pill on the module instead of dropping a nub under the bar, and the open never paints a
+    // wide dark block over the bar's other modules
+    readonly property real barLo: BarSvc.barInset
+    readonly property real barHi: BarSvc.barInset + BarSvc.barH
+    readonly property real pillTop: down ? barLo + (BarSvc.barH - pillH) / 2 : height - barHi + (BarSvc.barH - pillH) / 2
+    readonly property real hang: down ? barHi : height - barHi
+    readonly property real nearE: Math.min(1, openE * 3)
+    readonly property real baseY: pillTop + (hang - pillTop) * nearE
     readonly property real restY: down ? barSpace + 8 : height - barSpace - openH - 8
-    readonly property real bottom0: height - barSpace - h
-    readonly property real sy: down ? top0 + dp * (restY - top0) : bottom0 + dp * (restY - bottom0)
+    readonly property real sy: baseY + dp * (restY - baseY)
     readonly property real sideTop: Math.max(12, Math.min(height - openH - 12, (ay < 0 ? height / 2 : ay) - 30))
     // where the content sits in the window once the card is open (the shape moves over it)
     readonly property real hx: side ? (atRight ? width - sideSpace - openW - 8 : sideSpace + 8) : x0
     readonly property real hy: side ? sideTop : restY
     visible: t > 0.01
+    // V7.15: it lands on the module as a small pill and fades into the bar over the last frames, as the island does;
+    // without it the last pill (and the pop when the card was let go) sat under the bar instead of in it
+    opacity: Math.min(1, tc * 6)
     Behavior on openH { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
     // ---------- the strand: the card is one shape with the bar until it lets go ----------
@@ -54,7 +65,8 @@ Item {
         x: shape.x
         y: shape.y - height
         width: Math.max(1, shape.width)
-        height: Math.max(0, (dc.down ? shape.y - dc.top0 : 0))
+        // from the card's top up to the bar's bottom edge: the card is one piece with the bar until it lets go
+        height: Math.max(0, (dc.down ? shape.y - dc.barHi : 0))
         readonly property real tw0: Math.min(width * 0.62, dc.fromW * 0.9)
         readonly property real letgo: Math.max(0, Math.min(1, (dc.tc - 0.55) / 0.45))
         readonly property real tw: tw0 * Math.pow(1 - letgo, 2.2)

@@ -120,6 +120,18 @@ check(stray.at.x >= M1.x and stray.at.x + stray.size.x <= M1.x + 1920
       and stray.at.y >= M1.y and stray.at.y + stray.size.y <= M1.y + 1080,
     "off brings a window placed on a panned canvas back on screen")
 
+-- a floating window that only stuck out of the screen came back half off and looked gone: off keeps the whole
+-- rectangle inside the monitor now (Settings is the usual one; a tiled Firefox was retiled and stayed visible)
+active_ws = 99
+local edge = win("0xf", 99, M1, -180, 120, 420, 300)
+W = { edge }
+RiceInfinite.cfg.screens = 1
+RiceInfinite.set(true)
+RiceInfinite.set(false)
+check(edge.at.x >= M1.x + 24 and edge.at.x + edge.size.x <= M1.x + 1920
+      and edge.at.y >= M1.y + 24 and edge.at.y + edge.size.y <= M1.y + 1080,
+    "off clamps a floating window that only stuck out of the screen")
+
 -- 0.56+: the pointer itself, no input group (and the warp at the edge of the screen)
 local function tick() for _, f in ipairs(timers) do f() end end
 local function ticks() for _ = 1, 16 do tick() end end     -- 16 ms of the timer (16 ticks while held, one when idle)

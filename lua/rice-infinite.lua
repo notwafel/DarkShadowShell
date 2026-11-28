@@ -159,9 +159,11 @@ local function place(w, s, resize)
     run(hl.dsp.window.move({ x = math.floor(RI.ox + s.x * RI.z + 0.5), y = math.floor(RI.oy + s.y * RI.z + 0.5), window = sel(w) }))
 end
 
--- a place that would land outside its screen is brought to the middle of it. A window given its place while the
--- canvas was panned has canvas numbers that mean nothing once the view is back at 100 %; without this it was
--- put outside the screen and looked gone after turning Infinite Desktop off.
+-- a place that would land outside its screen is brought back on it. A window given its place while the canvas was
+-- panned has canvas numbers that mean nothing once the view is back at 100 %; without this it was put outside the
+-- screen and looked gone after turning Infinite Desktop off. V7.16: a place that only stuck out a little (the usual
+-- case for a floating window such as Settings) was left half off the screen and looked gone too, so the whole
+-- rectangle is kept inside the monitor now, not just its top-left corner.
 local function visible_place(w, s)
     local m = w.monitor
     if type(m) ~= "table" or not m.width then m = hl.get_active_monitor() end

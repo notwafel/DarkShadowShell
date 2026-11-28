@@ -577,7 +577,9 @@ function RI.go(dir)
 end
 
 -- ALT + TAB / the Task view picked a window that the canvas left far off screen: glide the canvas so it sits in
--- the middle of its own screen, like SUPER + CTRL + arrows. A window already in sight keeps the view still, and a
+-- the middle of its own screen, like SUPER + CTRL + arrows. Only the axis that is actually out of sight moves: a
+-- window off to the left at the same height comes in sideways, without dragging the whole canvas up or down (and
+-- a floating app to the left, such as Mullvad, stays where it was). A window in sight keeps the view still, and a
 -- window outside the canvas (another workspace in single-screen mode) is left alone.
 function RI.reveal(address)
     if not (RI.on and here()) then return end
@@ -590,8 +592,15 @@ function RI.reveal(address)
             if l then mx, my = (l + rr) / 2, (t + bb) / 2 end
             local x, y = RI.ox + s.x * RI.z, RI.oy + s.y * RI.z
             local sw, sh = s.w * RI.z, s.h * RI.z
-            if l and x >= l and y >= t and x + sw <= rr and y + sh <= bb then return end
-            RI.pan(math.floor(mx - (x + sw / 2) + 0.5), math.floor(my - (y + sh / 2) + 0.5))
+            local dx, dy = mx - (x + sw / 2), my - (y + sh / 2)
+            if l then
+                local seen_x = x >= l and x + sw <= rr
+                local seen_y = y >= t and y + sh <= bb
+                if seen_x and seen_y then return end
+                if seen_x then dx = 0 end
+                if seen_y then dy = 0 end
+            end
+            RI.pan(math.floor(dx + 0.5), math.floor(dy + 0.5))
             return
         end
     end

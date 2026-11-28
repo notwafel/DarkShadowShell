@@ -354,8 +354,9 @@ for _, w in ipairs(W) do
 end
 RiceInfinite.set(false)
 
--- ALT + TAB to a window the canvas left far off screen glides the canvas so it sits in the middle of its screen;
--- a window already in sight keeps the view still
+-- ALT + TAB to a window the canvas left far off screen glides the canvas so it sits in the middle of its screen.
+-- Only the axis out of sight moves: a window off to the left at the same height comes in sideways and the canvas
+-- does not drift up or down (a floating app on the left, such as Mullvad, keeps its height).
 D1.active_workspace = { id = 1 }
 active_ws = 1
 local far = win("0x71", 1, U1, 2600, 200, 400, 300)
@@ -364,9 +365,20 @@ RiceInfinite.cfg.screens = 0
 RiceInfinite.layouts = {}
 RiceInfinite.set(true)
 RiceInfinite.reveal("0x71")
-check(math.abs(far.at.x + far.size.x / 2 - 960) <= 2 and math.abs(far.at.y + far.size.y / 2 - 540) <= 2,
-    "Alt + Tab to a window off screen glides the canvas to its middle")
+check(math.abs(far.at.x + far.size.x / 2 - 960) <= 2, "Alt + Tab to a window off screen glides it to the middle sideways")
+check(far.at.y == 200, "Alt + Tab sideways leaves the height of everything alone")
 local before = #moves
 RiceInfinite.reveal("0x71")
 check(#moves == before, "Alt + Tab to a window already in sight leaves the canvas still")
+RiceInfinite.set(false)
+
+-- a window out of sight on both axes moves diagonally, each axis to its own middle
+local corner = win("0x72", 1, U1, 2600, -500, 400, 300)
+W = { corner }
+RiceInfinite.set(false)
+RiceInfinite.layouts = {}
+RiceInfinite.set(true)
+RiceInfinite.reveal("0x72")
+check(math.abs(corner.at.x + corner.size.x / 2 - 960) <= 2 and math.abs(corner.at.y + corner.size.y / 2 - 540) <= 2,
+    "Alt + Tab to a window out of sight both ways glides diagonally to its middle")
 RiceInfinite.set(false)

@@ -751,12 +751,12 @@ PanelWindow {
                 readonly property bool playing: bar.player !== null
                 // nothing plays: just the note, as narrow as the other icons; a song: a pill with the bars
                 width: playing ? 46 : 24; height: bar.barH - 12; radius: Look.sq ? 0 : (height / 2)
-                Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutBack } }
+                // V7.16: this was the only module that grew with an OutBack bounce and shrank on press; it uses the
+                // same calm state layer as the others now (the pill's width only follows whether a song plays)
+                Behavior on width { NumberAnimation { duration: 320; easing.type: Easing.OutCubic } }
                 color: playing ? (bar.goo ? gp.primary : Qt.rgba(1, 1, 1, mum.containsMouse ? 0.16 : 0.08))
                                : (mum.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent")
                 Behavior on color { ColorAnimation { duration: 200 } }
-                scale: mum.pressed ? 0.92 : (mum.containsMouse ? 1.05 : 1)
-                Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutBack } }
                 readonly property color ic: bar.goo && playing ? gp.inkPrimary : bar.fg
                 Row { anchors.centerIn: parent; spacing: 3
                     MIcon { anchors.verticalCenter: parent.verticalCenter; size: 18; name: "music_note"; glyph: String.fromCodePoint(0xF075A); color: mu.ic }

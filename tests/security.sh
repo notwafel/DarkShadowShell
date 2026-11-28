@@ -911,6 +911,23 @@ d = m.data_hypr()
 assert [w["cls"] for w in d["wins"]] == ["kitty"], d["wins"]
 PYT
 
+# ---- rice-look files: picking another file manager wins over the manager still named in ~/.config/rice/files
+python3 - "$root/bin/rice-look" <<'PYT' && ok "picking Files in Settings switches away from the old file manager" || bad "picking Files in Settings kept the old file manager"
+import importlib.machinery, importlib.util, sys
+ldr = importlib.machinery.SourceFileLoader("rlk", sys.argv[1])
+spec = importlib.util.spec_from_loader("rlk", ldr); m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+written = {}
+m.read = lambda p: "dolphin\n" if p == m.FILESFILE else ""
+m.write = lambda p, v: written.__setitem__(p, v)
+m.files_installed = lambda f: f["id"] in ("dolphin", "nautilus")
+m.run = lambda *a, **k: ""
+m.shutil.which = lambda name: None
+f = m.apply_files_choice({"files": "nautilus"}, "nautilus")
+assert f == "nautilus", f
+assert written[m.FILESFILE].strip() == "nautilus", written
+PYT
+
 # ---- rice-taskview: focusing a window also asks Infinite Desktop to glide the canvas to it
 python3 - "$root/bin/rice-taskview" <<'PYT' && ok "the switcher asks Infinite Desktop to glide to the window it picks" || bad "the switcher leaves the canvas where it was"
 import importlib.machinery, importlib.util, sys

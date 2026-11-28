@@ -914,8 +914,10 @@ def desktop_exists(name):
     return any(os.path.exists(d + "/" + name) for d in dirs)
 
 
-def apply_files_choice(c):
-    f = current_files(c)
+def apply_files_choice(c, want=None):
+    # Settings just picked `want`: the file still holds the old manager and would win in current_files, so the new
+    # choice is used directly (it was checked as installed before it got here)
+    f = want or current_files(c)
     if not f:
         return ""
     write(FILESFILE, f + "\n")
@@ -1065,7 +1067,7 @@ def main(a):
             sys.exit("%s is not installed" % f["name"])
         c["files"] = a[2]
         save(c)
-        apply_files_choice(c)
+        apply_files_choice(c, a[2])
         apply_files_theme(c)
         print("Files open in %s" % f["name"])
     elif cmd == "apps-default" and len(a) == 3 and a[2] in ("on", "off"):

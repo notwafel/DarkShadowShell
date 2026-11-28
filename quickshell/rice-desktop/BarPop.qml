@@ -45,7 +45,7 @@ Item {
     Behavior on width { enabled: bp.t > 0.98; NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
     height: (kind === "weather" ? wxCol.implicitHeight : (kind === "system" ? 228 : (kind === "music" ? musicCol.implicitHeight : calCol.implicitHeight))) + 28
     Behavior on height { enabled: bp.t > 0.98; NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
-    x: Math.max(8, Math.min(areaW - width - 8, ax - width / 2))
+    x: Math.max(12, Math.min(areaW - width - 12, ax - width / 2))
     readonly property color fg: pal ? pal.fg : "#ECEDEE"
     readonly property color dim: pal ? pal.dim : "#A9ADB2"
     readonly property color acc: pal ? pal.primary : "#9ec9bd"
@@ -73,7 +73,8 @@ Item {
     readonly property real tc: Math.max(0, t)
     readonly property real openE: { const p = Math.max(0, Math.min(1, (tc - 0.08) / 0.64)); return p * p * (3 - 2 * p) }
     readonly property real dp: { const p = Math.max(0, Math.min(1, (tc - 0.66) / 0.34)); return p * p * (3 - 2 * p) }
-    readonly property real pillH: Math.max(24, barH - 10)
+    // the same 26 px pill the DropCard menus start from (the island's own is a little shorter)
+    readonly property real pillH: Math.min(26, Math.max(22, barH - 10))
     // the bar's near edge is 8 px above this item (it is placed barH + 8 under the bar, or -height - 8 above a
     // bottom one). The pill is the module's pill inside the bar: centered on it, so it starts at the bar's far edge
     readonly property real hang: down ? -8 : height + 8
@@ -123,7 +124,17 @@ Item {
         opacity: Math.min(1, bp.t * 6)
         clip: true
         Shadow { anchors.fill: bg; radius: Look.sq ? 0 : (bg.radius); on: Look.shadows && Look.shadowPanels; size: Look.shadowSize * 0.8; strength: Look.shadowStrength * bp.openE }
-        Rectangle { id: bg; anchors.fill: parent; radius: Look.sq ? 0 : (Math.min(height / 2, bp.pillH / 2 + (24 - bp.pillH / 2) * bp.openE)); color: bp.pal ? bp.pal.surface : "#141414"; border.width: 1; border.color: bp.pal ? bp.pal.line : Qt.rgba(1, 1, 1, 0.06) }
+        Rectangle { id: bg; anchors.fill: parent; radius: Look.sq ? 0 : (Math.min(height / 2, bp.pillH / 2 + (24 - bp.pillH / 2) * bp.openE)); color: bp.pal ? bp.pal.surface : "#141414" }
+        // the glass line: only once the card is clearly away, so it is never drawn across the strand (the island
+        // and DropCard do the same; a border on the shape itself made the Music card the odd one out)
+        Rectangle {
+            anchors.fill: parent
+            radius: bg.radius
+            color: "transparent"; border.width: 1; border.color: bp.pal ? bp.pal.line : Qt.rgba(1, 1, 1, 0.06)
+            visible: opacity > 0.01
+            opacity: bp.dp > 0.9 && !strand.joined ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+        }
         MouseArea { anchors.fill: parent }        // clicks inside do not fall through to the desktop
         // the content stays where it belongs while the shape opens over it
         Item {

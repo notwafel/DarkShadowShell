@@ -22,11 +22,10 @@ Item {
 
     Instantiator { model: mp.on ? 1 : 0; delegate: QtObject { Component.onCompleted: Player.hold(); Component.onDestruction: Player.release() } }
 
-    // one after another: each part gets its own moment while the card opens
-    property real e: 0
-    onOnChanged: { eA.stop(); if (on) { e = 0; eA.start() } }
-    NumberAnimation { id: eA; target: mp; property: "e"; from: 0; to: 1; duration: 760; easing.type: Easing.Linear }
-    function st(i) { const p = Math.max(0, Math.min(1, (e - i * 0.09) / 0.55)); return 1 - Math.pow(1 - p, 3) }
+    // V7.16: the content follows the card's own shape (BarPop.openE), exactly like Weather/System/Date. It used to
+    // run its own 760 ms stagger, so Music was the only card still moving after the shape had finished opening.
+    readonly property real e: mp.bp ? mp.bp.openE : 0
+    function st(i) { return mp.e }
 
     // ---------- the lyrics ----------
     // V6.11: from Lyrics (one lookup per song for the whole shell), while the card is open
